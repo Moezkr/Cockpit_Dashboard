@@ -1,0 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+:root {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.8125rem;
+  color: #1a1d21;
+  background: #f6f7f9;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+html.dark body {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+html.dark .bg-white {
+  background-color: #121212 !important;
+  color: #ffffff !important;
+}
+html.dark .bg-surface-muted,
+html.dark [class*='bg-surface-muted'] {
+  background-color: #121212 !important;
+  color: #ffffff !important;
+}
+html.dark .bg-surface-sunken,
+html.dark [class*='bg-surface-sunken'] {
+  background-color: #18181b !important;
+  color: #ffffff !important;
+}
+html.dark .border-line {
+  border-color: #27272a !important;
+}
+html.dark .border-line-strong {
+  border-color: #3f3f46 !important;
+}
+html.dark .divide-line > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-line-strong > :not([hidden]) ~ :not([hidden]),
+html.dark [class*='divide-'] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #27272a !important;
+}
+html.dark table,
+html.dark thead,
+html.dark tbody,
+html.dark tr,
+html.dark th,
+html.dark td {
+  border-color: #27272a !important;
+}
+html.dark .text-ink {
+  color: #ffffff !important;
+}
+html.dark .text-ink-soft {
+  color: #d4d4d8 !important;
+}
+html.dark .text-ink-faint {
+  color: #a1a1aa !important;
+}
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #18181b !important;
+  color: #ffffff !important;
+  border-color: #27272a !important;
+}
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #71717a !important;
+}
+
+*:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cfd4da transparent;
+}
+html.dark * {
+  scrollbar-color: #3f3f46 transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #cfd4da;
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #b4bac2;
+}
+.cockpit-grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(37, 99, 235, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(37, 99, 235, 0.06) 1px, transparent 1px);
+}

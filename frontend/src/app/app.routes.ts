@@ -1,0 +1,21 @@
+import { Routes } from '@angular/router';
+import { authGuard } from '@core/guards/auth.guard';
+
+export const routes: Routes = [
+  {
+    path: '',
+    loadChildren: () => import('@pages/dashboard/dashboard.routes').then(m => m.routes),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'requetes',
+    loadChildren: () => import('@pages/query/query.routes').then(m => m.routes),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'parametres',
+    loadChildren: () => import('@pages/settings/settings.routes').then(m => m.routes),
+    canActivate: [authGuard]
+  },
+  { path: '**', redirectTo: '' }
+];

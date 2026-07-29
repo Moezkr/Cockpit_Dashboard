@@ -1,0 +1,654 @@
+<div *ngIf="open" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-ink/30 dark:bg-black/60 backdrop-blur-[1px]" (click)="handleClose()"></div>
+
+      <div class="relative w-full max-w-5xl rounded-lg bg-white dark:bg-slate-900 shadow-pop flex flex-col h-[560px] max-h-[85vh] overflow-hidden border border-line dark:border-slate-800 z-10">
+        <div class="flex items-center justify-between border-b border-line dark:border-slate-800 px-4 py-2.5 bg-white dark:bg-slate-900 flex-shrink-0">
+          <h2 class="text-sm font-semibold text-ink dark:text-white">
+            {{ queryToEdit ? 'Modifier la requête' : 'Assistant de création de requête' }}
+          </h2>
+          <button
+            type="button"
+            (click)="handleClose()"
+            aria-label="Fermer"
+            class="rounded p-1 text-ink-faint dark:text-slate-400 hover:bg-surface-sunken dark:hover:bg-slate-800 hover:text-ink dark:hover:text-white transition-colors cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="p-4 flex-1 min-h-0 bg-white dark:bg-slate-900 overflow-hidden flex flex-col">
+          <div class="flex gap-4 flex-1 min-h-0 h-full">
+            <ol class="hidden w-40 flex-shrink-0 space-y-0.5 md:block select-none overflow-y-auto pr-1 h-full" aria-label="Étapes de la requête">
+              <li *ngFor="let label of steps; let index = index">
+                <button
+                  type="button"
+                  (click)="setStep(index)"
+                  class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-2xs transition-colors cursor-pointer"
+                  [ngClass]="index === step ? 'bg-brand-soft dark:bg-brand/20 text-brand-strong dark:text-brand font-semibold' : (index < step ? 'text-ink-soft dark:text-slate-300 hover:bg-surface-muted dark:hover:bg-slate-800' : 'text-ink-faint dark:text-slate-500')"
+                >
+                  <span
+                    class="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-[9px] font-semibold"
+                    [ngClass]="index < step ? 'bg-emerald-500 text-white' : (index === step ? 'bg-brand text-white' : 'bg-surface-sunken dark:bg-slate-800 text-ink-faint dark:text-slate-400')"
+                  >
+                    <span *ngIf="index < step">✓</span>
+                    <span *ngIf="index >= step">{{ index + 1 }}</span>
+                  </span>
+                  <span class="font-medium truncate">{{ label }}</span>
+                </button>
+              </li>
+            </ol>
+
+            <div class="relative flex-1 min-w-0 h-full overflow-hidden">
+              <div class="absolute inset-0 overflow-y-auto overflow-x-hidden pr-2">
+                <div *ngIf="step === 0" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
+                <div>
+                  <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
+                    Nom de la requête
+                  </label>
+                  <input
+                    [(ngModel)]="query.name"
+                    placeholder="ex : CA & encaissements par client"
+                    class="h-7 w-full rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-xs text-ink dark:text-white placeholder:text-ink-faint dark:placeholder:text-slate-500 focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
+                    Description <span class="ml-1 font-normal normal-case tracking-normal text-ink-faint dark:text-slate-500">— optionnel</span>
+                  </label>
+                  <textarea
+                    rows="2"
+                    [(ngModel)]="query.description"
+                    placeholder="Documentez l’usage de cette requête"
+                    class="w-full rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1.5 text-xs text-ink dark:text-white placeholder:text-ink-faint dark:placeholder:text-slate-500 focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-colors resize-none"
+                  ></textarea>
+                </div>
+
+                <div>
+                  <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
+                    Visibilité
+                  </label>
+                  <div class="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      (click)="query.visibility = 'personal'"
+                      class="rounded-md border p-2.5 text-left transition-colors cursor-pointer"
+                      [ngClass]="query.visibility === 'personal' ? 'border-brand bg-brand-soft dark:bg-brand/20' : 'border-line dark:border-slate-800 hover:border-line-strong dark:hover:border-slate-700 bg-white dark:bg-slate-800'"
+                    >
+                      <div class="text-xs font-medium text-ink dark:text-white">Personnelle</div>
+                      <div class="text-2xs text-ink-faint dark:text-slate-400">Vous uniquement</div>
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="query.visibility = 'shared'"
+                      class="rounded-md border p-2.5 text-left transition-colors cursor-pointer"
+                      [ngClass]="query.visibility === 'shared' ? 'border-brand bg-brand-soft dark:bg-brand/20' : 'border-line dark:border-slate-800 hover:border-line-strong dark:hover:border-slate-700 bg-white dark:bg-slate-800'"
+                    >
+                      <div class="text-xs font-medium text-ink dark:text-white">Partagée</div>
+                      <div class="text-2xs text-ink-faint dark:text-slate-400">Utilisateurs et groupes autorisés</div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="step === 1" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
+                <div>
+                  <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
+                    Sélectionnez une ou plusieurs sources
+                  </label>
+                  <p class="text-2xs text-ink-faint dark:text-slate-400">
+                    Combinez les tables métier nécessaires à votre analyse. Au moins une source est requise.
+                  </p>
+                </div>
+
+                <div *ngIf="selectedSources.length > 0" class="flex flex-wrap gap-1.5 rounded-md border border-brand/20 bg-brand-soft/40 dark:bg-brand/10 p-2">
+                  <span
+                    *ngFor="let source of selectedSources"
+                    class="inline-flex items-center gap-1 rounded bg-brand-soft dark:bg-brand/20 text-brand-strong dark:text-brand px-1.5 py-0.5 text-2xs font-medium"
+                  >
+                    {{ source.label }}
+                    <button
+                      type="button"
+                      (click)="toggleSource(source.id)"
+                      class="ml-0.5 rounded hover:bg-brand/10 text-ink-faint hover:text-ink cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <button
+                    *ngFor="let source of sources"
+                    type="button"
+                    (click)="toggleSource(source.id)"
+                    class="rounded-md border p-2.5 text-left transition-colors cursor-pointer"
+                    [ngClass]="isSourceSelected(source.id) ? 'border-brand bg-brand-soft dark:bg-brand/20' : 'border-line dark:border-slate-800 hover:border-line-strong dark:hover:border-slate-700 bg-white dark:bg-slate-800'"
+                  >
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="text-xs font-semibold text-ink dark:text-white">{{ source.label }}</span>
+                      <span
+                        class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-2xs font-medium"
+                        [ngClass]="isSourceSelected(source.id) ? 'bg-brand-soft dark:bg-brand/30 text-brand-strong dark:text-brand' : 'bg-surface-sunken dark:bg-slate-700 text-ink-soft dark:text-slate-300'"
+                      >
+                        {{ isSourceSelected(source.id) ? 'Sélectionnée' : source.app }}
+                      </span>
+                    </div>
+                    <p class="mt-1 text-2xs text-ink-faint dark:text-slate-400">{{ source.description }}</p>
+                    <p class="mt-1 text-2xs text-ink-faint dark:text-slate-400">{{ source.fields.length }} champs disponibles</p>
+                  </button>
+                </div>
+              </div>
+
+              <div *ngIf="step === 2" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
+                      Relations entre les sources
+                    </label>
+                    <p class="text-2xs text-ink-faint dark:text-slate-400">
+                      Définissez comment les tables doivent être rapprochées. Les relations sont appliquées avant les filtres.
+                    </p>
+                  </div>
+                  <div class="flex gap-1 flex-shrink-0">
+                    <button
+                      type="button"
+                      (click)="suggestRelation()"
+                      class="inline-flex items-center gap-1 rounded bg-surface-muted dark:bg-slate-800 hover:bg-surface-sunken dark:hover:bg-slate-700 text-ink dark:text-white px-2 py-1 text-2xs font-medium transition-colors cursor-pointer border border-line dark:border-slate-700"
+                    >
+                      <span>🪄</span> Suggérer
+                    </button>
+                    <button
+                      type="button"
+                      (click)="addJoin()"
+                      class="inline-flex items-center gap-1 rounded bg-brand text-white hover:bg-brand-strong px-2 py-1 text-2xs font-medium transition-colors cursor-pointer"
+                    >
+                      + Relation
+                    </button>
+                  </div>
+                </div>
+
+                <div *ngIf="relationError" role="alert" class="rounded-md bg-red-50 dark:bg-red-950/40 px-2 py-1.5 text-2xs text-negative">
+                  {{ relationError }}
+                </div>
+
+                <div *ngIf="query.joins.length === 0" class="flex flex-col items-center justify-center rounded-md border border-dashed border-line-strong dark:border-slate-700 bg-surface-muted dark:bg-slate-800/50 px-4 py-8 text-center space-y-1">
+                  <div class="text-base text-ink-faint dark:text-slate-400">🔗</div>
+                  <div class="font-semibold text-ink dark:text-white text-xs">Aucune relation définie</div>
+                  <div class="text-2xs text-ink-faint dark:text-slate-400">Utilisez une suggestion ou ajoutez une relation manuellement.</div>
+                </div>
+
+                <div *ngIf="query.joins.length > 0" class="space-y-2">
+                  <div *ngFor="let join of query.joins; let i = index" class="rounded-md border border-line dark:border-slate-800 p-2 bg-white dark:bg-slate-800 space-y-1.5">
+                    <div class="grid grid-cols-[1fr_1fr_74px_1fr_1fr_auto] items-center gap-1.5">
+                      <select
+                        [ngModel]="join.leftSourceId"
+                        (ngModelChange)="updateJoin(join.id, { leftSourceId: $event, leftFieldId: getSourceFirstField($event) })"
+                        class="h-7 w-full rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+                      >
+                        <option *ngFor="let id of query.sourceIds" [value]="id">{{ getSource(id)?.label }}</option>
+                      </select>
+
+                      <select
+                        [ngModel]="join.leftFieldId"
+                        (ngModelChange)="updateJoin(join.id, { leftFieldId: $event })"
+                        class="h-7 w-full rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+                      >
+                        <option *ngFor="let field of getSource(join.leftSourceId)?.fields" [value]="field.id">{{ field.label }}</option>
+                      </select>
+
+                      <select
+                        [ngModel]="join.type"
+                        (ngModelChange)="updateJoin(join.id, { type: $event })"
+                        class="h-7 w-full rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none font-medium"
+                      >
+                        <option *ngFor="let jt of joinTypes" [value]="jt.value">{{ jt.label }}</option>
+                      </select>
+
+                      <select
+                        [ngModel]="join.rightSourceId"
+                        (ngModelChange)="updateJoin(join.id, { rightSourceId: $event, rightFieldId: getSourceFirstField($event) })"
+                        class="h-7 w-full rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+                      >
+                        <option *ngFor="let id of query.sourceIds" [value]="id">{{ getSource(id)?.label }}</option>
+                      </select>
+
+                      <select
+                        [ngModel]="join.rightFieldId"
+                        (ngModelChange)="updateJoin(join.id, { rightFieldId: $event })"
+                        class="h-7 w-full rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+                      >
+                        <option *ngFor="let field of getSource(join.rightSourceId)?.fields" [value]="field.id">{{ field.label }}</option>
+                      </select>
+
+                      <button
+                        (click)="deleteJoin(join.id)"
+                        aria-label="Supprimer la relation"
+                        class="rounded p-1 text-ink-faint hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-negative cursor-pointer"
+                      >
+                        <app-svg-icon name="Trash2" class="h-3.5 w-3.5"></app-svg-icon>
+                      </button>
+                    </div>
+                    <p class="text-2xs text-ink-faint dark:text-slate-400">
+                      {{ join.type === 'left' ? 'Conserve toutes les lignes de la source de gauche.' : (join.type === 'inner' ? 'Conserve uniquement les correspondances.' : 'Jointure configurée.') }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="step === 3" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
+                <div>
+                  <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
+                    Champs à inclure
+                  </label>
+                  <p class="text-2xs text-ink-faint dark:text-slate-400">
+                    Les champs sont regroupés par source pour lever toute ambiguïté.
+                  </p>
+                </div>
+
+                <section *ngFor="let source of selectedSources" class="rounded-md border border-line dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden space-y-0">
+                  <div class="border-b border-line dark:border-slate-800 bg-surface-muted dark:bg-slate-800/60 px-2 py-1.5 text-xs font-semibold text-ink dark:text-white flex items-center justify-between">
+                    <span>{{ source.label }}</span>
+                    <span class="text-2xs font-normal text-ink-faint dark:text-slate-400">{{ source.app }}</span>
+                  </div>
+                  <div class="grid grid-cols-1 gap-1.5 p-2 sm:grid-cols-2">
+                    <label
+                      *ngFor="let field of source.fields"
+                      class="flex cursor-pointer items-center gap-2 rounded-md border p-1.5 text-xs transition-colors"
+                      [ngClass]="query.selectedFieldIds.includes(field.id) ? 'border-brand bg-brand-soft dark:bg-brand/20' : 'border-line dark:border-slate-800 hover:border-line-strong dark:hover:border-slate-700 bg-white dark:bg-slate-800'"
+                    >
+                      <input
+                        type="checkbox"
+                        [checked]="query.selectedFieldIds.includes(field.id)"
+                        (change)="toggleField(field.id)"
+                        class="rounded border-line-strong text-brand"
+                      />
+                      <span>
+                        <span class="font-medium text-ink dark:text-white">{{ field.label }}</span>
+                        <span class="ml-1 text-2xs text-ink-faint dark:text-slate-400">({{ field.type }})</span>
+                      </span>
+                    </label>
+                  </div>
+                </section>
+
+                <div *ngIf="query.selectedFieldIds.length > 0" class="pt-2">
+                  <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1.5">
+                    Ordre de sortie
+                  </label>
+                  <div class="space-y-1">
+                    <div
+                      *ngFor="let fieldId of query.selectedFieldIds; let idx = index"
+                      class="flex items-center justify-between gap-2 rounded-md border border-line dark:border-slate-800 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs shadow-2xs"
+                    >
+                      <span class="flex-1 font-medium text-ink dark:text-white">
+                        {{ getDisplayFieldLabel(fieldId) }}
+                      </span>
+                      <div class="flex items-center gap-1">
+                        <button
+                          type="button"
+                          [disabled]="idx === 0"
+                          (click)="moveField(idx, -1)"
+                          aria-label="Monter"
+                          class="p-1 text-ink-faint dark:text-slate-400 hover:text-ink dark:hover:text-white disabled:opacity-30 cursor-pointer"
+                        >
+                          <app-svg-icon name="ArrowUp" class="h-3 w-3"></app-svg-icon>
+                        </button>
+                        <button
+                          type="button"
+                          [disabled]="idx === query.selectedFieldIds.length - 1"
+                          (click)="moveField(idx, 1)"
+                          aria-label="Descendre"
+                          class="p-1 text-ink-faint dark:text-slate-400 hover:text-ink dark:hover:text-white disabled:opacity-30 cursor-pointer"
+                        >
+                          <app-svg-icon name="ArrowDown" class="h-3 w-3"></app-svg-icon>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="step === 4" class="space-y-2" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
+                      Filtres source
+                    </label>
+                    <p class="text-2xs text-ink-faint dark:text-slate-400">
+                      Appliqués après les relations et avant les transformations.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="addCondition()"
+                    class="inline-flex items-center gap-1.5 rounded bg-surface-muted dark:bg-slate-800 hover:bg-surface-sunken dark:hover:bg-slate-700 text-ink dark:text-white px-2.5 py-1 text-2xs font-medium border border-line dark:border-slate-700 cursor-pointer"
+                  >
+                    <span>+</span> Critère
+                  </button>
+                </div>
+
+                <div *ngIf="query.conditions.length === 0" class="flex flex-col items-center justify-center rounded-md border border-dashed border-line-strong dark:border-slate-700 bg-surface-muted dark:bg-slate-800/50 px-4 py-8 text-center space-y-1">
+                  <app-svg-icon name="Sparkles" class="h-5 w-5 text-ink-faint dark:text-slate-400 mb-1.5"></app-svg-icon>
+                  <div class="font-semibold text-ink dark:text-white text-xs">Aucun filtre source</div>
+                  <div class="text-2xs text-ink-faint dark:text-slate-400">La requête retournera toutes les lignes jointes.</div>
+                </div>
+
+                <div *ngFor="let condition of query.conditions; let index = index" class="space-y-1.5 rounded-md border border-line dark:border-slate-800 p-2 bg-white dark:bg-slate-800">
+                  <div class="flex items-center gap-1.5">
+                    <select
+                      *ngIf="index > 0"
+                      [(ngModel)]="condition.logical"
+                      class="h-7 w-14 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white outline-none"
+                    >
+                      <option value="AND">ET</option>
+                      <option value="OR">OU</option>
+                    </select>
+
+                    <select
+                      [(ngModel)]="condition.fieldId"
+                      class="h-7 flex-1 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white outline-none"
+                    >
+                      <option *ngFor="let f of catalogFields" [value]="f.id">{{ f.sourceLabel }} · {{ f.label }}</option>
+                    </select>
+
+                    <select
+                      [(ngModel)]="condition.operator"
+                      class="h-7 w-28 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white outline-none"
+                    >
+                      <option *ngFor="let op of operators" [value]="op.value">{{ op.label }}</option>
+                    </select>
+
+                    <input
+                      [(ngModel)]="condition.value"
+                      placeholder="Valeur"
+                      class="h-7 w-28 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white outline-none"
+                    />
+
+                    <button (click)="deleteCondition(condition.id)" aria-label="Supprimer" class="rounded p-1 text-ink-faint dark:text-slate-400 hover:text-negative cursor-pointer">
+                      <app-svg-icon name="Trash2" class="h-3.5 w-3.5"></app-svg-icon>
+                    </button>
+                  </div>
+                  <label class="flex items-center gap-1.5 text-2xs text-ink-soft dark:text-slate-400 cursor-pointer">
+                    <input type="checkbox" [(ngModel)]="condition.parametrable" class="rounded border-line-strong text-brand" />
+                    Paramétrable dans le tableau de bord
+                  </label>
+                </div>
+              </div>
+
+              <div *ngIf="step === 5" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
+                      Transformations des données
+                    </label>
+                    <p class="text-2xs text-ink-faint dark:text-slate-400">
+                      Appliquées dans l'ordre, après les filtres et avant l'agrégation.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="addTransformation()"
+                    class="inline-flex items-center gap-1 rounded bg-brand text-white hover:bg-brand-strong px-2 py-1 text-2xs font-medium cursor-pointer"
+                  >
+                    + Transformation
+                  </button>
+                </div>
+
+                <div *ngIf="query.transformations.length === 0" class="flex flex-col items-center justify-center rounded-md border border-dashed border-line-strong dark:border-slate-700 bg-surface-muted dark:bg-slate-800/50 px-4 py-8 text-center space-y-1">
+                  <app-svg-icon name="Sparkles" class="h-5 w-5 text-ink-faint dark:text-slate-400 mb-1.5"></app-svg-icon>
+                  <div class="font-semibold text-ink dark:text-white text-xs">Aucune transformation</div>
+                  <div class="text-2xs text-ink-faint dark:text-slate-400">Ajoutez un renommage, un calcul, un formatage ou un filtre post-jointure.</div>
+                </div>
+
+                <div *ngFor="let t of query.transformations; let i = index" class="rounded-md border border-line dark:border-slate-800 p-2 bg-white dark:bg-slate-800 space-y-1.5">
+                  <div class="flex items-center gap-1.5">
+                    <select
+                      [(ngModel)]="t.type"
+                      class="h-7 w-44 flex-shrink-0 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+                    >
+                      <option *ngFor="let tt of transformTypes" [value]="tt.value">{{ tt.label }}</option>
+                    </select>
+
+                    <select
+                      [(ngModel)]="t.fieldId"
+                      class="h-7 flex-1 min-w-0 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+                    >
+                      <option value="">— Champ —</option>
+                      <option *ngFor="let f of catalogFields" [value]="f.id">{{ f.sourceLabel }} · {{ f.label }}</option>
+                    </select>
+
+                    <button (click)="deleteTransformation(t.id)" aria-label="Supprimer" class="rounded p-1 text-ink-faint dark:text-slate-400 hover:text-negative cursor-pointer">
+                      <app-svg-icon name="Trash2" class="h-3.5 w-3.5"></app-svg-icon>
+                    </button>
+                  </div>
+
+                  <div *ngIf="t.type === 'rename' || t.type === 'calculated'" class="flex items-center gap-1.5">
+                    <label class="text-2xs text-ink-faint dark:text-slate-400 w-24 flex-shrink-0">Nouveau libellé</label>
+                    <input
+                      [(ngModel)]="t.outputLabel"
+                      placeholder="ex : Montant TTC"
+                      class="h-7 flex-1 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+                    />
+                  </div>
+
+                  <div *ngIf="t.type === 'calculated'" class="flex items-center gap-1.5">
+                    <label class="text-2xs text-ink-faint dark:text-slate-400 w-24 flex-shrink-0">Formule</label>
+                    <input
+                      [(ngModel)]="t.formula"
+                      placeholder="ex : {montant} * 1.2"
+                      class="h-7 flex-1 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none font-mono"
+                    />
+                  </div>
+
+                  <div *ngIf="t.type === 'format'" class="flex items-center gap-1.5">
+                    <label class="text-2xs text-ink-faint dark:text-slate-400 w-24 flex-shrink-0">Type de format</label>
+                    <select
+                      [(ngModel)]="t.format"
+                      class="h-7 flex-1 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+                    >
+                      <option value="">— Choisir —</option>
+                      <option value="year">Extraire l'année</option>
+                      <option value="quarter">Extraire le trimestre</option>
+                      <option value="month">Extraire le mois</option>
+                      <option value="round">Arrondir le nombre</option>
+                    </select>
+                  </div>
+
+                  <div *ngIf="t.type === 'replaceEmpty'" class="flex items-center gap-1.5">
+                    <label class="text-2xs text-ink-faint dark:text-slate-400 w-24 flex-shrink-0">Valeur par défaut</label>
+                    <input
+                      [(ngModel)]="t.replacementValue"
+                      placeholder="ex : 0 ou Non spécifié"
+                      class="h-7 flex-1 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+                    />
+                  </div>
+
+                  <div *ngIf="t.type === 'filterRows'" class="flex items-center gap-1.5">
+                    <label class="text-2xs text-ink-faint dark:text-slate-400 w-24 flex-shrink-0">Condition</label>
+                    <select
+                      [(ngModel)]="t.operator"
+                      class="h-7 w-28 flex-shrink-0 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white outline-none"
+                    >
+                      <option *ngFor="let op of operators" [value]="op.value">{{ op.label }}</option>
+                    </select>
+                    <input
+                      [(ngModel)]="t.value"
+                      placeholder="Valeur"
+                      class="h-7 flex-1 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="step === 6" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
+                <div>
+                  <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
+                    Regroupement et agrégation
+                  </label>
+                  <p class="text-2xs text-ink-faint dark:text-slate-400">
+                    Les calculs sont effectués après les transformations.
+                  </p>
+                </div>
+
+                <div>
+                  <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">Regrouper par</label>
+                  <div class="flex flex-wrap gap-1.5">
+                    <button
+                      *ngFor="let field of catalogFields"
+                      type="button"
+                      (click)="toggleGroupBy(field.id)"
+                      class="rounded-full border px-2 py-1 text-2xs cursor-pointer transition-colors"
+                      [ngClass]="query.groupByFieldIds.includes(field.id) ? 'border-brand bg-brand-soft dark:bg-brand/20 text-brand-strong dark:text-brand' : 'border-line dark:border-slate-700 text-ink-soft dark:text-slate-300 hover:border-line-strong dark:hover:border-slate-600 bg-white dark:bg-slate-800'"
+                    >
+                      {{ field.sourceLabel }} · {{ field.label }}
+                    </button>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">Agrégation</label>
+                    <select
+                      [(ngModel)]="query.aggregation"
+                      class="h-7 w-full rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+                    >
+                      <option value="none">Aucune (somme par défaut visuelle)</option>
+                      <option value="sum">Somme</option>
+                      <option value="avg">Moyenne</option>
+                      <option value="min">Minimum</option>
+                      <option value="max">Maximum</option>
+                      <option value="count">Comptage</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">Champ agrégé</label>
+                    <select
+                      [disabled]="query.aggregation === 'none'"
+                      [(ngModel)]="query.aggregationFieldId"
+                      class="h-7 w-full rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none disabled:opacity-50"
+                    >
+                      <option value="">—</option>
+                      <option *ngFor="let field of catalogFields" [value]="field.id">{{ field.sourceLabel }} · {{ field.label }}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="step === 7" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
+                <div>
+                  <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">Tri et limite</label>
+                  <p class="text-2xs text-ink-faint dark:text-slate-400">
+                    Le tri est la dernière opération de traitement.
+                  </p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">Trier par</label>
+                    <select
+                      [ngModel]="query.sort?.fieldId || ''"
+                      (ngModelChange)="setSortField($event)"
+                      class="h-7 w-full rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+                    >
+                      <option value="">— Aucun —</option>
+                      <option *ngFor="let field of catalogFields" [value]="field.id">{{ field.sourceLabel }} · {{ field.label }}</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">Direction</label>
+                    <select
+                      [disabled]="!query.sort"
+                      [ngModel]="query.sort?.direction || 'asc'"
+                      (ngModelChange)="setSortDirection($event)"
+                      class="h-7 w-full rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none disabled:opacity-50"
+                    >
+                      <option value="asc">Ascendant</option>
+                      <option value="desc">Descendant</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">Nombre maximum de lignes</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100000"
+                    [(ngModel)]="query.rowLimit"
+                    class="h-7 w-36 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
+                  />
+                </div>
+              </div>
+
+              <div *ngIf="step === 8" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
+                <div class="rounded-md border border-line dark:border-slate-800 bg-surface-muted dark:bg-slate-800/60 p-3 space-y-1">
+                  <h3 class="text-sm font-semibold text-ink dark:text-white">
+                    {{ query.name || 'Requête sans nom' }}
+                  </h3>
+                  <p class="text-2xs text-ink-faint dark:text-slate-400">
+                    {{ query.description || 'Aucune description' }}
+                  </p>
+                  <div class="mt-2 flex flex-wrap gap-1">
+                    <span *ngFor="let source of selectedSources" class="inline-flex items-center rounded bg-brand-soft dark:bg-brand/20 text-brand-strong dark:text-brand px-1.5 py-0.5 text-2xs font-medium">
+                      {{ source.label }}
+                    </span>
+                    <span class="inline-flex items-center rounded bg-surface-sunken dark:bg-slate-700 text-ink-soft dark:text-slate-300 px-1.5 py-0.5 text-2xs font-medium">
+                      {{ query.joins.length }} relation(s)
+                    </span>
+                    <span class="inline-flex items-center rounded bg-surface-sunken dark:bg-slate-700 text-ink-soft dark:text-slate-300 px-1.5 py-0.5 text-2xs font-medium">
+                      {{ query.selectedFieldIds.length }} champ(s)
+                    </span>
+                    <span class="inline-flex items-center rounded bg-surface-sunken dark:bg-slate-700 text-ink-soft dark:text-slate-300 px-1.5 py-0.5 text-2xs font-medium">
+                      {{ query.conditions.length }} filtre(s)
+                    </span>
+                  </div>
+                </div>
+
+                <div class="rounded-md border border-brand/20 bg-brand-soft/40 dark:bg-brand/10 p-2 text-2xs text-brand-strong dark:text-brand">
+                  <span class="font-semibold">Ordre de traitement :</span> Sources → Relations → Filtres → Transformations → Agrégation → Tri
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-auto flex items-center justify-between border-t border-line dark:border-slate-800 px-4 py-2.5 bg-white dark:bg-slate-900 select-none">
+          <span class="text-2xs text-ink-faint dark:text-slate-400">
+            Étape {{ step + 1 }} sur {{ steps.length }} — {{ steps[step] }}
+          </span>
+
+          <div class="flex gap-2">
+            <app-button
+              *ngIf="step > 0"
+              variant="secondary"
+              size="sm"
+              (onClick)="setStep(step - 1)"
+            >
+              Précédent
+            </app-button>
+
+            <app-button
+              *ngIf="step < steps.length - 1"
+              variant="primary"
+              size="sm"
+              [disabled]="!canProceed"
+              (onClick)="setStep(step + 1)"
+            >
+              Suivant ›
+            </app-button>
+
+            <app-button
+              *ngIf="step === steps.length - 1"
+              variant="primary"
+              size="sm"
+              (onClick)="submit()"
+            >
+              Enregistrer la requête
+            </app-button>
+          </div>
+        </div>
+      </div>
+    </div>

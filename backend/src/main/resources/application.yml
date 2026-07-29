@@ -1,0 +1,85 @@
+spring:
+  application:
+    name: cockpit-backend
+
+  datasource:
+    url: ${COCKPIT_DB_URL:jdbc:postgresql://localhost:5433/cockpit}
+    username: ${COCKPIT_DB_USER:cockpit}
+    password: ${COCKPIT_DB_PASSWORD:cockpit}
+    hikari:
+      minimum-idle: 2
+      maximum-pool-size: 16
+      connection-timeout: 30000
+      idle-timeout: 300000
+      max-lifetime: 900000
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          time_zone: UTC
+        default_schema: cockpit
+
+  flyway:
+    enabled: true
+    schemas: cockpit
+    default-schema: cockpit
+    locations: classpath:db/migration,classpath:db/seeder/erp,classpath:db/seeder/cockpit
+    baseline-on-migrate: true
+    validate-on-migrate: false
+    repair-on-migrate: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${COCKPIT_JWT_ISSUER:http://localhost:8081/realms/cockpit}
+
+server:
+  port: ${COCKPIT_SERVER_PORT:8080}
+  shutdown: graceful
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        secure: true
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+
+management:
+  endpoint:
+    health:
+      show-details: never
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+cockpit:
+  security:
+    allowed-origins: ${COCKPIT_ALLOWED_ORIGINS:http://localhost:5173}
+    required-audience: ${COCKPIT_JWT_AUDIENCE:cockpit-api}
+  external-connectors:
+    progescode-erp:
+      enabled: true
+      driver-class-name: org.postgresql.Driver
+      url: ${ERP_DB_URL:jdbc:postgresql://localhost:5433/erp_db}
+      username: ${ERP_DB_USER:cockpit}
+      password: ${ERP_DB_PASSWORD:cockpit}
+      hikari:
+        pool-name: ERP-HikariPool
+        maximum-pool-size: 10
+        minimum-idle: 2
+        connection-timeout: 20000
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: WARN

@@ -1,0 +1,92 @@
+<div class="rounded-lg border border-line bg-white shadow-card overflow-hidden">
+  <div class="flex items-center gap-2 border-b border-line bg-white px-4 py-3 text-ink">
+    <app-svg-icon name="Clock" class="h-4 w-4 text-ink-faint"></app-svg-icon>
+    <h2 class="text-xs font-bold text-ink">Journal d'audit</h2>
+  </div>
+
+  <div class="overflow-x-auto max-w-full">
+    <table class="w-full min-w-[650px] table-fixed border-collapse text-left text-xs">
+      <thead class="border-b border-line bg-surface-muted text-2xs font-semibold uppercase tracking-wider text-ink-faint select-none">
+        <tr>
+          <th (click)="toggleSort('event')" class="w-[22%] px-4 py-2.5 cursor-pointer hover:text-ink transition-colors group">
+            <div class="flex items-center gap-1">
+              <span>ÉVÉNEMENT</span>
+              <app-svg-icon *ngIf="sortField === 'event' && sortDirection === 'asc'" name="ChevronUp" class="h-3 w-3 text-ink-soft group-hover:text-ink transition-colors"></app-svg-icon>
+              <app-svg-icon *ngIf="sortField === 'event' && sortDirection === 'desc'" name="ChevronDown" class="h-3 w-3 text-ink-soft group-hover:text-ink transition-colors"></app-svg-icon>
+              <app-svg-icon *ngIf="sortField !== 'event'" name="ChevronDown" class="h-3 w-3 text-ink-faint opacity-40 group-hover:opacity-100 transition-opacity"></app-svg-icon>
+            </div>
+          </th>
+
+          <th (click)="toggleSort('detail')" class="w-[42%] px-4 py-2.5 cursor-pointer hover:text-ink transition-colors group">
+            <div class="flex items-center gap-1">
+              <span>DÉTAIL</span>
+              <app-svg-icon *ngIf="sortField === 'detail' && sortDirection === 'asc'" name="ChevronUp" class="h-3 w-3 text-ink-soft group-hover:text-ink transition-colors"></app-svg-icon>
+              <app-svg-icon *ngIf="sortField === 'detail' && sortDirection === 'desc'" name="ChevronDown" class="h-3 w-3 text-ink-soft group-hover:text-ink transition-colors"></app-svg-icon>
+              <app-svg-icon *ngIf="sortField !== 'detail'" name="ChevronDown" class="h-3 w-3 text-ink-faint opacity-40 group-hover:opacity-100 transition-opacity"></app-svg-icon>
+            </div>
+          </th>
+
+          <th (click)="toggleSort('author')" class="w-[18%] px-4 py-2.5 cursor-pointer hover:text-ink transition-colors group">
+            <div class="flex items-center gap-1">
+              <span>AUTEUR</span>
+              <app-svg-icon *ngIf="sortField === 'author' && sortDirection === 'asc'" name="ChevronUp" class="h-3 w-3 text-ink-soft group-hover:text-ink transition-colors"></app-svg-icon>
+              <app-svg-icon *ngIf="sortField === 'author' && sortDirection === 'desc'" name="ChevronDown" class="h-3 w-3 text-ink-soft group-hover:text-ink transition-colors"></app-svg-icon>
+              <app-svg-icon *ngIf="sortField !== 'author'" name="ChevronDown" class="h-3 w-3 text-ink-faint opacity-40 group-hover:opacity-100 transition-opacity"></app-svg-icon>
+            </div>
+          </th>
+
+          <th (click)="toggleSort('date')" class="w-[18%] px-4 py-2.5 cursor-pointer hover:text-ink transition-colors group">
+            <div class="flex items-center gap-1">
+              <span>DATE</span>
+              <app-svg-icon *ngIf="sortField === 'date' && sortDirection === 'asc'" name="ChevronUp" class="h-3 w-3 text-ink-soft group-hover:text-ink transition-colors"></app-svg-icon>
+              <app-svg-icon *ngIf="sortField === 'date' && sortDirection === 'desc'" name="ChevronDown" class="h-3 w-3 text-ink-soft group-hover:text-ink transition-colors"></app-svg-icon>
+              <app-svg-icon *ngIf="sortField !== 'date'" name="ChevronDown" class="h-3 w-3 text-ink-faint opacity-40 group-hover:opacity-100 transition-opacity"></app-svg-icon>
+            </div>
+          </th>
+        </tr>
+      </thead>
+
+      <tbody class="divide-y divide-line bg-white text-ink-soft">
+        <tr *ngFor="let log of paginatedAuditLogs" class="hover:bg-surface-sunken/60 transition-colors">
+          <td class="px-4 py-3 font-semibold text-ink truncate" [title]="log.event">
+            {{ log.event }}
+          </td>
+          <td class="px-4 py-3 text-ink-soft truncate" [title]="log.detail">
+            {{ log.detail }}
+          </td>
+          <td class="px-4 py-3 font-medium text-ink truncate" [title]="log.author">
+            {{ log.author }}
+          </td>
+          <td class="px-4 py-3 text-ink-faint truncate" [title]="log.date">
+            {{ log.date }}
+          </td>
+        </tr>
+        <tr *ngIf="!paginatedAuditLogs.length">
+          <td colspan="4" class="px-4 py-6 text-center text-xs text-ink-faint">
+            Aucun événement d'audit disponible.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-line bg-surface-muted px-4 py-2.5 text-xs text-ink-faint">
+    <div class="flex items-center gap-2">
+      <span>Affichage de {{ auditLogs.length ? startIndex : 0 }} à {{ endIndex }} sur {{ auditLogs.length }} entrées</span>
+      <select [(ngModel)]="pageSize" (ngModelChange)="currentPage = 1" class="h-7 rounded border border-line-strong bg-white px-2 text-2xs text-ink outline-none focus:border-brand cursor-pointer">
+        <option [ngValue]="5">5 / page</option>
+        <option [ngValue]="10">10 / page</option>
+        <option [ngValue]="20">20 / page</option>
+        <option [ngValue]="50">50 / page</option>
+      </select>
+    </div>
+
+    <div class="flex items-center gap-1">
+      <button type="button" [disabled]="currentPage <= 1" (click)="prevPage()" class="inline-flex h-7 px-2.5 items-center justify-center rounded border border-line bg-white text-xs font-medium text-ink shadow-2xs hover:bg-surface-sunken disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Précédent</button>
+      <div class="flex items-center gap-1 px-1">
+        <button *ngFor="let page of pageNumbers" type="button" (click)="goToPage(page)" class="inline-flex h-7 w-7 items-center justify-center rounded text-xs font-semibold transition-colors" [ngClass]="page === currentPage ? 'bg-brand text-white' : 'text-ink-soft hover:bg-surface-sunken'">{{ page }}</button>
+      </div>
+      <button type="button" [disabled]="currentPage >= totalPages" (click)="nextPage()" class="inline-flex h-7 px-2.5 items-center justify-center rounded border border-line bg-white text-xs font-medium text-ink shadow-2xs hover:bg-surface-sunken disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Suivant</button>
+    </div>
+  </div>
+</div>

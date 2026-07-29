@@ -1,0 +1,303 @@
+<div class="mx-auto max-w-[1400px] p-6 space-y-5">
+      <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+        <div>
+          <h1 class="text-xl font-bold text-ink">Requêtes de données</h1>
+          <p class="text-xs text-ink-faint mt-0.5">
+            Composez des jeux de données à partir d'une ou plusieurs sources métier.
+          </p>
+        </div>
+
+        <div class="shrink-0 self-start sm:self-auto">
+          <app-button variant="primary" size="md" (onClick)="openWizard()">
+            <app-svg-icon name="Plus" class="h-4 w-4 mr-1.5"></app-svg-icon>
+            <span class="whitespace-nowrap">Nouvelle requête</span>
+          </app-button>
+        </div>
+      </div>
+
+      <div class="relative w-80 max-w-full flex items-center">
+        <div class="pointer-events-none absolute left-3 flex items-center justify-center text-ink-faint">
+          <app-svg-icon name="Search" class="h-3.5 w-3.5"></app-svg-icon>
+        </div>
+        <input
+          [(ngModel)]="search"
+          placeholder="Rechercher par nom, description ou source."
+          class="h-8 w-full rounded-md border border-line-strong bg-white pr-3 text-xs outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+          style="padding-left: 2.25rem !important;"
+        />
+      </div>
+
+      <div class="overflow-x-auto max-w-full rounded-lg border border-line bg-white shadow-card">
+        <table class="w-full min-w-[700px] table-fixed border-collapse text-left text-xs">
+          <thead class="border-b border-line bg-surface-muted text-2xs font-semibold uppercase tracking-wider text-ink-faint select-none">
+            <tr>
+              <th
+                (click)="toggleSort('name')"
+                class="w-[32%] px-4 py-2.5 cursor-pointer hover:text-ink transition-colors group"
+              >
+                <div class="flex items-center gap-1">
+                  <span>NOM</span>
+                  <app-svg-icon
+                    *ngIf="sortField === 'name' && sortDirection === 'asc'"
+                    name="ChevronUp"
+                    class="h-3 w-3 text-ink-soft group-hover:text-ink transition-colors"
+                  ></app-svg-icon>
+                  <app-svg-icon
+                    *ngIf="sortField === 'name' && sortDirection === 'desc'"
+                    name="ChevronDown"
+                    class="h-3 w-3 text-ink-soft group-hover:text-ink transition-colors"
+                  ></app-svg-icon>
+                  <app-svg-icon
+                    *ngIf="sortField !== 'name'"
+                    name="ChevronDown"
+                    class="h-3 w-3 text-ink-faint opacity-40 group-hover:opacity-100 transition-opacity"
+                  ></app-svg-icon>
+                </div>
+              </th>
+
+              <th
+                (click)="toggleSort('sources')"
+                class="w-[18%] px-4 py-2.5 cursor-pointer hover:text-ink transition-colors group"
+              >
+                <div class="flex items-center gap-1">
+                  <span>SOURCES</span>
+                  <app-svg-icon
+                    *ngIf="sortField === 'sources' && sortDirection === 'asc'"
+                    name="ChevronUp"
+                    class="h-3 w-3 text-ink-soft group-hover:text-ink transition-colors"
+                  ></app-svg-icon>
+                  <app-svg-icon
+                    *ngIf="sortField === 'sources' && sortDirection === 'desc'"
+                    name="ChevronDown"
+                    class="h-3 w-3 text-ink-soft group-hover:text-ink transition-colors"
+                  ></app-svg-icon>
+                  <app-svg-icon
+                    *ngIf="sortField !== 'sources'"
+                    name="ChevronDown"
+                    class="h-3 w-3 text-ink-faint opacity-40 group-hover:opacity-100 transition-opacity"
+                  ></app-svg-icon>
+                </div>
+              </th>
+
+              <th
+                (click)="toggleSort('visibility')"
+                class="w-[15%] px-4 py-2.5 cursor-pointer hover:text-ink transition-colors group"
+              >
+                <div class="flex items-center gap-1">
+                  <span>VISIBILITÉ</span>
+                  <app-svg-icon
+                    *ngIf="sortField === 'visibility' && sortDirection === 'asc'"
+                    name="ChevronUp"
+                    class="h-3 w-3 text-ink-soft group-hover:text-ink transition-colors"
+                  ></app-svg-icon>
+                  <app-svg-icon
+                    *ngIf="sortField === 'visibility' && sortDirection === 'desc'"
+                    name="ChevronDown"
+                    class="h-3 w-3 text-ink-soft group-hover:text-ink transition-colors"
+                  ></app-svg-icon>
+                  <app-svg-icon
+                    *ngIf="sortField !== 'visibility'"
+                    name="ChevronDown"
+                    class="h-3 w-3 text-ink-faint opacity-40 group-hover:opacity-100 transition-opacity"
+                  ></app-svg-icon>
+                </div>
+              </th>
+
+              <th
+                (click)="toggleSort('usedByWidgets')"
+                class="w-[13%] px-4 py-2.5 cursor-pointer hover:text-ink transition-colors group"
+              >
+                <div class="flex items-center gap-1">
+                  <span>UTILISÉE PAR</span>
+                  <app-svg-icon
+                    *ngIf="sortField === 'usedByWidgets' && sortDirection === 'asc'"
+                    name="ChevronUp"
+                    class="h-3 w-3 text-ink-soft group-hover:text-ink transition-colors"
+                  ></app-svg-icon>
+                  <app-svg-icon
+                    *ngIf="sortField === 'usedByWidgets' && sortDirection === 'desc'"
+                    name="ChevronDown"
+                    class="h-3 w-3 text-ink-soft group-hover:text-ink transition-colors"
+                  ></app-svg-icon>
+                  <app-svg-icon
+                    *ngIf="sortField !== 'usedByWidgets'"
+                    name="ChevronDown"
+                    class="h-3 w-3 text-ink-faint opacity-40 group-hover:opacity-100 transition-opacity"
+                  ></app-svg-icon>
+                </div>
+              </th>
+
+              <th
+                (click)="toggleSort('updatedAt')"
+                class="w-[12%] px-4 py-2.5 cursor-pointer hover:text-ink transition-colors group"
+              >
+                <div class="flex items-center gap-1">
+                  <span>MODIFIÉE</span>
+                  <app-svg-icon
+                    *ngIf="sortField === 'updatedAt' && sortDirection === 'asc'"
+                    name="ChevronUp"
+                    class="h-3 w-3 text-ink-soft group-hover:text-ink transition-colors"
+                  ></app-svg-icon>
+                  <app-svg-icon
+                    *ngIf="sortField === 'updatedAt' && sortDirection === 'desc'"
+                    name="ChevronDown"
+                    class="h-3 w-3 text-ink-soft group-hover:text-ink transition-colors"
+                  ></app-svg-icon>
+                  <app-svg-icon
+                    *ngIf="sortField !== 'updatedAt'"
+                    name="ChevronDown"
+                    class="h-3 w-3 text-ink-faint opacity-40 group-hover:opacity-100 transition-opacity"
+                  ></app-svg-icon>
+                </div>
+              </th>
+
+              <th class="w-[10%] px-4 py-2.5 text-right">ACTIONS</th>
+            </tr>
+          </thead>
+
+          <tbody class="divide-y divide-line bg-white">
+            <tr
+              *ngFor="let q of paginatedQueries"
+              class="hover:bg-surface-sunken/60 transition-colors"
+            >
+              <td class="px-4 py-3 truncate">
+                <div class="font-bold text-ink flex items-center gap-1.5 truncate">
+                  <span class="truncate" [title]="q.name">{{ q.name }}</span>
+                  <span *ngIf="q.id === 'q-encaissements'" class="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.2 text-[10px] font-semibold text-emerald-700 shrink-0">
+                    🧩 2
+                  </span>
+                </div>
+                <div class="text-2xs text-ink-faint mt-0.5 truncate" [title]="q.description || ''">
+                  {{ q.description || 'Aucune description.' }}
+                </div>
+              </td>
+
+              <td class="px-4 py-3 truncate">
+                <div class="flex items-center gap-1 truncate">
+                  <span
+                    *ngFor="let s of getSourcesList(q)"
+                    class="inline-flex items-center rounded border border-line-strong bg-surface-muted px-2 py-0.5 text-[11px] font-medium text-ink-soft shrink-0"
+                  >
+                    {{ s }}
+                  </span>
+                </div>
+              </td>
+
+              <td class="px-4 py-3 truncate">
+                <span
+                  class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-2xs font-medium shrink-0"
+                  [ngClass]="q.visibility === 'shared' ? 'bg-blue-50 text-brand-strong' : 'bg-slate-100 text-slate-700'"
+                >
+                  <app-svg-icon [name]="q.visibility === 'shared' ? 'Share2' : 'Lock'" class="h-3 w-3"></app-svg-icon>
+                  {{ q.visibility === 'shared' ? 'Partagée' : 'Personnelle' }}
+                </span>
+              </td>
+
+              <td class="px-4 py-3 truncate text-ink-soft">
+                {{ q.usedByWidgets }} widget(s)
+              </td>
+
+              <td class="px-4 py-3 truncate text-ink-faint">
+                {{ getModifiedText(q) }}
+              </td>
+
+              <td class="px-4 py-3 truncate text-right">
+                <div class="inline-flex items-center gap-1">
+                  <button
+                    (click)="edit(q)"
+                    title="Modifier"
+                    class="rounded p-1.5 text-ink-faint hover:bg-surface-sunken hover:text-brand"
+                  >
+                    <app-svg-icon name="Pencil" class="h-3.5 w-3.5"></app-svg-icon>
+                  </button>
+                  <button
+                    (click)="duplicate(q.id)"
+                    title="Dupliquer"
+                    class="rounded p-1.5 text-ink-faint hover:bg-surface-sunken hover:text-brand"
+                  >
+                    <app-svg-icon name="Copy" class="h-3.5 w-3.5"></app-svg-icon>
+                  </button>
+                  <button
+                    (click)="deleteQuery(q.id)"
+                    title="Supprimer"
+                    class="rounded p-1.5 text-ink-faint hover:bg-surface-sunken hover:text-negative"
+                  >
+                    <app-svg-icon name="Trash2" class="h-3.5 w-3.5"></app-svg-icon>
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <tr *ngIf="paginatedQueries.length === 0">
+              <td colspan="6" class="px-4 py-8 text-center text-ink-faint">
+                Aucune requête trouvée.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-line bg-surface-muted px-4 py-2.5 text-xs text-ink-faint">
+          <div class="flex items-center gap-2">
+            <span>Affichage de {{ sortedQueries.length ? startIndex : 0 }} à {{ endIndex }} sur {{ sortedQueries.length }} entrées</span>
+            <select
+              [(ngModel)]="pageSize"
+              (ngModelChange)="currentPage = 1"
+              class="h-7 rounded border border-line-strong bg-white px-2 text-2xs text-ink outline-none focus:border-brand cursor-pointer"
+            >
+              <option [ngValue]="5">5 / page</option>
+              <option [ngValue]="10">10 / page</option>
+              <option [ngValue]="20">20 / page</option>
+              <option [ngValue]="50">50 / page</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              [disabled]="currentPage <= 1"
+              (click)="prevPage()"
+              class="inline-flex h-7 px-2.5 items-center justify-center rounded border border-line bg-white text-xs font-medium text-ink shadow-2xs hover:bg-surface-sunken disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Précédent
+            </button>
+
+            <div class="flex items-center gap-1 px-1">
+              <button
+                *ngFor="let page of pageNumbers"
+                type="button"
+                (click)="goToPage(page)"
+                class="inline-flex h-7 w-7 items-center justify-center rounded text-xs font-semibold transition-colors"
+                [ngClass]="page === currentPage ? 'bg-brand text-white' : 'text-ink-soft hover:bg-surface-sunken'"
+              >
+                {{ page }}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              [disabled]="currentPage >= totalPages"
+              (click)="nextPage()"
+              class="inline-flex h-7 px-2.5 items-center justify-center rounded border border-line bg-white text-xs font-medium text-ink shadow-2xs hover:bg-surface-sunken disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Suivant
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <app-query-wizard-modal
+        [open]="showWizard"
+        [queryToEdit]="editingQuery"
+        (onClose)="showWizard = false"
+        (onSave)="saveQuery($event)"
+      ></app-query-wizard-modal>
+
+      <app-confirm-modal
+        [open]="deleteConfirmOpen"
+        title="Supprimer la requête"
+        message="Êtes-vous sûr de vouloir supprimer cette requête de données ? Cette action est irréversible."
+        (onClose)="deleteConfirmOpen = false"
+        (onConfirm)="confirmDeleteQuery()"
+      ></app-confirm-modal>
+    </div>

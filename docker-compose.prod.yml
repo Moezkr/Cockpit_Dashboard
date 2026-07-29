@@ -1,0 +1,59 @@
+name: prestacode-prod
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: prod-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - prod_postgres_data:/var/lib/postgresql
+      - ./backend/src/main/resources/db/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - prod-net
+
+  backend:
+    image: ghcr.io/moezkr/cockpit_dashboard-backend:latest
+    container_name: prod-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      COCKPIT_DB_URL: jdbc:postgresql://postgres:5432/cockpit
+      COCKPIT_DB_USER: postgres
+      COCKPIT_DB_PASSWORD: postgres
+      ERP_DB_URL: jdbc:postgresql://postgres:5432/erp_db
+      ERP_DB_USER: postgres
+      ERP_DB_PASSWORD: postgres
+      COCKPIT_ALLOWED_ORIGINS: "*"
+      COCKPIT_JWT_ISSUER: "http://localhost:8081/realms/cockpit"
+      COCKPIT_SERVER_PORT: 8080
+    networks:
+      - prod-net
+
+  frontend:
+    image: ghcr.io/moezkr/cockpit_dashboard-frontend:latest
+    container_name: prod-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "4201:80"
+    networks:
+      - prod-net
+
+networks:
+  prod-net:
+    driver: bridge
+
+volumes:
+  prod_postgres_data:

@@ -1,0 +1,116 @@
+<div class="mx-auto max-w-[1400px] p-5">
+      <div class="mb-4 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+        <div>
+          <h1 class="text-lg font-semibold text-ink">Tableaux de bord</h1>
+          <p class="text-xs text-ink-faint">
+            Créez, consultez et partagez vos tableaux de bord dynamiques.
+          </p>
+        </div>
+
+        <div class="shrink-0 self-start sm:self-auto">
+          <app-button variant="primary" size="md" (onClick)="showNewModal = true">
+            <app-svg-icon name="Plus" class="h-4 w-4 mr-1"></app-svg-icon>
+            <span class="whitespace-nowrap">Nouveau tableau de bord</span>
+          </app-button>
+        </div>
+      </div>
+
+      <div class="mb-3 flex items-center gap-1 border-b border-line overflow-x-auto">
+        <button
+          *ngFor="let t of tabs"
+          (click)="currentTab = t.id"
+          class="relative -mb-px border-b-2 px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap"
+          [ngClass]="currentTab === t.id ? 'border-brand text-brand-strong' : 'border-transparent text-ink-soft hover:text-ink'"
+        >
+          {{ t.label }}
+        </button>
+      </div>
+
+      <div class="mb-3 flex flex-wrap items-center gap-2">
+        <div class="relative w-64">
+          <app-svg-icon name="Search" class="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-faint"></app-svg-icon>
+          <input
+            [(ngModel)]="search"
+            placeholder="Filtrer par nom ou étiquette…"
+            class="h-7 w-full rounded-md border border-line-strong bg-white pl-7 pr-2 text-xs outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+          />
+        </div>
+
+        <div class="ml-auto flex items-center gap-2">
+          <label class="flex items-center gap-1 text-2xs text-ink-faint">
+            Trier
+            <select
+              [(ngModel)]="currentSort"
+              class="h-7 rounded-md border border-line-strong bg-white px-1.5 text-xs outline-none focus:border-brand"
+            >
+              <option value="updated">Modification</option>
+              <option value="created">Création</option>
+              <option value="name">Nom</option>
+            </select>
+          </label>
+
+          <div class="flex overflow-hidden rounded-md border border-line-strong">
+            <button
+              (click)="currentView = 'grid'"
+              aria-label="Vue vignettes"
+              class="flex h-7 w-7 items-center justify-center"
+              [ngClass]="currentView === 'grid' ? 'bg-brand-soft text-brand-strong' : 'text-ink-faint hover:bg-surface-muted'"
+            >
+              <app-svg-icon name="LayoutGrid" class="h-3.5 w-3.5"></app-svg-icon>
+            </button>
+            <button
+              (click)="currentView = 'list'"
+              aria-label="Vue liste"
+              class="flex h-7 w-7 items-center justify-center border-l border-line-strong"
+              [ngClass]="currentView === 'list' ? 'bg-brand-soft text-brand-strong' : 'text-ink-faint hover:bg-surface-muted'"
+            >
+              <app-svg-icon name="List" class="h-3.5 w-3.5"></app-svg-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <ng-container *ngIf="filteredDashboards.length > 0; else emptyState">
+        <div
+          *ngIf="currentView === 'grid'"
+          class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        >
+          <app-dashboard-card
+            *ngFor="let d of filteredDashboards"
+            [dashboard]="d"
+            (onOpen)="openDashboard(d)"
+          ></app-dashboard-card>
+        </div>
+
+        <div
+          *ngIf="currentView === 'list'"
+          class="overflow-hidden rounded-lg border border-line bg-white"
+        >
+          <app-dashboard-list-row
+            *ngFor="let d of filteredDashboards"
+            [dashboard]="d"
+            (onOpen)="openDashboard(d)"
+          ></app-dashboard-list-row>
+        </div>
+      </ng-container>
+
+      <ng-template #emptyState>
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+          <app-svg-icon name="Archive" class="h-8 w-8 text-ink-faint mb-2"></app-svg-icon>
+          <h3 class="text-sm font-semibold text-ink">
+            {{ currentTab === 'archived' ? 'Aucun tableau de bord archivé' : 'Aucun tableau de bord' }}
+          </h3>
+          <p class="text-2xs text-ink-faint mb-4">
+            {{ currentTab === 'archived' ? 'Les tableaux de bord que vous mezttez en archive apparaîtront ici.' : (currentTab === 'shared' ? 'Aucun tableau de bord ne vous a encore été partagé.' : 'Créez votre premier tableau de bord pour commencer.') }}
+          </p>
+          <app-button *ngIf="currentTab !== 'archived'" variant="primary" (onClick)="showNewModal = true">
+            Nouveau tableau de bord
+          </app-button>
+        </div>
+      </ng-template>
+
+      <app-new-dashboard-modal
+        [open]="showNewModal"
+        (onClose)="showNewModal = false"
+      ></app-new-dashboard-modal>
+    </div>

@@ -1,0 +1,2 @@
+CREATE DATABASE cockpit;
+CREATE DATABASE erp_db;

@@ -1,0 +1,381 @@
+<aside class="flex h-full w-64 flex-shrink-0 flex-col border-l border-line bg-white">
+      <ng-container *ngIf="widget; else noSelection">
+        <div class="flex items-center justify-between border-b border-line px-3 py-2">
+          <div class="min-w-0">
+            <h2 class="truncate text-xs font-semibold text-ink">
+              {{ getWidgetTypeLabel(widget.type) }}
+            </h2>
+            <p class="text-2xs text-ink-faint">Configuration du widget</p>
+          </div>
+          <button
+            type="button"
+            (click)="onDelete.emit(widget.id)"
+            aria-label="Supprimer le widget"
+            class="rounded p-1 text-ink-faint hover:bg-red-50 hover:text-negative transition-colors"
+          >
+            <app-svg-icon name="Trash2" class="h-3.5 w-3.5"></app-svg-icon>
+          </button>
+        </div>
+
+        <section class="border-b border-line bg-surface-muted p-3">
+          <div class="mb-2 flex items-center justify-between">
+            <p class="text-2xs font-semibold uppercase tracking-wide text-ink-faint">
+              DISPOSITION
+            </p>
+            <span class="text-2xs tabular-nums text-ink-faint">
+              Grille {{ columns }} col.
+            </span>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="mb-1 block text-2xs font-medium text-ink-soft">Colonne</label>
+              <input
+                type="number"
+                [ngModel]="widget.layout.x + 1"
+                (ngModelChange)="onPosChange('x', +$event - 1)"
+                min="1"
+                [max]="columns"
+                class="h-7 w-full rounded border border-line-strong bg-white px-2 text-xs outline-none focus:border-brand"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-2xs font-medium text-ink-soft">Ligne</label>
+              <input
+                type="number"
+                [ngModel]="widget.layout.y + 1"
+                (ngModelChange)="onPosChange('y', +$event - 1)"
+                min="1"
+                class="h-7 w-full rounded border border-line-strong bg-white px-2 text-xs outline-none focus:border-brand"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-2xs font-medium text-ink-soft">Largeur</label>
+              <input
+                type="number"
+                [ngModel]="widget.layout.w"
+                (ngModelChange)="onPosChange('w', +$event)"
+                min="1"
+                [max]="columns"
+                class="h-7 w-full rounded border border-line-strong bg-white px-2 text-xs outline-none focus:border-brand"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-2xs font-medium text-ink-soft">Hauteur</label>
+              <input
+                type="number"
+                [ngModel]="widget.layout.h"
+                (ngModelChange)="onPosChange('h', +$event)"
+                min="1"
+                class="h-7 w-full rounded border border-line-strong bg-white px-2 text-xs outline-none focus:border-brand"
+              />
+            </div>
+          </div>
+          <p class="mt-2 text-2xs text-ink-faint">
+            Les collisions sont réorganisées automatiquement.
+          </p>
+        </section>
+
+        <div class="flex border-b border-line">
+          <button
+            type="button"
+            (click)="activeTab = 'data'"
+            class="flex-1 border-b-2 py-1.5 text-2xs font-medium transition-colors text-center"
+            [ngClass]="activeTab === 'data' ? 'border-brand text-brand-strong' : 'border-transparent text-ink-faint hover:text-ink'"
+          >
+            Données
+          </button>
+          <button
+            type="button"
+            (click)="activeTab = 'display'"
+            class="flex-1 border-b-2 py-1.5 text-2xs font-medium transition-colors text-center"
+            [ngClass]="activeTab === 'display' ? 'border-brand text-brand-strong' : 'border-transparent text-ink-faint hover:text-ink'"
+          >
+            Affichage
+          </button>
+          <button
+            type="button"
+            (click)="activeTab = 'filters'"
+            class="flex-1 border-b-2 py-1.5 text-2xs font-medium transition-colors text-center"
+            [ngClass]="activeTab === 'filters' ? 'border-brand text-brand-strong' : 'border-transparent text-ink-faint hover:text-ink'"
+          >
+            Filtres
+          </button>
+          <button
+            type="button"
+            (click)="activeTab = 'interactions'"
+            class="flex-1 border-b-2 py-1.5 text-2xs font-medium transition-colors text-center"
+            [ngClass]="activeTab === 'interactions' ? 'border-brand text-brand-strong' : 'border-transparent text-ink-faint hover:text-ink'"
+          >
+            Interactions
+          </button>
+        </div>
+
+        <div class="flex-1 space-y-3 overflow-auto p-3">
+          <ng-container *ngIf="activeTab === 'data'">
+            <div class="space-y-1 block">
+              <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
+                TITRE
+              </label>
+              <input
+                [ngModel]="widget.title"
+                (ngModelChange)="update({ title: $event })"
+                class="h-8 w-full rounded border border-line-strong bg-white px-2 text-xs outline-none focus:border-brand"
+              />
+            </div>
+
+            <label class="flex items-center gap-2 text-xs text-ink-soft cursor-pointer">
+              <input
+                type="checkbox"
+                [ngModel]="widget.showTitle"
+                (ngModelChange)="update({ showTitle: $event })"
+                class="rounded border-line-strong text-brand"
+              />
+              Afficher le titre / en-tête
+            </label>
+
+            <div class="space-y-1 block">
+              <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
+                DESCRIPTION
+              </label>
+              <textarea
+                rows="2"
+                [ngModel]="widget.description || ''"
+                (ngModelChange)="update({ description: $event })"
+                placeholder="Aide affichée au survol"
+                class="w-full rounded border border-line-strong bg-white p-2 text-xs outline-none focus:border-brand resize-none"
+              ></textarea>
+            </div>
+
+            <div *ngIf="widget.type !== 'text'" class="space-y-1 block">
+              <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
+                SOURCE DE DONNÉES (REQUÊTE)
+              </label>
+              <select
+                [ngModel]="widget.queryId || ''"
+                (ngModelChange)="update({ queryId: $event || undefined })"
+                class="h-8 w-full rounded border border-line-strong bg-white px-2 text-xs outline-none focus:border-brand"
+              >
+                <option value="">— Aucune —</option>
+                <option *ngFor="let q of queries" [value]="q.id">
+                  {{ q.name }} · {{ getQuerySummary(q) }}
+                </option>
+              </select>
+            </div>
+
+            <div *ngIf="widget.type === 'kpi'" class="space-y-1 block">
+              <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
+                FORMAT DE LA VALEUR
+              </label>
+              <select
+                [ngModel]="widget.kpiFormat || 'amount'"
+                (ngModelChange)="update({ kpiFormat: $event })"
+                class="h-8 w-full rounded border border-line-strong bg-white px-2 text-xs outline-none focus:border-brand"
+              >
+                <option value="amount">Montant</option>
+                <option value="percent">Pourcentage</option>
+                <option value="integer">Nombre entier</option>
+              </select>
+            </div>
+
+            <div *ngIf="widget.type === 'datagrid'">
+              <app-data-grid-config-fields
+                [widget]="widget"
+                (onChange)="update({ datagrid: $event })"
+              ></app-data-grid-config-fields>
+            </div>
+
+            <div *ngIf="widget.type === 'text'" class="space-y-1 block">
+              <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
+                CONTENU
+              </label>
+              <textarea
+                rows="4"
+                [ngModel]="widget.text || ''"
+                (ngModelChange)="update({ text: $event })"
+                placeholder="Saisissez votre texte…"
+                class="w-full rounded border border-line-strong bg-white p-2 text-xs outline-none focus:border-brand"
+              ></textarea>
+            </div>
+          </ng-container>
+
+          <ng-container *ngIf="activeTab === 'display'">
+            <div class="space-y-1 block">
+              <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
+                RAFRAÎCHISSEMENT
+              </label>
+              <select
+                [ngModel]="widget.refreshInterval"
+                (ngModelChange)="update({ refreshInterval: $event })"
+                class="h-8 w-full rounded border border-line-strong bg-white px-2 text-xs outline-none focus:border-brand"
+              >
+                <option value="inherit">Hérité du tableau de bord</option>
+                <option *ngFor="let opt of refreshOptions" [value]="opt.value">
+                  {{ opt.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="rounded-md bg-surface-muted p-2 text-2xs text-ink-faint">
+              Bordure, ombre et transparence sont réglables ici. Un aperçu en temps réel reflète les changements sur la grille.
+            </div>
+          </ng-container>
+
+          <ng-container *ngIf="activeTab === 'filters'">
+            <div class="space-y-2">
+              <p class="text-2xs text-ink-faint">
+                Filtres additionnels propres à ce widget, s’ajoutant aux filtres globaux. En cas de conflit, le filtre spécifique prime.
+              </p>
+
+              <ng-container *ngIf="widget.filters?.length; else noFilters">
+                <div class="space-y-2">
+                  <div
+                    *ngFor="let filter of widget.filters; trackBy: trackByFilterId"
+                    class="rounded-md border border-line p-2"
+                  >
+                    <div class="grid gap-2 sm:grid-cols-2">
+                      <div class="space-y-1">
+                        <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
+                          Libellé
+                        </label>
+                        <input
+                          [ngModel]="filter.label || ''"
+                          (ngModelChange)="updateFilter(filter.id, { label: $event })"
+                          class="h-8 w-full rounded border border-line-strong bg-white px-2 text-xs outline-none focus:border-brand"
+                        />
+                      </div>
+                      <div class="space-y-1">
+                        <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
+                          Champ
+                        </label>
+                        <select
+                          [ngModel]="filter.fieldId || ''"
+                          (ngModelChange)="updateFilter(filter.id, { fieldId: $event || undefined })"
+                          class="h-8 w-full rounded border border-line-strong bg-white px-2 text-xs outline-none focus:border-brand"
+                        >
+                          <option value="">— Aucun —</option>
+                          <option *ngFor="let field of assignedFields; trackBy: trackByFieldId" [value]="field.id">
+                            {{ field.label }}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="mt-2 grid gap-2 sm:grid-cols-2">
+                      <div class="space-y-1">
+                        <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
+                          Opérateur
+                        </label>
+                        <select
+                          [ngModel]="filter.operator"
+                          (ngModelChange)="updateFilter(filter.id, { operator: $event })"
+                          class="h-8 w-full rounded border border-line-strong bg-white px-2 text-xs outline-none focus:border-brand"
+                        >
+                          <option value="eq">= Égal</option>
+                          <option value="neq">≠ Différent</option>
+                          <option value="gt">&gt; Supérieur</option>
+                          <option value="lt">&lt; Inférieur</option>
+                          <option value="contains">Contient</option>
+                          <option value="in">Dans</option>
+                          <option value="between">Entre</option>
+                        </select>
+                      </div>
+
+                      <ng-container *ngIf="filter.operator === 'between'; else singleValueInput">
+                        <div class="grid grid-cols-2 gap-1.5">
+                          <div class="space-y-1">
+                            <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
+                              Min
+                            </label>
+                            <input
+                              [ngModel]="getBetweenMin(filter.value)"
+                              (ngModelChange)="updateBetweenValue(filter.id, $event, getBetweenMax(filter.value))"
+                              placeholder="Min"
+                              class="h-8 w-full rounded border border-line-strong bg-white px-2 text-xs outline-none focus:border-brand"
+                            />
+                          </div>
+                          <div class="space-y-1">
+                            <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
+                              Max
+                            </label>
+                            <input
+                              [ngModel]="getBetweenMax(filter.value)"
+                              (ngModelChange)="updateBetweenValue(filter.id, getBetweenMin(filter.value), $event)"
+                              placeholder="Max"
+                              class="h-8 w-full rounded border border-line-strong bg-white px-2 text-xs outline-none focus:border-brand"
+                            />
+                          </div>
+                        </div>
+                      </ng-container>
+
+                      <ng-template #singleValueInput>
+                        <div class="space-y-1">
+                          <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
+                            {{ filter.operator === 'in' ? 'VALEURS' : 'VALEUR' }}
+                          </label>
+                          <input
+                            [ngModel]="filter.value"
+                            (ngModelChange)="updateFilter(filter.id, { value: $event })"
+                            [placeholder]="filter.operator === 'in' ? 'ex: Val1 / Val2' : ''"
+                            class="h-8 w-full rounded border border-line-strong bg-white px-2 text-xs outline-none focus:border-brand"
+                          />
+                        </div>
+                      </ng-template>
+                    </div>
+                    <div class="mt-2 flex justify-end">
+                      <app-button
+                        variant="secondary"
+                        size="xs"
+                        (onClick)="removeFilter(filter.id)"
+                      >
+                        Supprimer
+                      </app-button>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+
+              <ng-template #noFilters>
+                <div class="rounded-md border border-line p-3 text-2xs text-ink-faint">
+                  Aucun filtre spécifique défini.
+                </div>
+              </ng-template>
+
+              <app-button
+                variant="secondary"
+                size="sm"
+                customClass="w-full justify-center"
+                (onClick)="addFilter()"
+              >
+                + Ajouter un filtre spécifique
+              </app-button>
+            </div>
+          </ng-container>
+
+          <ng-container *ngIf="activeTab === 'interactions'">
+            <div class="space-y-1 block">
+              <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
+                LIEN DE NAVIGATION (AU CLIC)
+              </label>
+              <select
+                [ngModel]="widget.navigateToDashboardId || ''"
+                (ngModelChange)="update({ navigateToDashboardId: $event || undefined })"
+                class="h-8 w-full rounded border border-line-strong bg-white px-2 text-xs outline-none focus:border-brand"
+              >
+                <option value="">— Aucun —</option>
+                <option *ngFor="let d of dashboards" [value]="d.id">
+                  {{ d.name }}
+                </option>
+              </select>
+              <p class="mt-1.5 text-2xs text-ink-faint">
+                Ouvre le tableau de bord cible en transmettant les paramètres de la ligne comme contexte (drill-down).
+              </p>
+            </div>
+          </ng-container>
+        </div>
+      </ng-container>
+
+      <ng-template #noSelection>
+        <div class="flex flex-1 items-center justify-center p-6 text-center text-2xs text-ink-faint">
+          Sélectionnez un widget sur la grille pour le configurer, le déplacer ou ajuster sa taille.
+        </div>
+      </ng-template>
+    </aside>
