@@ -255,6 +255,7 @@
                   <div class="grid grid-cols-1 gap-1.5 p-2 sm:grid-cols-2">
                     <label
                       *ngFor="let field of source.fields"
+                      [title]="field.description || field.label"
                       class="flex cursor-pointer items-center gap-2 rounded-md border p-1.5 text-xs transition-colors"
                       [ngClass]="query.selectedFieldIds.includes(field.id) ? 'border-brand bg-brand-soft dark:bg-brand/20' : 'border-line dark:border-slate-800 hover:border-line-strong dark:hover:border-slate-700 bg-white dark:bg-slate-800'"
                     >

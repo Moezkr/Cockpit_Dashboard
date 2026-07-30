@@ -177,14 +177,11 @@ export class QueryCatalogComponent implements OnInit, OnDestroy {
   }
 
   getSourcesList(q: any): string[] {
-    if (Array.isArray(q.sources) && q.sources.length > 0) return q.sources;
-    if (q.sourceIds && q.sourceIds.length > 0) {
-      return q.sourceIds.map((id: string) => {
-        const src = this.sources.find((s) => s.id === id || s.sourceKey === id);
-        return src ? (src.sourceLabel || src.label || id) : 'Factures';
-      });
-    }
-    return ['Factures'];
+    const rawIds: string[] = q.sourceIds || (Array.isArray(q.sources) ? q.sources.map((s: any) => typeof s === 'string' ? s : (s.id || s.sourceKey || s.key)) : []);
+    return (rawIds || []).map((id: string) => {
+      const src = this.sources.find((s) => s.id === id || s.key === id || s.sourceKey === id || s.label === id || s.sourceLabel === id);
+      return src ? (src.label || src.sourceLabel || id) : id;
+    });
   }
 
   getModifiedText(q: any): string {
