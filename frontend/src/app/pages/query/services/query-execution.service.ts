@@ -41,33 +41,38 @@ export function executeWidgetRowsLocal(
   query: DataQuery,
   rows: any[]
 ): Datum[] {
-  if (rows.length > 0) {
-    if ('label' in rows[0] && 'value' in rows[0]) {
-      return rows as Datum[];
-    }
-    const firstRow = rows[0];
-    const labelKey = Object.keys(firstRow).find(k =>
-      typeof firstRow[k] === 'string'
-    ) ?? Object.keys(firstRow)[0];
-    const valueKey = Object.keys(firstRow).find(k =>
-      typeof firstRow[k] === 'number'
-    ) ?? Object.keys(firstRow)[1];
+  if (!rows || rows.length === 0) return [];
 
+  const firstRow = rows[0];
+  const keys = Object.keys(firstRow);
+  if (keys.length === 0) return [];
 
-    const groups = new Map<string, number[]>();
-    rows.forEach(row => {
-      const label = String(row[labelKey] ?? 'Inconnu');
-      const val = Number(row[valueKey]) || 0;
-      const arr = groups.get(label) ?? [];
-      arr.push(val);
-      groups.set(label, arr);
-    });
-    return [...groups.entries()].map(([label, values]) => ({
-      label,
-      value: values.reduce((s, v) => s + v, 0)
-    }));
-  }
-  return [];
+  const labelKey = keys.find(k => k.toLowerCase() === 'label') 
+    || keys.find(k => typeof firstRow[k] === 'string') 
+    || keys[0];
+
+  const valueKey = keys.find(k => k.toLowerCase() === 'value') 
+    || keys.find(k => typeof firstRow[k] === 'number' && k !== labelKey) 
+    || keys.find(k => k !== labelKey) 
+    || keys[0];
+
+  const groups = new Map<string, number[]>();
+
+  rows.forEach(row => {
+    const rawLabel = row[labelKey] ?? row[keys[0]] ?? 'Inconnu';
+    const label = String(rawLabel);
+    const rawVal = row[valueKey] ?? row[keys[1]] ?? 1;
+    const val = typeof rawVal === 'number' ? rawVal : (parseFloat(String(rawVal)) || 1);
+
+    const arr = groups.get(label) ?? [];
+    arr.push(val);
+    groups.set(label, arr);
+  });
+
+  return [...groups.entries()].map(([label, values]) => ({
+    label,
+    value: values.reduce((s, v) => s + v, 0)
+  }));
 }
 
 

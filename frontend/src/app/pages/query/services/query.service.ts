@@ -113,7 +113,11 @@ export class QueryService {
     if (exists) {
       const dto = QueryMapper.toDto(query);
       this.http.put<QueryRequestDto>(`${API_URL}/queries/${query.id}`, dto).subscribe({
-        next: () => this.auditService.loadAuditLogs()
+        next: () => {
+          this.loadFromBackend();
+          this.auditService.loadAuditLogs();
+        },
+        error: (err) => console.error('Error updating query:', err)
       });
     } else {
       const dto = QueryMapper.toDto(query);
@@ -121,15 +125,13 @@ export class QueryService {
         next: (createdDto: QueryResponseDto) => {
           const created = QueryMapper.toDomain(createdDto);
           if (created && created.id) {
-            const current = this.queries;
-            const idx = current.findIndex(q => q.id === query.id);
-            if (idx !== -1) {
-              current[idx] = created;
-              this.setQueries([...current]);
-            }
+            const current = this.queries.filter(q => q.id !== query.id && q.id !== created.id);
+            this.setQueries([created, ...current]);
           }
+          this.loadFromBackend();
           this.auditService.loadAuditLogs();
-        }
+        },
+        error: (err) => console.error('Error creating query:', err)
       });
     }
   }

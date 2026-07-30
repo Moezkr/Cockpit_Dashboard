@@ -57,11 +57,22 @@ export class WidgetCatalogPanelComponent {
   search: string = '';
   catalog = WIDGET_CATALOG;
 
+  private cachedFilteredCatalog: WidgetTypeMeta[] = [];
+  private lastSearchStr: string | null = null;
+
   get filteredCatalog(): WidgetTypeMeta[] {
-    if (!this.search.trim()) return this.catalog;
-    const q = this.search.toLowerCase();
-    return this.catalog.filter(
-      (w) => w.label.toLowerCase().includes(q) || w.description.toLowerCase().includes(q)
-    );
+    const searchTrimmed = (this.search || '').trim().toLowerCase();
+    if (searchTrimmed === this.lastSearchStr) {
+      return this.cachedFilteredCatalog;
+    }
+    this.lastSearchStr = searchTrimmed;
+    if (!searchTrimmed) {
+      this.cachedFilteredCatalog = this.catalog;
+    } else {
+      this.cachedFilteredCatalog = this.catalog.filter(
+        (w) => w.label.toLowerCase().includes(searchTrimmed) || w.description.toLowerCase().includes(searchTrimmed)
+      );
+    }
+    return this.cachedFilteredCatalog;
   }
 }

@@ -7,7 +7,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataGridConfig, Widget, DataQuery } from '@core/models/types';
 import { executeDisplayRows } from '@pages/query/services/query-execution.service';
-import { DATA_SOURCES } from '@core/models/types';
 import { queryFieldCatalog } from '@pages/query/services/query-model.service';
 import { dataGridAvailableColumns, resolveDataGridConfig } from '@pages/dashboard/services/datagrid.service';
 
@@ -204,22 +203,39 @@ export class DataGridConfigFieldsComponent implements OnChanges {
     if (!this.widget?.queryId) return col;
     const query = this.queryService.queries.find((q) => q.id === this.widget.queryId);
     if (!query) return col;
-    const catalog = queryFieldCatalog(query, DATA_SOURCES);
+    const catalog = queryFieldCatalog(query, this.queryService.catalogSources);
     const field = catalog.find((f) => f.id === col);
     if (field) return `${field.sourceLabel} · ${field.label}`;
     return col;
   }
 
+  private cachedSelectedCols: string[] = [];
+  private cachedUnselectedCols: string[] = [];
+  private lastColsKeyStr: string = '';
+
+  private computeColsCache() {
+    const rawVisible = this.cfg.visibleColumns || [];
+    const key = (this.availableCols || []).join(',') + '___' + rawVisible.join(',');
+    if (key === this.lastColsKeyStr) return;
+    this.lastColsKeyStr = key;
+
+    if (!rawVisible.length) {
+      this.cachedSelectedCols = [...this.availableCols];
+    } else {
+      const normalized = rawVisible.map((c) => this.getColumnLabel(c));
+      this.cachedSelectedCols = normalized.filter((c) => this.availableCols.includes(c));
+    }
+    this.cachedUnselectedCols = this.availableCols.filter((c) => !this.cachedSelectedCols.includes(c));
+  }
+
   get selectedColumns(): string[] {
-    const rawVisible = this.cfg.visibleColumns;
-    if (!rawVisible || !rawVisible.length) return this.availableCols;
-    const normalized = rawVisible.map((c) => this.getColumnLabel(c));
-    const valid = normalized.filter((c) => this.availableCols.includes(c));
-    return valid;
+    this.computeColsCache();
+    return this.cachedSelectedCols;
   }
 
   get unselectedColumns(): string[] {
-    return this.availableCols.filter((c) => !this.selectedColumns.includes(c));
+    this.computeColsCache();
+    return this.cachedUnselectedCols;
   }
 
   toggleColumn(col: string) {

@@ -149,11 +149,22 @@ export class WidgetCardComponent implements OnInit, OnChanges, OnDestroy {
     return this.refreshTick + this.widgetLocalTick;
   }
 
+  private cachedEffectiveFilters: RuntimeQueryFilter[] = [];
+  private lastFiltersKeyStr: string = '';
+
   get effectiveRuntimeFilters(): RuntimeQueryFilter[] {
-    const widgetRuntimeFilters = this.widget?.filters
-      ? resolveWidgetRuntimeFilters(this.widget.filters)
-      : [];
-    return mergeRuntimeFilters(this.runtimeFilters ?? [], widgetRuntimeFilters);
+    const key = JSON.stringify({
+      rf: this.runtimeFilters ?? [],
+      wf: this.widget?.filters ?? []
+    });
+    if (key !== this.lastFiltersKeyStr) {
+      this.lastFiltersKeyStr = key;
+      const widgetRuntimeFilters = this.widget?.filters
+        ? resolveWidgetRuntimeFilters(this.widget.filters)
+        : [];
+      this.cachedEffectiveFilters = mergeRuntimeFilters(this.runtimeFilters ?? [], widgetRuntimeFilters);
+    }
+    return this.cachedEffectiveFilters;
   }
 
   exportCsv(widget: Widget) {

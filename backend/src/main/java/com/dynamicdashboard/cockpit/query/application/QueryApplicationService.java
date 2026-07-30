@@ -37,6 +37,9 @@ import com.dynamicdashboard.cockpit.shared.domain.DomainEnums.QueryVisibility;
 import com.dynamicdashboard.cockpit.shared.domain.DomainEnums.SortDirection;
 import com.dynamicdashboard.cockpit.shared.security.CurrentUserService;
 import com.dynamicdashboard.cockpit.shared.utils.ParsingUtils;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -72,67 +75,175 @@ public class QueryApplicationService {
 
 
     @Transactional(readOnly = true)
-    public List<java.util.Map<String, Object>> executeQueryData(UUID id, List<com.dynamicdashboard.cockpit.query.application.dto.RuntimeQueryFilterDto> filters) {
-        Optional<DataQueryEntity> queryOpt = dataQueryRepository.findById(id);
-        if (queryOpt.isEmpty()) return java.util.Collections.emptyList();
+    public List<Map<String, Object>> executeQueryData(UUID queryId, List<com.dynamicdashboard.cockpit.query.application.dto.RuntimeQueryFilterDto> filters) {
+        DataQueryEntity query = dataQueryRepository.findById(queryId).orElse(null);
+        if (query == null) return java.util.Collections.emptyList();
 
-        DataQueryEntity query = queryOpt.get();
         List<QuerySourceBindingEntity> sources = querySourceBindingRepository.findByQueryIdOrderByPositionIndexAsc(query.getId());
         if (sources.isEmpty()) return java.util.Collections.emptyList();
 
-        String tableName = sources.get(0).getDataSource().getTableName();
-        if (tableName == null || tableName.isBlank()) return java.util.Collections.emptyList();
+        String primaryTable = sources.get(0).getDataSource().getSourceKey();
+        if (primaryTable == null || primaryTable.isBlank()) return java.util.Collections.emptyList();
 
+        org.jooq.DSLContext dsl = org.jooq.impl.DSL.using(org.jooq.SQLDialect.POSTGRES);
         List<QueryGroupByFieldEntity> groupByFields = queryGroupByFieldRepository.findByIdQueryIdOrderByPositionIndexAsc(query.getId());
+        
+        org.jooq.SelectJoinStep<?> jooqQuery;
+        
+        if (query.getAggregation() != null && !AggregationType.NONE.equals(query.getAggregation())) {
+            org.jooq.Field<?> groupByColumn = groupByFields.isEmpty()
+                ? org.jooq.impl.DSL.val("Tous").as("label")
+                : org.jooq.impl.DSL.field(groupByFields.get(0).getField().getDataSource() != null
+                    ? groupByFields.get(0).getField().getDataSource().getSourceKey() + "." + groupByFields.get(0).getField().getFieldKey()
+                    : groupByFields.get(0).getField().getFieldKey()).as("label");
+                    
+            String aggColumnName = query.getAggregationField() != null
+                ? (query.getAggregationField().getDataSource() != null
+                    ? query.getAggregationField().getDataSource().getSourceKey() + "." + query.getAggregationField().getFieldKey()
+                    : query.getAggregationField().getFieldKey())
+                : "*";
+                
+            DataFieldEntity aggFieldEntity = query.getAggregationField();
+            boolean isNumericField = aggFieldEntity != null && 
+                (com.dynamicdashboard.cockpit.shared.domain.DomainEnums.FieldType.AMOUNT.equals(aggFieldEntity.getFieldType()) || 
+                 com.dynamicdashboard.cockpit.shared.domain.DomainEnums.FieldType.NUMBER.equals(aggFieldEntity.getFieldType()) ||
+                 com.dynamicdashboard.cockpit.shared.domain.DomainEnums.FieldType.PERCENT.equals(aggFieldEntity.getFieldType()));
+                
+            org.jooq.Field<?> aggColumn;
+            if (AggregationType.SUM.equals(query.getAggregation())) {
+                if (isNumericField) {
+                    aggColumn = org.jooq.impl.DSL.sum(org.jooq.impl.DSL.field(aggColumnName, java.math.BigDecimal.class)).as("value");
+                } else {
+                    aggColumn = org.jooq.impl.DSL.count(org.jooq.impl.DSL.field(aggColumnName)).as("value");
+                }
+            } else if (AggregationType.AVG.equals(query.getAggregation())) {
+                if (isNumericField) {
+                    aggColumn = org.jooq.impl.DSL.avg(org.jooq.impl.DSL.field(aggColumnName, java.math.BigDecimal.class)).as("value");
+                } else {
+                    aggColumn = org.jooq.impl.DSL.count(org.jooq.impl.DSL.field(aggColumnName)).as("value");
+                }
+            } else if (AggregationType.COUNT.equals(query.getAggregation())) {
+                aggColumn = org.jooq.impl.DSL.count(org.jooq.impl.DSL.field(aggColumnName)).as("value");
+            } else if (AggregationType.MAX.equals(query.getAggregation())) {
+                aggColumn = org.jooq.impl.DSL.max(org.jooq.impl.DSL.field(aggColumnName)).as("value");
+            } else if (AggregationType.MIN.equals(query.getAggregation())) {
+                aggColumn = org.jooq.impl.DSL.min(org.jooq.impl.DSL.field(aggColumnName)).as("value");
+            } else {
+                aggColumn = org.jooq.impl.DSL.field(aggColumnName).as("value");
+            }
+            
+            jooqQuery = dsl.select(groupByColumn, aggColumn).from(org.jooq.impl.DSL.table(primaryTable));
+        } else {
+            jooqQuery = dsl.select(org.jooq.impl.DSL.asterisk()).from(org.jooq.impl.DSL.table(primaryTable));
+        }
 
-        DynamicSqlBuilderPattern builder = DynamicSqlBuilderPattern.from(tableName).limit(query.getRowLimit());
+        java.util.Set<String> includedTables = new java.util.HashSet<>();
+        includedTables.add(primaryTable.toLowerCase());
+
+        List<QueryJoinEntity> joins = queryJoinRepository.findByQueryId(query.getId());
+        for (QueryJoinEntity join : joins) {
+            if (join.getLeftField() != null && join.getRightField() != null) {
+                String leftTable = join.getLeftField().getDataSource() != null
+                    ? join.getLeftField().getDataSource().getSourceKey()
+                    : (join.getLeftSource() != null ? join.getLeftSource().getSourceKey() : primaryTable);
+                String rightTable = join.getRightField().getDataSource() != null
+                    ? join.getRightField().getDataSource().getSourceKey()
+                    : (join.getRightSource() != null ? join.getRightSource().getSourceKey() : "");
+                
+                String leftField = join.getLeftField().getFieldKey();
+                String rightField = join.getRightField().getFieldKey();
+
+                if (!leftTable.isBlank() && !rightTable.isBlank() && !leftTable.equalsIgnoreCase(rightTable)) {
+                    String newTable = null;
+                    if (includedTables.contains(leftTable.toLowerCase()) && !includedTables.contains(rightTable.toLowerCase())) {
+                        newTable = rightTable;
+                    } else if (includedTables.contains(rightTable.toLowerCase()) && !includedTables.contains(leftTable.toLowerCase())) {
+                        newTable = leftTable;
+                    } else if (!includedTables.contains(leftTable.toLowerCase()) && !includedTables.contains(rightTable.toLowerCase())) {
+                        newTable = rightTable;
+                    }
+                    
+                    if (newTable != null) {
+                        org.jooq.Table<?> jooqNewTable = org.jooq.impl.DSL.table(newTable);
+                        org.jooq.Condition onCondition = org.jooq.impl.DSL.field(leftTable + "." + leftField).eq(org.jooq.impl.DSL.field(rightTable + "." + rightField));
+                        
+                        if (QueryJoinType.INNER.equals(join.getJoinType())) {
+                            jooqQuery = jooqQuery.join(jooqNewTable).on(onCondition);
+                        } else if (QueryJoinType.RIGHT.equals(join.getJoinType())) {
+                            jooqQuery = jooqQuery.rightJoin(jooqNewTable).on(onCondition);
+                        } else {
+                            jooqQuery = jooqQuery.leftJoin(jooqNewTable).on(onCondition);
+                        }
+                        includedTables.add(newTable.toLowerCase());
+                    }
+                }
+            }
+        }
+
+        org.jooq.Condition finalCondition = org.jooq.impl.DSL.noCondition();
+        List<QueryConditionEntity> conditions = queryConditionRepository.findByQueryId(query.getId());
+        for (QueryConditionEntity condition : conditions) {
+            if (condition.getField() != null && condition.getValueExpression() != null) {
+                String col = condition.getField().getDataSource() != null
+                    ? condition.getField().getDataSource().getSourceKey() + "." + condition.getField().getFieldKey()
+                    : condition.getField().getFieldKey();
+                
+                if (FilterOperator.EQ.equals(condition.getOperator())) {
+                    finalCondition = finalCondition.and(org.jooq.impl.DSL.field(col).eq(condition.getValueExpression()));
+                }
+            }
+        }
 
         if (filters != null && !filters.isEmpty()) {
             for (com.dynamicdashboard.cockpit.query.application.dto.RuntimeQueryFilterDto filter : filters) {
                 if ("GLOBAL_DATE_RANGE".equals(filter.getFieldId()) && "between".equals(filter.getOperator())) {
                     String[] dates = filter.getValue().split(",");
                     if (dates.length == 2) {
-                        String start = dates[0].trim();
-                        String end = dates[1].trim();
-
-
-                        builder.where("created_at >= '" + start + " 00:00:00' AND created_at <= '" + end + " 23:59:59'");
+                        finalCondition = finalCondition.and(org.jooq.impl.DSL.field(primaryTable + ".created_at").between(dates[0].trim() + " 00:00:00", dates[1].trim() + " 23:59:59"));
                     }
                 } else if (filter.getFieldId() != null) {
-                    dataFieldRepository.findByFieldKey(filter.getFieldId()).ifPresent(field -> {
-                        String col = field.getFieldKey();
+                    DataFieldEntity field = dataFieldRepository.findByFieldKey(filter.getFieldId()).orElse(null);
+                    if (field != null) {
+                        String col = field.getDataSource() != null
+                            ? field.getDataSource().getSourceKey() + "." + field.getFieldKey()
+                            : field.getFieldKey();
                         if ("eq".equals(filter.getOperator())) {
-                            builder.where(col + " = '" + filter.getValue().replace("'", "''") + "'");
+                            finalCondition = finalCondition.and(org.jooq.impl.DSL.field(col).eq(filter.getValue())); 
                         } else if ("in".equals(filter.getOperator())) {
                             String[] vals = filter.getValue().split(",");
-                            StringBuilder inClause = new StringBuilder(col + " IN (");
-                            for (int i = 0; i < vals.length; i++) {
-                                inClause.append("'").append(vals[i].trim().replace("'", "''")).append("'");
-                                if (i < vals.length - 1) inClause.append(",");
-                            }
-                            inClause.append(")");
-                            builder.where(inClause.toString());
+                            List<String> trimmedVals = new java.util.ArrayList<>();
+                            for (String v : vals) trimmedVals.add(v.trim());
+                            finalCondition = finalCondition.and(org.jooq.impl.DSL.field(col).in(trimmedVals));
                         }
-                    });
+                    }
                 }
             }
         }
 
+        org.jooq.SelectConditionStep<?> whereQuery = jooqQuery.where(finalCondition);
+        org.jooq.SelectLimitStep<?> step1 = whereQuery;
+        
         if (query.getAggregation() != null && !AggregationType.NONE.equals(query.getAggregation())) {
-            String groupByColumn = groupByFields.isEmpty()
-                ? "'Tous'"
-                : groupByFields.get(0).getField().getFieldKey();
-            String aggColumn = query.getAggregationField() != null
-                ? query.getAggregationField().getFieldKey()
-                : "*";
-            builder.groupBy(groupByColumn).aggregate(query.getAggregation().name(), aggColumn);
-        } else {
-            builder.selectAll();
+            if (!groupByFields.isEmpty()) {
+                org.jooq.Field<?> groupByColumn = org.jooq.impl.DSL.field(groupByFields.get(0).getField().getDataSource() != null
+                    ? groupByFields.get(0).getField().getDataSource().getSourceKey() + "." + groupByFields.get(0).getField().getFieldKey()
+                    : groupByFields.get(0).getField().getFieldKey());
+                        
+                step1 = whereQuery.groupBy(groupByColumn);
+            }
+        }
+
+        org.jooq.Select<?> finalQuery = step1;
+        Integer limit = query.getRowLimit();
+        if (limit != null && limit > 0) {
+            finalQuery = step1.limit(limit);
         }
 
         try {
-            return erpJdbcTemplate.queryForList(builder.build());
+            String sql = finalQuery.getSQL(org.jooq.conf.ParamType.INLINED);
+            return erpJdbcTemplate.queryForList(sql);
         } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger(QueryApplicationService.class).warn("Query execution error for queryId {}: {}", queryId, e.getMessage());
             return java.util.Collections.emptyList();
         }
     }
@@ -239,7 +350,7 @@ public class QueryApplicationService {
         query.setVisibility(ParsingUtils.parseEnum(QueryVisibility.class, dto.getVisibility(), QueryVisibility.SHARED));
         query.setAggregation(ParsingUtils.parseEnum(AggregationType.class, dto.getAggregation(), AggregationType.NONE));
         if (dto.getAggregationFieldId() != null && !dto.getAggregationFieldId().isBlank()) {
-            dataFieldRepository.findByFieldKey(dto.getAggregationFieldId()).ifPresent(query::setAggregationField);
+            resolveField(dto.getAggregationFieldId()).ifPresent(query::setAggregationField);
         } else {
             query.setAggregationField(null);
         }

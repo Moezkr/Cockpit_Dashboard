@@ -195,7 +195,7 @@
                         (ngModelChange)="updateJoin(join.id, { leftFieldId: $event })"
                         class="h-7 w-full rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
                       >
-                        <option *ngFor="let field of getSource(join.leftSourceId)?.fields" [value]="field.id">{{ field.label }}</option>
+                        <option *ngFor="let field of getSourceFields(join.leftSourceId)" [value]="field.id">{{ field.label }}</option>
                       </select>
 
                       <select
@@ -219,7 +219,7 @@
                         (ngModelChange)="updateJoin(join.id, { rightFieldId: $event })"
                         class="h-7 w-full rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
                       >
-                        <option *ngFor="let field of getSource(join.rightSourceId)?.fields" [value]="field.id">{{ field.label }}</option>
+                        <option *ngFor="let field of getSourceFields(join.rightSourceId)" [value]="field.id">{{ field.label }}</option>
                       </select>
 
                       <button

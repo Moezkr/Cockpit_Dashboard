@@ -106,7 +106,6 @@ CREATE TABLE IF NOT EXISTS cockpit.data_source (
     source_label VARCHAR(160) NOT NULL,
     source_description VARCHAR(400),
     host_application VARCHAR(40) NOT NULL,
-    table_name VARCHAR(160),
     active BOOLEAN NOT NULL DEFAULT TRUE,
     CONSTRAINT uk_data_source_key UNIQUE (source_key)
 );

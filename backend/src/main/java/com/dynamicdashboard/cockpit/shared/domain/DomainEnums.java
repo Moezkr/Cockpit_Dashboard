@@ -17,10 +17,6 @@ public final class DomainEnums {
         OWNER, ADMIN, MEMBER, READER
     }
 
-    public enum HostApplication {
-        PROGES_CODE, HEALTH_PILOT, CARE_AT_HOME
-    }
-
     public enum FieldType {
         TEXT, NUMBER, DATE, AMOUNT, PERCENT
     }

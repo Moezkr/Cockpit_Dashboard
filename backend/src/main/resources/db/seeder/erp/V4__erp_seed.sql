@@ -1,6 +1,6 @@
 
 
-INSERT INTO public.erp_client (id_client, raison_sociale, secteur, chiffre_affaires, encours, region, statut)
+INSERT INTO erp_db.erp_client (id_client, raison_sociale, secteur, chiffre_affaires, encours, region, statut)
 VALUES
     ('CL-001', 'STE Medina',       'Commerce',  428000, 42800, 'Tunis',    'Actif'),
     ('CL-002', 'Groupe Sahel',     'Services',  382000, 38200, 'Sousse',   'Actif'),
@@ -12,7 +12,7 @@ VALUES
     ('CL-008', 'Gafsa Mining Co',  'Industrie', 520000, 52000, 'Gafsa',    'Actif')
 ON CONFLICT (id_client) DO NOTHING;
 
-INSERT INTO public.erp_facture (num_facture, id_client, client, date_facture, montant_ttc, montant_ht, statut, mois)
+INSERT INTO erp_db.erp_facture (num_facture, id_client, client, date_facture, montant_ttc, montant_ht, statut, mois)
 VALUES
     ('FAC-2601',  'CL-001', 'STE Medina',       '2026-01-15', 182000, 152941, 'Validée',    'Jan'),
     ('FAC-2602',  'CL-002', 'Groupe Sahel',     '2026-02-12', 154000, 129412, 'Validée',    'Fév'),
@@ -35,7 +35,7 @@ VALUES
     ('FAC-2612',  'CL-008', 'Gafsa Mining Co',  '2026-07-22', 310000, 260504, 'Validée',    'Juil')
 ON CONFLICT (num_facture) DO NOTHING;
 
-INSERT INTO public.erp_paiement (num_paiement, num_facture, id_client, date_paiement, montant_paye, mode_paiement, mois)
+INSERT INTO erp_db.erp_paiement (num_paiement, num_facture, id_client, date_paiement, montant_paye, mode_paiement, mois)
 VALUES
     ('PAY-801', 'FAC-2601', 'CL-001', '2026-01-28', 150000, 'Virement', 'Jan'),
     ('PAY-802', 'FAC-2602', 'CL-002', '2026-02-22', 154000, 'Chèque',   'Fév'),
@@ -48,7 +48,7 @@ VALUES
     ('PAY-809', 'FAC-2612', 'CL-008', '2026-07-26', 310000, 'Virement', 'Juil')
 ON CONFLICT (num_paiement) DO NOTHING;
 
-INSERT INTO public.erp_rendez_vous (id_rdv, praticien, date_rdv, acte, montant, statut)
+INSERT INTO erp_db.erp_rendez_vous (id_rdv, praticien, date_rdv, acte, montant, statut)
 VALUES
     ('RDV-101', 'Dr. Ben Ali',  '2026-07-10', 'Implantologie', 62000, 'Réalisé'),
     ('RDV-102', 'Dr. Trabelsi', '2026-07-11', 'Orthodontie',   48500, 'Réalisé'),
@@ -61,7 +61,7 @@ VALUES
     ('RDV-109', 'Dr. Ben Ali',  '2026-07-18', 'Consultation',  36000, 'Réalisé')
 ON CONFLICT (id_rdv) DO NOTHING;
 
-INSERT INTO public.erp_produit (id_produit, designation, categorie, prix_unitaire, stock_actuel, stock_min, statut)
+INSERT INTO erp_db.erp_produit (id_produit, designation, categorie, prix_unitaire, stock_actuel, stock_min, statut)
 VALUES
     ('PRD-001', 'NVIDIA RTX 4090 24GB',       'Cartes Graphiques', 5800, 12,  4, 'Disponible'),
     ('PRD-002', 'NVIDIA RTX 4080 Super',     'Cartes Graphiques', 3900, 8,   3, 'Disponible'),

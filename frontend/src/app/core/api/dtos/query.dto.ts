@@ -30,12 +30,16 @@ export interface QueryResponseDto {
   id: string;
   name: string;
   description?: string;
+  visibility?: string;
   sourceIds: string[];
   joins: QueryJoinDto[];
   selectedFieldIds: string[];
   conditions: QueryConditionDto[];
   groupByFieldIds: string[];
-  sorts: QuerySortDto[];
+  aggregation?: string;
+  aggregationFieldId?: string;
+  sort?: QuerySortDto;
+  sorts?: QuerySortDto[];
   transformations: QueryTransformationDto[];
   rowLimit?: number;
   tags?: string[];

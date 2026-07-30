@@ -6,7 +6,6 @@ import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Widget, WidgetLayout, WidgetFilter, DataQuery } from '@core/models/types';
-import { DATA_SOURCES } from '@core/models/types';
 import { widgetMeta } from '@pages/dashboard/services/widget-catalog.service';
 import { querySourceSummary, queryFieldCatalog, CatalogField } from '@pages/query/services/query-model.service';
 import { REFRESH_OPTIONS, uid } from '@core/services/utils';
@@ -65,9 +64,18 @@ export class WidgetConfigPanelComponent implements OnChanges {
     return this.queries.find((q) => q.id === this.widget!.queryId);
   }
 
+  private cachedFields: CatalogField[] = [];
+  private lastAssignedKey: string = '';
+
   get assignedFields(): CatalogField[] {
     const query = this.assignedQuery;
     if (!query) return [];
+
+    const key = query.id + '_' + (query.selectedFieldIds || []).join(',') + '_' + (query.groupByFieldIds || []).join(',') + '_' + (query.aggregationFieldId || '');
+    if (key === this.lastAssignedKey) {
+      return this.cachedFields;
+    }
+    this.lastAssignedKey = key;
 
     const catalog = queryFieldCatalog(query, this.dataSources);
     const result: CatalogField[] = [];
@@ -80,15 +88,12 @@ export class WidgetConfigPanelComponent implements OnChanges {
       }
     };
 
-
     const priorityIds = new Set<string>();
     (query.selectedFieldIds || []).forEach((id) => priorityIds.add(id));
     (query.groupByFieldIds || []).forEach((id) => priorityIds.add(id));
     if (query.aggregationFieldId) priorityIds.add(query.aggregationFieldId);
 
-
     catalog.filter((f) => priorityIds.has(f.id)).forEach(addField);
-
 
     (query.transformations || []).forEach((t) => {
       if (t.outputLabel && !addedIds.has(t.outputLabel)) {
@@ -103,7 +108,8 @@ export class WidgetConfigPanelComponent implements OnChanges {
       }
     });
 
-    return result;
+    this.cachedFields = result;
+    return this.cachedFields;
   }
 
   trackByFilterId(index: number, filter: WidgetFilter): string {
@@ -142,7 +148,7 @@ export class WidgetConfigPanelComponent implements OnChanges {
         }))
       }));
     }
-    return DATA_SOURCES;
+    return [];
   }
 
   getBetweenMin(value: string | undefined): string {

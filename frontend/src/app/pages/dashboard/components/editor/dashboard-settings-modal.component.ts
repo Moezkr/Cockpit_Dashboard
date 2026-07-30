@@ -6,7 +6,6 @@ import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Dashboard, GlobalFilter, RefreshInterval, DataSource, DataField } from '@core/models/types';
-import { DATA_SOURCES } from '@core/models/types';
 import { REFRESH_OPTIONS, uid } from '@core/services/utils';
 import { LIVE_QUERY_DATA } from '@pages/query/services/query-execution.service';
 import { queryFieldCatalog, CatalogField } from '@pages/query/services/query-model.service';
@@ -250,9 +249,7 @@ export class DashboardSettingsModalComponent implements OnChanges {
     });
 
     const activeFields: CatalogField[] = [];
-    const catalogSources = this.queryService.catalogSources.length > 0
-      ? this.queryService.catalogSources
-      : DATA_SOURCES;
+    const catalogSources = this.queryService.catalogSources;
 
     catalogSources.forEach((source: DataSource) => {
       source.fields.forEach((f: DataField) => {

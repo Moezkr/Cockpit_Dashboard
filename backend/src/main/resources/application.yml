@@ -3,7 +3,7 @@ spring:
     name: cockpit-backend
 
   datasource:
-    url: ${COCKPIT_DB_URL:jdbc:postgresql://localhost:5433/cockpit}
+    url: ${COCKPIT_DB_URL:jdbc:postgresql://localhost:5433/cockpit_db}
     username: ${COCKPIT_DB_USER:cockpit}
     password: ${COCKPIT_DB_PASSWORD:cockpit}
     hikari:
@@ -16,7 +16,7 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: false
@@ -28,7 +28,7 @@ spring:
     enabled: true
     schemas: cockpit
     default-schema: cockpit
-    locations: classpath:db/migration,classpath:db/seeder/erp,classpath:db/seeder/cockpit
+    locations: classpath:db/migration/cockpit,classpath:db/seeder/cockpit
     baseline-on-migrate: true
     validate-on-migrate: false
     repair-on-migrate: true

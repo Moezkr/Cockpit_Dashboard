@@ -9,20 +9,23 @@ VALUES
 ON CONFLICT (username) DO NOTHING;
 
 
-INSERT INTO cockpit.data_source (id, version, created_at, updated_at, created_by, updated_by, source_key, source_label, source_description, host_application, table_name, active)
+INSERT INTO cockpit.data_source (id, version, created_at, updated_at, created_by, updated_by, source_key, source_label, source_description, host_application, active)
 VALUES
-    ('e1000001-0000-4000-a000-000000000001', 0, NOW(), NOW(), 'system', 'system', 'src-factures', 'Factures Clients', 'Factures clients émises (ProgesCode)', 'PROGES_CODE', 'public.erp_facture', true),
-    ('e1000002-0000-4000-a000-000000000002', 0, NOW(), NOW(), 'system', 'system', 'src-clients', 'Référentiel Clients', 'Référentiel clients et comptes (ProgesCode)', 'PROGES_CODE', 'public.erp_client', true),
-    ('e1000003-0000-4000-a000-000000000003', 0, NOW(), NOW(), 'system', 'system', 'src-paiements', 'Encaissements & Paiements', 'Encaissements et règlements reçus (ProgesCode)', 'PROGES_CODE', 'public.erp_paiement', true),
-    ('e1000004-0000-4000-a000-000000000004', 0, NOW(), NOW(), 'system', 'system', 'src-rdv', 'Planning Rendez-vous', 'Planning des rendez-vous (HealthPilot)', 'HEALTH_PILOT', 'public.erp_rendez_vous', true),
-    ('e1000005-0000-4000-a000-000000000005', 0, NOW(), NOW(), 'system', 'system', 'src-produits', 'Catalogue Produits & Stock', 'Gestion des produits et niveaux de stock (ProgesCode)', 'PROGES_CODE', 'public.erp_produit', true)
-ON CONFLICT (source_key) DO NOTHING;
+    ('e1000001-0000-4000-a000-000000000001', 0, NOW(), NOW(), 'system', 'system', 'erp_db.erp_facture', 'Factures Clients', 'Factures clients émises (ERP)', 'ERP', true),
+    ('e1000002-0000-4000-a000-000000000002', 0, NOW(), NOW(), 'system', 'system', 'erp_db.erp_client', 'Référentiel Clients', 'Référentiel clients et comptes (ERP)', 'ERP', true),
+    ('e1000003-0000-4000-a000-000000000003', 0, NOW(), NOW(), 'system', 'system', 'erp_db.erp_paiement', 'Encaissements & Paiements', 'Encaissements et règlements reçus (ERP)', 'ERP', true),
+    ('e1000004-0000-4000-a000-000000000004', 0, NOW(), NOW(), 'system', 'system', 'erp_db.erp_rendez_vous', 'Planning Rendez-vous', 'Planning des rendez-vous (ERP)', 'ERP', true),
+    ('e1000005-0000-4000-a000-000000000005', 0, NOW(), NOW(), 'system', 'system', 'erp_db.erp_produit', 'Catalogue Produits & Stock', 'Gestion des produits et niveaux de stock (ERP)', 'ERP', true)
+ON CONFLICT (source_key) DO UPDATE SET 
+    host_application = EXCLUDED.host_application,
+    source_description = EXCLUDED.source_description;
 
 
 INSERT INTO cockpit.data_field (id, version, created_at, updated_at, created_by, updated_by, data_source_id, field_key, field_label, field_type, field_description, nullable)
 VALUES
 
     ('f1000101-0000-4000-a000-000000000101', 0, NOW(), NOW(), 'system', 'system', 'e1000001-0000-4000-a000-000000000001', 'num_facture', 'N° Facture', 'TEXT', 'Numéro unique de facture', false),
+    ('f1000108-0000-4000-a000-000000000108', 0, NOW(), NOW(), 'system', 'system', 'e1000001-0000-4000-a000-000000000001', 'id_client', 'ID Client', 'TEXT', 'Identifiant du client', false),
     ('f1000102-0000-4000-a000-000000000102', 0, NOW(), NOW(), 'system', 'system', 'e1000001-0000-4000-a000-000000000001', 'client', 'Client', 'TEXT', 'Nom du client', true),
     ('f1000103-0000-4000-a000-000000000103', 0, NOW(), NOW(), 'system', 'system', 'e1000001-0000-4000-a000-000000000001', 'date_facture', 'Date de facture', 'DATE', 'Date d emission de la facture', true),
     ('f1000104-0000-4000-a000-000000000104', 0, NOW(), NOW(), 'system', 'system', 'e1000001-0000-4000-a000-000000000001', 'montant_ttc', 'Montant TTC', 'AMOUNT', 'Montant toutes taxes comprises', true),

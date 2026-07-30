@@ -1,4 +1,6 @@
-CREATE TABLE IF NOT EXISTS public.erp_client (
+CREATE SCHEMA IF NOT EXISTS erp_db;
+
+CREATE TABLE IF NOT EXISTS erp_db.erp_client (
     id_client        VARCHAR(50)  PRIMARY KEY,
     raison_sociale   VARCHAR(255) NOT NULL,
     secteur          VARCHAR(100),
@@ -9,9 +11,9 @@ CREATE TABLE IF NOT EXISTS public.erp_client (
     created_at       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS public.erp_facture (
+CREATE TABLE IF NOT EXISTS erp_db.erp_facture (
     num_facture VARCHAR(50) PRIMARY KEY,
-    id_client VARCHAR(50) REFERENCES public.erp_client(id_client),
+    id_client VARCHAR(50) REFERENCES erp_db.erp_client(id_client),
     client VARCHAR(255),
     date_facture DATE,
     montant_ttc NUMERIC(15, 2),
@@ -21,10 +23,10 @@ CREATE TABLE IF NOT EXISTS public.erp_facture (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS public.erp_paiement (
+CREATE TABLE IF NOT EXISTS erp_db.erp_paiement (
     num_paiement VARCHAR(50) PRIMARY KEY,
-    num_facture VARCHAR(50) REFERENCES public.erp_facture(num_facture),
-    id_client VARCHAR(50) REFERENCES public.erp_client(id_client),
+    num_facture VARCHAR(50) REFERENCES erp_db.erp_facture(num_facture),
+    id_client VARCHAR(50) REFERENCES erp_db.erp_client(id_client),
     date_paiement DATE,
     montant_paye NUMERIC(15, 2),
     mode_paiement VARCHAR(50),
@@ -32,7 +34,7 @@ CREATE TABLE IF NOT EXISTS public.erp_paiement (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS public.erp_rendez_vous (
+CREATE TABLE IF NOT EXISTS erp_db.erp_rendez_vous (
     id_rdv     VARCHAR(50) PRIMARY KEY,
     praticien  VARCHAR(255),
     date_rdv   DATE,
@@ -42,7 +44,7 @@ CREATE TABLE IF NOT EXISTS public.erp_rendez_vous (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS public.erp_produit (
+CREATE TABLE IF NOT EXISTS erp_db.erp_produit (
     id_produit    VARCHAR(50)  PRIMARY KEY,
     designation   VARCHAR(255) NOT NULL,
     categorie     VARCHAR(100),

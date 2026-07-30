@@ -5,7 +5,6 @@ import com.dynamicdashboard.cockpit.catalog.application.dto.DataSourceDto;
 import com.dynamicdashboard.cockpit.catalog.domain.DataFieldEntity;
 import com.dynamicdashboard.cockpit.catalog.domain.DataSourceEntity;
 import com.dynamicdashboard.cockpit.catalog.repository.DataFieldRepository;
-import com.dynamicdashboard.cockpit.shared.domain.DomainEnums.HostApplication;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -25,9 +24,7 @@ public class CatalogMapper {
                 .map(this::toDataFieldDto)
                 .collect(Collectors.toList());
 
-        String appLabel = "ProgesCode";
-        if (entity.getHostApplication() == HostApplication.HEALTH_PILOT) appLabel = "HealthPilot";
-        if (entity.getHostApplication() == HostApplication.CARE_AT_HOME) appLabel = "Care at Home";
+        String appLabel = entity.getHostApplication() != null ? entity.getHostApplication() : "ERP";
 
         return DataSourceDto.builder()
                 .id(entity.getId())

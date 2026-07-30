@@ -15,30 +15,22 @@ public class CurrentUserService {
 
     private final UserAccountRepository userAccountRepository;
 
-    @Transactional
+    @Transactional(readOnly = true)
     public UserAccountEntity getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !auth.getName().equals("anonymousUser")) {
             String name = auth.getName();
             return userAccountRepository.findByUsername(name)
                     .or(() -> userAccountRepository.findByDisplayName(name))
-                    .orElseGet(this::getOrCreateDefaultUser);
+                    .orElseGet(this::getDefaultSeededUser);
         }
-        return getOrCreateDefaultUser();
+        return getDefaultSeededUser();
     }
 
-    @Transactional
-    public UserAccountEntity getOrCreateDefaultUser() {
+    @Transactional(readOnly = true)
+    public UserAccountEntity getDefaultSeededUser() {
         return userAccountRepository.findByUsername("ahaddad")
                 .or(() -> userAccountRepository.findByDisplayName("Amine Haddad"))
-                .orElseGet(() -> {
-                    UserAccountEntity user = new UserAccountEntity();
-                    user.setUsername("ahaddad");
-                    user.setEmail("amine.haddad@prestacode.com");
-                    user.setPasswordHash("$2a$10$7Q9b9K.d1Z...");
-                    user.setDisplayName("Amine Haddad");
-                    user.setAccountStatus(AccountStatus.ACTIVE);
-                    return userAccountRepository.save(user);
-                });
+                .orElseThrow(() -> new IllegalStateException("Default user 'ahaddad' not found. Please ensure database seed V3__cockpit_seed.sql was executed."));
     }
 }

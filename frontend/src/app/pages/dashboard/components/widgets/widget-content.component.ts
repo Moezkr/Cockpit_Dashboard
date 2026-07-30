@@ -6,10 +6,11 @@ import {
   Component,
   Input,
   OnChanges,
-  SimpleChanges
+  SimpleChanges,
+  ChangeDetectorRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Dashboard, Datum, Widget, DATA_SOURCES } from '@core/models/types';
+import { Dashboard, Datum, Widget } from '@core/models/types';
 import {
   executeDisplayRowsLocal,
   executeWidgetRowsLocal
@@ -49,35 +50,24 @@ export class WidgetContentComponent implements OnChanges {
   hoveredItem: Datum | null = null;
   hoverType: 'bar' | 'line' | 'donut' | 'heatmap' | null = null;
 
-  constructor(private dashboardService: DashboardService, private queryService: QueryService, private auditService: AuditService, private userService: UserService) {}
+  constructor(
+    private dashboardService: DashboardService,
+    private queryService: QueryService,
+    private auditService: AuditService,
+    private userService: UserService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
-  private lastWidgetString: string = '';
-  private lastFiltersString: string = '';
+  private lastLoadKey: string = '';
 
   ngOnChanges(changes: SimpleChanges): void {
-    let shouldLoad = false;
+    const queryId = this.widget?.queryId || '';
+    const filtersStr = JSON.stringify(this.runtimeFilters || []);
+    const widgetFiltersStr = JSON.stringify(this.widget?.filters || []);
+    const refreshKey = `${queryId}_${this.refreshTick}_${this.hasError}_${filtersStr}_${widgetFiltersStr}`;
 
-    if (changes['refreshTick'] || changes['hasError']) {
-      shouldLoad = true;
-    }
-
-    if (changes['widget']) {
-      const currentWidgetStr = JSON.stringify(this.widget);
-      if (this.lastWidgetString !== currentWidgetStr) {
-        this.lastWidgetString = currentWidgetStr;
-        shouldLoad = true;
-      }
-    }
-
-    if (changes['runtimeFilters']) {
-      const currentFiltersStr = JSON.stringify(this.runtimeFilters);
-      if (this.lastFiltersString !== currentFiltersStr) {
-        this.lastFiltersString = currentFiltersStr;
-        shouldLoad = true;
-      }
-    }
-
-    if (shouldLoad) {
+    if (this.lastLoadKey !== refreshKey) {
+      this.lastLoadKey = refreshKey;
       this.loadData();
     }
   }
@@ -112,8 +102,7 @@ export class WidgetContentComponent implements OnChanges {
 
     const activeFilters = [...this.runtimeFilters, ...widgetFilters];
 
-    const rawSources = this.queryService.catalogSources;
-    const sources = (rawSources && rawSources.length > 0) ? rawSources : DATA_SOURCES;
+    const sources = this.queryService.catalogSources || [];
     const queryCatalog = queryFieldCatalog(query, sources);
     const validFieldKeys = new Set(queryCatalog.map(f => f.key || f.id));
     const validFieldIds = new Set(queryCatalog.map(f => f.id));
@@ -136,19 +125,22 @@ export class WidgetContentComponent implements OnChanges {
         return validFieldKeys.has(f.fieldId as string) || validFieldIds.has(f.originalId as string);
       });
 
-    this.isLoading = true;
     this.queryService.executeQueryData(query.id, finalFilters).subscribe({
       next: (rows) => {
-        this.dataRows = executeWidgetRowsLocal(query, rows);
-        this.gridDisplayRows = executeDisplayRowsLocal(query, rows);
-        this.isLoading = false;
-
-
+        setTimeout(() => {
+          this.dataRows = executeWidgetRowsLocal(query, rows);
+          this.gridDisplayRows = executeDisplayRowsLocal(query, rows);
+          this.isLoading = false;
+          this.cdr.markForCheck();
+        });
       },
-      error: () => {
-        this.dataRows = [];
-        this.gridDisplayRows = [];
-        this.isLoading = false;
+      error: (err) => {
+        setTimeout(() => {
+          this.dataRows = [];
+          this.gridDisplayRows = [];
+          this.isLoading = false;
+          this.cdr.markForCheck();
+        });
       }
     });
   }
@@ -292,7 +284,11 @@ export class WidgetContentComponent implements OnChanges {
       const val = Number(d['value']) || 0;
       const startAngle = (accumulated / total) * 360;
       accumulated += val;
-      const endAngle = (accumulated / total) * 360;
+      let endAngle = (accumulated / total) * 360;
+
+      if (endAngle - startAngle >= 359.9) {
+        endAngle = startAngle + 359.99;
+      }
 
       const startRad = ((startAngle - 90) * Math.PI) / 180;
       const endRad = ((endAngle - 90) * Math.PI) / 180;

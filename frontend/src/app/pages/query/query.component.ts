@@ -7,7 +7,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { DataQuery } from '@core/models/types';
-import { DATA_SOURCES } from '@core/models/types';
 import { relativeDate } from '@core/services/utils';
 import { ButtonComponent } from '@shared/components/ui/button.component';
 import { BadgeComponent } from '@shared/components/ui/badge.component';
@@ -38,8 +37,8 @@ export class QueryCatalogComponent implements OnInit, OnDestroy {
 
   currentPage: number = 1;
   pageSize: number = 10;
-  sortField: string = 'name';
-  sortDirection: 'asc' | 'desc' = 'asc';
+  sortField: string = 'updatedAt';
+  sortDirection: 'asc' | 'desc' = 'desc';
 
   sources: any[] = [];
   sub!: Subscription;
