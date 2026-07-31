@@ -7,6 +7,7 @@ import { uid } from '@core/services/utils';
 import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component';
 import { ButtonComponent } from '@shared/components/ui/button.component';
 import { QueryService } from '@pages/query/services/query.service';
+import { LIVE_QUERY_DATA } from '@pages/query/services/query-execution.service';
 
 const STEPS = [
   'Nom & description',
@@ -292,6 +293,54 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
     const field = this.catalogFields.find((f) => f.id === fieldId);
     if (field) return `${field.sourceLabel} · ${field.label}`;
     return fieldId;
+  }
+
+  getLivePreviewColumns(): { id: string; label: string; key: string }[] {
+    if (this.query.selectedFieldIds && this.query.selectedFieldIds.length > 0) {
+      return this.query.selectedFieldIds.map((id) => {
+        const f = this.catalogFields.find((field) => field.id === id);
+        return {
+          id,
+          key: f ? (f.key || f.fieldKey || id) : id,
+          label: f ? `${(f.sourceLabel || '').toUpperCase()} · ${(f.label || '').toUpperCase()}` : id.toUpperCase()
+        };
+      });
+    }
+    const realRows = LIVE_QUERY_DATA[this.query.id];
+    if (realRows && realRows.length > 0) {
+      return Object.keys(realRows[0]).map((k) => ({
+        id: k,
+        key: k,
+        label: k.toUpperCase()
+      }));
+    }
+    return [];
+  }
+
+  getCellValue(row: Record<string, any>, colIndex: number, colObj: { id: string; label: string; key: string }): any {
+    if (!row) return '—';
+    if (row[colObj.key] !== undefined && row[colObj.key] !== null) return row[colObj.key];
+    if (row[colObj.id] !== undefined && row[colObj.id] !== null) return row[colObj.id];
+
+    const keyLower = (colObj.key || '').toLowerCase();
+    const foundKey = Object.keys(row).find((k) => k.toLowerCase() === keyLower || k.toLowerCase().includes(keyLower));
+    if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) {
+      return row[foundKey];
+    }
+
+    const values = Object.values(row);
+    if (colIndex < values.length && values[colIndex] !== undefined && values[colIndex] !== null) {
+      return values[colIndex];
+    }
+    return '—';
+  }
+
+  getLivePreviewRows(): Record<string, any>[] {
+    const realRows = LIVE_QUERY_DATA[this.query.id];
+    if (realRows && Array.isArray(realRows) && realRows.length > 0) {
+      return realRows;
+    }
+    return [];
   }
 
   toggleSource(idOrKey: any) {

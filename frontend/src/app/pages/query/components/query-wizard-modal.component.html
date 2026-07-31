@@ -469,6 +469,34 @@
                     />
                   </div>
                 </div>
+
+                <div *ngIf="query.transformations.length > 0 && getLivePreviewColumns().length > 0" class="mt-4 border-t border-line dark:border-slate-800 pt-3">
+                  <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1.5">
+                    APERÇU TRANSFORMÉ
+                  </label>
+                  <div class="flex items-center gap-1.5 mb-2 text-2xs font-medium text-emerald-600 dark:text-emerald-400">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Aperçu en temps réel · {{ getLivePreviewRows().length }} lignes
+                  </div>
+                  <div class="max-h-44 overflow-y-auto rounded-md border border-line dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+                    <table class="w-full text-left text-xs">
+                      <thead class="bg-surface-muted dark:bg-slate-800 text-2xs font-semibold uppercase tracking-wider text-ink-faint dark:text-slate-400 border-b border-line dark:border-slate-800 sticky top-0">
+                        <tr>
+                          <th *ngFor="let col of getLivePreviewColumns()" class="px-3 py-2 whitespace-nowrap">
+                            {{ col.label }}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-line dark:divide-slate-800">
+                        <tr *ngFor="let row of getLivePreviewRows()" class="hover:bg-surface-sunken/40 dark:hover:bg-slate-800/40">
+                          <td *ngFor="let col of getLivePreviewColumns(); let cIdx = index" class="px-3 py-1.5 text-ink dark:text-slate-200 tabular-nums whitespace-nowrap">
+                            {{ getCellValue(row, cIdx, col) }}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
 
               <div *ngIf="step === 6" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
@@ -599,6 +627,34 @@
 
                 <div class="rounded-md border border-brand/20 bg-brand-soft/40 dark:bg-brand/10 p-2 text-2xs text-brand-strong dark:text-brand">
                   <span class="font-semibold">Ordre de traitement :</span> Sources → Relations → Filtres → Transformations → Agrégation → Tri
+                </div>
+
+                <div *ngIf="getLivePreviewColumns().length > 0" class="mt-4 border-t border-line dark:border-slate-800 pt-3 space-y-2">
+                  <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400">
+                    APERÇU FINAL
+                  </label>
+                  <div class="flex items-center gap-1.5 text-2xs font-medium text-emerald-600 dark:text-emerald-400">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Aperçu en temps réel · {{ getLivePreviewRows().length }} lignes
+                  </div>
+                  <div class="max-h-48 overflow-y-auto rounded-md border border-line dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+                    <table class="w-full text-left text-xs">
+                      <thead class="bg-surface-muted dark:bg-slate-800 text-2xs font-semibold uppercase tracking-wider text-ink-faint dark:text-slate-400 border-b border-line dark:border-slate-800 sticky top-0">
+                        <tr>
+                          <th *ngFor="let col of getLivePreviewColumns()" class="px-3 py-2 whitespace-nowrap">
+                            {{ col.label }}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-line dark:divide-slate-800">
+                        <tr *ngFor="let row of getLivePreviewRows()" class="hover:bg-surface-sunken/40 dark:hover:bg-slate-800/40">
+                          <td *ngFor="let col of getLivePreviewColumns(); let cIdx = index" class="px-3 py-1.5 text-ink dark:text-slate-200 tabular-nums whitespace-nowrap">
+                            {{ getCellValue(row, cIdx, col) }}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
