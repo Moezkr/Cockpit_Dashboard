@@ -173,12 +173,20 @@
               </td>
 
               <td class="px-4 py-3">
-                <div class="flex flex-wrap items-center gap-1">
+                <div class="flex items-center gap-1.5 flex-nowrap">
                   <span
-                    *ngFor="let s of getSourcesList(q)"
-                    class="inline-flex items-center rounded border border-line-strong bg-surface-muted px-2 py-0.5 text-[11px] font-medium text-ink-soft shrink-0"
+                    *ngFor="let s of getSourcesList(q).slice(0, 1)"
+                    [title]="s"
+                    class="inline-flex max-w-[140px] items-center rounded border border-line-strong bg-surface-muted px-2 py-0.5 text-[11px] font-medium text-ink-soft shrink-0 min-w-0"
                   >
-                    {{ s }}
+                    <span class="truncate block max-w-full">{{ s }}</span>
+                  </span>
+                  <span
+                    *ngIf="getSourcesList(q).length > 1"
+                    [title]="getSourcesList(q).slice(1).join(', ')"
+                    class="inline-flex items-center rounded border border-line-strong bg-surface-muted px-1.5 py-0.5 text-[11px] font-semibold text-ink-faint shrink-0"
+                  >
+                    +{{ getSourcesList(q).length - 1 }}
                   </span>
                 </div>
               </td>

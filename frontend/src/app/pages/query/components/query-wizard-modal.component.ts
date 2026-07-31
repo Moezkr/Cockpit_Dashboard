@@ -315,6 +315,37 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
+  draggedIndex: number | null = null;
+
+  onDragStart(event: DragEvent, index: number) {
+    this.draggedIndex = index;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', index.toString());
+    }
+  }
+
+  onDragOver(event: DragEvent, index: number) {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+  }
+
+  onDrop(event: DragEvent, targetIndex: number) {
+    event.preventDefault();
+    if (this.draggedIndex === null || this.draggedIndex === targetIndex) return;
+    const copy = [...this.query.selectedFieldIds];
+    const [removed] = copy.splice(this.draggedIndex, 1);
+    copy.splice(targetIndex, 0, removed);
+    this.query.selectedFieldIds = copy;
+    this.draggedIndex = null;
+  }
+
+  onDragEnd() {
+    this.draggedIndex = null;
+  }
+
   moveField(index: number, direction: -1 | 1) {
     const targetIndex = index + direction;
     if (targetIndex < 0 || targetIndex >= this.query.selectedFieldIds.length) return;

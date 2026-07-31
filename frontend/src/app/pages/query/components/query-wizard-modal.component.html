@@ -280,31 +280,20 @@
                   <div class="space-y-1">
                     <div
                       *ngFor="let fieldId of query.selectedFieldIds; let idx = index"
-                      class="flex items-center justify-between gap-2 rounded-md border border-line dark:border-slate-800 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs shadow-2xs"
+                      draggable="true"
+                      (dragstart)="onDragStart($event, idx)"
+                      (dragover)="onDragOver($event, idx)"
+                      (drop)="onDrop($event, idx)"
+                      (dragend)="onDragEnd()"
+                      [ngClass]="draggedIndex === idx ? 'opacity-40 border-dashed border-brand bg-brand-soft/30' : 'border-line dark:border-slate-800 bg-white dark:bg-slate-800 hover:border-brand/40'"
+                      class="flex items-center gap-2.5 rounded-md border px-3 py-2 text-xs shadow-2xs transition-all cursor-grab active:cursor-grabbing select-none"
                     >
+                      <span class="text-sm font-bold tracking-tighter text-ink-faint dark:text-slate-400 cursor-grab active:cursor-grabbing select-none hover:text-ink">
+                        ⋮⋮
+                      </span>
                       <span class="flex-1 font-medium text-ink dark:text-white">
                         {{ getDisplayFieldLabel(fieldId) }}
                       </span>
-                      <div class="flex items-center gap-1">
-                        <button
-                          type="button"
-                          [disabled]="idx === 0"
-                          (click)="moveField(idx, -1)"
-                          aria-label="Monter"
-                          class="p-1 text-ink-faint dark:text-slate-400 hover:text-ink dark:hover:text-white disabled:opacity-30 cursor-pointer"
-                        >
-                          <app-svg-icon name="ArrowUp" class="h-3 w-3"></app-svg-icon>
-                        </button>
-                        <button
-                          type="button"
-                          [disabled]="idx === query.selectedFieldIds.length - 1"
-                          (click)="moveField(idx, 1)"
-                          aria-label="Descendre"
-                          class="p-1 text-ink-faint dark:text-slate-400 hover:text-ink dark:hover:text-white disabled:opacity-30 cursor-pointer"
-                        >
-                          <app-svg-icon name="ArrowDown" class="h-3 w-3"></app-svg-icon>
-                        </button>
-                      </div>
                     </div>
                   </div>
                 </div>
