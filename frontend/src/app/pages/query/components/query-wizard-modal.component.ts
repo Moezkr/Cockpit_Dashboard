@@ -140,16 +140,30 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       return allSourcesMap.get(rawId) || rawId;
     };
 
-    const resolveFieldId = (rawId: string | undefined, contextSourceId?: string): string => {
+    // Resolve field keys/ids within the query's active sources first so that
+    // duplicate fieldKeys across tables (e.g. "mois", "statut") map to the
+    // correct UUID instead of whatever last wrote into allFieldsMap.
+    const resolveFieldId = (rawId: string | undefined, contextSourceId?: string | string[]): string => {
       if (!rawId) return '';
-      if (contextSourceId) {
-        const canonicalSrcId = resolveSourceId(contextSourceId);
-        const src = activeSources.find((s: any) => s.id === canonicalSrcId || s.key === canonicalSrcId || s.sourceKey === canonicalSrcId);
-        if (src && src.fields) {
-          const match = src.fields.find((f: any) => f.id === rawId || f.key === rawId || f.fieldKey === rawId);
-          if (match && match.id) return match.id;
+
+      const contextIds = contextSourceId
+        ? (Array.isArray(contextSourceId) ? contextSourceId : [contextSourceId])
+        : [];
+
+      for (const srcId of contextIds) {
+        if (!srcId) continue;
+        const canonicalSrcId = resolveSourceId(srcId);
+        const src = activeSources.find((s: any) =>
+          s.id === canonicalSrcId || s.key === canonicalSrcId || s.sourceKey === canonicalSrcId
+        );
+        if (src?.fields) {
+          const match = src.fields.find((f: any) =>
+            f.id === rawId || f.key === rawId || f.fieldKey === rawId
+          );
+          if (match?.id) return match.id;
         }
       }
+
       return allFieldsMap.get(rawId) || rawId;
     };
 
@@ -179,13 +193,7 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
 
     if (q.conditions) {
       q.conditions = q.conditions.map((c: any) => {
-        let derivedSourceId;
-        const globalMatch = activeSources.find((s: any) => 
-          (s.fields || []).some((f: any) => f.id === c.fieldId || f.key === c.fieldId || f.fieldKey === c.fieldId)
-        );
-        if (globalMatch) derivedSourceId = globalMatch.id;
-
-        let fld = resolveFieldId(c.fieldId, derivedSourceId);
+        let fld = resolveFieldId(c.fieldId, q.sourceIds);
         if (!fld && this.catalogFields.length > 0) {
           fld = this.catalogFields[0].id;
         }
@@ -197,19 +205,19 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     if (q.selectedFieldIds) {
-      q.selectedFieldIds = q.selectedFieldIds.map((id: string) => resolveFieldId(id));
+      q.selectedFieldIds = q.selectedFieldIds.map((id: string) => resolveFieldId(id, q.sourceIds));
     }
 
     if (q.groupByFieldIds) {
-      q.groupByFieldIds = q.groupByFieldIds.map((id: string) => resolveFieldId(id));
+      q.groupByFieldIds = q.groupByFieldIds.map((id: string) => resolveFieldId(id, q.sourceIds));
     }
 
     if (q.aggregationFieldId) {
-      q.aggregationFieldId = resolveFieldId(q.aggregationFieldId);
+      q.aggregationFieldId = resolveFieldId(q.aggregationFieldId, q.sourceIds);
     }
 
     if (q.sort && q.sort.fieldId) {
-      q.sort.fieldId = resolveFieldId(q.sort.fieldId);
+      q.sort.fieldId = resolveFieldId(q.sort.fieldId, q.sourceIds);
     }
 
     return q;
