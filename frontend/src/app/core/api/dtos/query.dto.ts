@@ -18,7 +18,13 @@ export interface QueryConditionDto {
 export interface QueryTransformationDto {
   id: string;
   type: string;
-  config: any;
+  fieldId?: string;
+  outputLabel?: string;
+  formula?: string;
+  format?: string;
+  replacementValue?: string;
+  operator?: string;
+  value?: string;
 }
 
 export interface QuerySortDto {

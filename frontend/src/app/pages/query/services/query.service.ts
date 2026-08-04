@@ -10,9 +10,7 @@ import { normalizeQueries, normalizeQuery } from '@pages/query/services/query-mo
 import { LIVE_QUERY_DATA, setCatalogSources } from '@pages/query/services/query-execution.service';
 
 const nowIso = () => new Date().toISOString();
-const API_URL = (typeof window !== 'undefined' && window.location.hostname === 'localhost' && window.location.port === '4200')
-  ? 'http://localhost:8080/api'
-  : '/api';
+const API_URL = '/api';
 
 function getStoredQueries(): DataQuery[] {
   if (typeof localStorage !== 'undefined') {
@@ -54,7 +52,7 @@ export class QueryService {
   public loadFromBackend(): void {
     this.http.get<QueryResponseDto[]>(`${API_URL}/queries`).subscribe({
       next: (data: any) => {
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           const cleanModels = data.map((dto: QueryResponseDto) => QueryMapper.toDomain(dto));
           const queries = normalizeQueries(cleanModels);
           this.setQueries(queries);
@@ -116,8 +114,7 @@ export class QueryService {
         next: () => {
           this.loadFromBackend();
           this.auditService.loadAuditLogs();
-        },
-        error: (err) => console.error('Error updating query:', err)
+        }
       });
     } else {
       const dto = QueryMapper.toDto(query);
@@ -130,8 +127,7 @@ export class QueryService {
           }
           this.loadFromBackend();
           this.auditService.loadAuditLogs();
-        },
-        error: (err) => console.error('Error creating query:', err)
+        }
       });
     }
   }
@@ -203,5 +199,10 @@ export class QueryService {
 
   executeQueryData(queryId: string, filters: import('@pages/dashboard/services/dashboard-filters.service').RuntimeQueryFilter[] = []): Observable<any[]> {
     return this.http.post<any[]>(`${API_URL}/queries/${queryId}/execute`, filters);
+  }
+
+  previewQuery(query: DataQuery): Observable<any[]> {
+    const payload = QueryMapper.toDto(query);
+    return this.http.post<any[]>(`${API_URL}/queries/preview`, payload);
   }
 }

@@ -1,0 +1,244 @@
+---
+- name: Provision Cockpit Dashboard VPS
+  hosts: vps
+  become: true
+  vars:
+    app_dir: "/root/cockpit-{{ deploy_branch }}"
+    vault_dir: "/root/cockpit-vault"
+    wg_peers: "{{ wg_external_peers | default([]) }}"
+
+  tasks:
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install packages
+      apt:
+        name: [docker.io, docker-compose-plugin, wireguard, nginx, certbot, python3-certbot-nginx, ufw, git]
+        state: present
+
+    - name: Start Docker
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Configure UFW rules
+      ufw:
+        rule: allow
+        port: "{{ item.port }}"
+        proto: "{{ item.proto }}"
+      loop:
+        - { port: "22",    proto: tcp }
+        - { port: "80",    proto: tcp }
+        - { port: "443",   proto: tcp }
+        - { port: "51820", proto: udp }
+
+    - name: Allow Vault port from VPN subnet only
+      ufw:
+        rule: allow
+        port: "8200"
+        proto: tcp
+        src: 10.8.0.0/24
+
+    - name: Enable UFW
+      ufw:
+        state: enabled
+        policy: deny
+
+    - name: Check if Vault container is running
+      command: docker inspect -f '{{ "{{" }}.State.Running{{ "}}" }}' cockpit_vault
+      register: vault_running
+      failed_when: false
+      changed_when: false
+
+    - name: Create Vault directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0700"
+      loop:
+        - "{{ vault_dir }}"
+        - "{{ vault_dir }}/config"
+        - "{{ vault_dir }}/data"
+        - "{{ vault_dir }}/logs"
+      when: vault_running.rc != 0 or vault_running.stdout != 'true'
+
+    - name: Deploy Vault config
+      template:
+        src: templates/vault.json.j2
+        dest: "{{ vault_dir }}/config/vault.json"
+        mode: "0600"
+      when: vault_running.rc != 0 or vault_running.stdout != 'true'
+
+    - name: Deploy Vault docker-compose
+      template:
+        src: templates/vault-docker-compose.yml.j2
+        dest: "{{ vault_dir }}/docker-compose.yml"
+        mode: "0600"
+      when: vault_running.rc != 0 or vault_running.stdout != 'true'
+
+    - name: Start Vault
+      command: docker compose up -d
+      args:
+        chdir: "{{ vault_dir }}"
+      when: vault_running.rc != 0 or vault_running.stdout != 'true'
+
+    - name: Wait for Vault to be ready
+      wait_for:
+        port: 8200
+        host: 127.0.0.1
+        delay: 3
+        timeout: 30
+      when: vault_running.rc != 0 or vault_running.stdout != 'true'
+
+    - name: Check if Vault is initialized
+      command: docker exec cockpit_vault vault status -format=json
+      register: vault_status
+      failed_when: false
+      changed_when: false
+      when: vault_running.rc != 0 or vault_running.stdout != 'true'
+
+    - name: Initialize Vault and save keys to file on VPS
+      shell: |
+        docker exec cockpit_vault vault operator init > /root/.vault-init
+        chmod 600 /root/.vault-init
+      no_log: true
+      when:
+        - vault_running.rc != 0 or vault_running.stdout != 'true'
+        - vault_status.stdout is defined
+        - (vault_status.stdout | from_json).initialized == false
+
+    - name: Notify that Vault init keys are saved on VPS
+      debug:
+        msg: "Vault initialized. Keys saved to /root/.vault-init on the VPS. SSH in and run: cat /root/.vault-init"
+      when:
+        - vault_running.rc != 0 or vault_running.stdout != 'true'
+        - vault_status.stdout is defined
+        - (vault_status.stdout | from_json).initialized == false
+
+    - name: Enable IP forwarding
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: "1"
+        sysctl_set: yes
+        reload: yes
+      when: wg_peers | length > 0
+
+    - name: Check if WireGuard is already running
+      command: wg show wg0
+      register: wg_status
+      failed_when: false
+      changed_when: false
+      when: wg_peers | length > 0
+
+    - name: Deploy WireGuard config
+      template:
+        src: templates/wg0.conf.j2
+        dest: /etc/wireguard/wg0.conf
+        mode: "0600"
+      no_log: true
+      when: wg_peers | length > 0 and wg_status.rc != 0
+      notify: Restart WireGuard
+
+    - name: Enable WireGuard
+      systemd:
+        name: wg-quick@wg0
+        state: started
+        enabled: yes
+      when: wg_peers | length > 0
+
+    - name: Clone or update project
+      git:
+        repo: "https://{{ github_actor }}:{{ github_token }}@github.com/{{ github_repository }}.git"
+        dest: "{{ app_dir }}"
+        version: "{{ deploy_branch }}"
+        force: yes
+      no_log: true
+
+    - name: Deploy .env
+      template:
+        src: templates/.env.j2
+        dest: "{{ app_dir }}/.env"
+        mode: "0600"
+      no_log: true
+
+    - name: Login to GHCR
+      command: echo "{{ github_token }}" | docker login ghcr.io -u {{ github_actor }} --password-stdin
+      no_log: true
+
+    - name: Pull and start containers
+      command: docker compose -f {{ compose_file }} up -d --pull always --remove-orphans
+      args:
+        chdir: "{{ app_dir }}"
+      environment:
+        VAULT_TOKEN: "{{ vault_token }}"
+      no_log: true
+
+    - name: Check if Nginx site already exists
+      stat:
+        path: "/etc/nginx/sites-available/{{ domain_name }}"
+      register: nginx_site
+
+    - name: Deploy Nginx config
+      template:
+        src: templates/nginx.conf.j2
+        dest: "/etc/nginx/sites-available/{{ domain_name }}"
+        mode: "0644"
+      when: not nginx_site.stat.exists
+      notify: Reload Nginx
+
+    - name: Enable Nginx site
+      file:
+        src: "/etc/nginx/sites-available/{{ domain_name }}"
+        dest: "/etc/nginx/sites-enabled/{{ domain_name }}"
+        state: link
+      when: not nginx_site.stat.exists
+      notify: Reload Nginx
+
+    - name: Remove default Nginx site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Reload Nginx
+
+    - name: Start Nginx
+      systemd:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - meta: flush_handlers
+
+    - name: Check if SSL cert already exists
+      stat:
+        path: "/etc/letsencrypt/live/{{ domain_name }}/fullchain.pem"
+      register: ssl_cert
+
+    - name: Obtain SSL certificate
+      command: >
+        certbot --nginx -d {{ domain_name }}
+        --non-interactive --agree-tos
+        -m {{ certbot_email }} --redirect
+      when: not ssl_cert.stat.exists
+
+    - name: Set SSL auto-renewal cron
+      cron:
+        name: Certbot renewal
+        minute: "0"
+        hour: "3"
+        day: "1"
+        job: "certbot renew --quiet && systemctl reload nginx"
+
+  handlers:
+    - name: Restart WireGuard
+      systemd:
+        name: wg-quick@wg0
+        state: restarted
+
+    - name: Reload Nginx
+      systemd:
+        name: nginx
+        state: reloaded

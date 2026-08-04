@@ -34,6 +34,10 @@ html.dark .bg-white {
   background-color: #121212 !important;
   color: #ffffff !important;
 }
+html.dark .bg-brand-soft {
+  background-color: rgba(37, 99, 235, 0.2) !important;
+  color: #ffffff !important;
+}
 html.dark .bg-surface-muted,
 html.dark [class*='bg-surface-muted'] {
   background-color: #121212 !important;

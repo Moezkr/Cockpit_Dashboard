@@ -4,9 +4,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 
-const API_URL = (typeof window !== 'undefined' && window.location.hostname === 'localhost' && window.location.port === '4200')
-  ? 'http://localhost:8080/api'
-  : '/api';
+const API_URL = '/api';
 
 export interface UserProfile {
   id?: string;

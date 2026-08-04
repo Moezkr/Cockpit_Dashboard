@@ -85,8 +85,20 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
             [ngClass]="{ 'justify-center px-0': !sidebarOpen && !isMobile }"
             [title]="!sidebarOpen && !isMobile ? 'Requêtes' : ''"
           >
-            <app-svg-icon name="Database" class="h-4 w-4 flex-shrink-0"></app-svg-icon>
+            <app-svg-icon name="Layers" class="h-4 w-4 flex-shrink-0"></app-svg-icon>
             <span *ngIf="sidebarOpen || isMobile" class="truncate">Requêtes</span>
+          </a>
+
+          <a
+            routerLink="/sources-de-donnees"
+            (click)="closeSidebarOnMobile()"
+            routerLinkActive="bg-brand-soft text-brand-strong dark:bg-brand/20 dark:text-brand"
+            class="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-xs font-medium text-ink-soft dark:text-zinc-300 hover:bg-surface-sunken dark:hover:bg-zinc-800 hover:text-ink dark:hover:text-white transition-colors"
+            [ngClass]="{ 'justify-center px-0': !sidebarOpen && !isMobile }"
+            [title]="!sidebarOpen && !isMobile ? 'Sources de données' : ''"
+          >
+            <app-svg-icon name="Database" class="h-4 w-4 flex-shrink-0"></app-svg-icon>
+            <span *ngIf="sidebarOpen || isMobile" class="truncate">Sources de données</span>
           </a>
 
           <a

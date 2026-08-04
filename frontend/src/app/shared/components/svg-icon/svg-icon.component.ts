@@ -310,6 +310,32 @@ import { CommonModule } from '@angular/common';
         <path d="m16 16-4-4-4 4" />
       </g>
 
+      <g *ngSwitchCase="'Link2'">
+        <path d="M9 17H7A5 5 0 0 1 7 7h2" />
+        <path d="M15 7h2a5 5 0 1 1 0 10h-2" />
+        <line x1="8" y1="12" x2="16" y2="12" />
+      </g>
+
+      <g *ngSwitchCase="'ServerCog'">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M4.5 10H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-.5" />
+        <path d="M4.5 14H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-.5" />
+        <path d="M6 6h.01" />
+        <path d="M6 18h.01" />
+        <path d="m15.7 13.4-.9-.3" />
+        <path d="m9.2 10.9-.9-.3" />
+        <path d="m10.6 15.7.3-.9" />
+        <path d="m13.6 8.3.3-.9" />
+        <path d="m10.8 9.3-.4-.8" />
+        <path d="m13.6 15.5-.4-.8" />
+        <path d="m14.6 10.4.8-.4" />
+        <path d="m8.4 13.6.8-.4" />
+      </g>
+
+      <g *ngSwitchCase="'LoaderCircle'">
+        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+      </g>
+
       <g *ngSwitchDefault>
         <circle cx="12" cy="12" r="8" />
       </g>

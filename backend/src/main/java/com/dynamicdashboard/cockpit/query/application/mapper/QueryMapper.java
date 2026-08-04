@@ -80,7 +80,7 @@ public class QueryMapper {
                 .map(t -> QueryTransformationDto.builder()
                         .id(t.getId().toString())
                         .type(t.getTransformationType().name().toLowerCase())
-                        .fieldId(t.getTargetField() != null ? t.getTargetField().getFieldKey() : null)
+                        .fieldId(t.getTargetField() != null ? t.getTargetField().getId().toString() : null)
                         .outputLabel(t.getOutputLabel())
                         .formula(t.getFormulaExpression())
                         .format(t.getFormatOption())

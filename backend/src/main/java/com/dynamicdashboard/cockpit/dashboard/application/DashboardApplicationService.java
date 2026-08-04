@@ -99,11 +99,12 @@ public class DashboardApplicationService {
     @Transactional
     public Optional<DashboardResponseDto> updateDashboard(UUID id, DashboardRequestDto dto) {
         return dashboardRepository.findById(id).map(dashboard -> {
+            deleteChildEntities(dashboard.getId());
+
             applyDtoToDashboardEntity(dto, dashboard);
             dashboard.setUpdatedAt(java.time.Instant.now());
-            DashboardEntity updatedDashboard = dashboardRepository.save(dashboard);
+            DashboardEntity updatedDashboard = dashboardRepository.saveAndFlush(dashboard);
 
-            deleteChildEntities(updatedDashboard.getId());
             saveChildEntities(updatedDashboard, dto);
 
             auditApplicationService.logEvent("Modification de tableau de bord", "DASHBOARD", updatedDashboard.getId(), updatedDashboard.getDashboardName(), null);

@@ -17,5 +17,10 @@ export const routes: Routes = [
     loadChildren: () => import('@pages/settings/settings.routes').then(m => m.routes),
     canActivate: [authGuard]
   },
+  {
+    path: 'sources-de-donnees',
+    loadChildren: () => import('@pages/data-sources/data-sources.routes').then(m => m.routes),
+    canActivate: [authGuard]
+  },
   { path: '**', redirectTo: '' }
 ];

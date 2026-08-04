@@ -222,8 +222,7 @@ export class DataGridConfigFieldsComponent implements OnChanges {
     if (!rawVisible.length) {
       this.cachedSelectedCols = [...this.availableCols];
     } else {
-      const normalized = rawVisible.map((c) => this.getColumnLabel(c));
-      this.cachedSelectedCols = normalized.filter((c) => this.availableCols.includes(c));
+      this.cachedSelectedCols = rawVisible.filter((c) => this.availableCols.includes(c));
     }
     this.cachedUnselectedCols = this.availableCols.filter((c) => !this.cachedSelectedCols.includes(c));
   }

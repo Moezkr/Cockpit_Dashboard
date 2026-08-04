@@ -2,15 +2,13 @@ import { DashboardResponseDto, DashboardRequestDto } from '@core/api/dtos/dashbo
 import { DashboardMapper } from '@core/api/mappers/dashboard.mapper';
 import { Injectable, NgZone } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, map } from 'rxjs';
 import { Dashboard } from '@core/models/types';
 import { uid } from '@core/utils/utils';
 import { AuditService } from '@pages/settings/services/audit.service';
 
 const nowIso = () => new Date().toISOString();
-const API_URL = (typeof window !== 'undefined' && window.location.hostname === 'localhost' && window.location.port === '4200')
-  ? 'http://localhost:8080/api'
-  : '/api';
+const API_URL = '/api';
 
 function getStoredDashboards(): Dashboard[] {
   if (typeof localStorage !== 'undefined') {
@@ -48,7 +46,7 @@ export class DashboardService {
   public loadFromBackend(): void {
     this.http.get<DashboardResponseDto[]>(`${API_URL}/dashboards`).subscribe({
       next: (data: any) => {
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           const cleanModels = data.map((dto: DashboardResponseDto) => DashboardMapper.toDomain(dto));
           this.setDashboards(cleanModels);
         }
@@ -81,13 +79,24 @@ export class DashboardService {
 
     if (exists) {
       const dto = DashboardMapper.toDto(dashboard);
-      this.http.put<DashboardRequestDto>(`${API_URL}/dashboards/${dashboard.id}`, dto).subscribe({
-        next: () => this.auditService.loadAuditLogs()
+      this.http.put<DashboardResponseDto>(`${API_URL}/dashboards/${dashboard.id}`, dto).subscribe({
+        next: () => {
+          this.loadFromBackend();
+          this.auditService.loadAuditLogs();
+        }
       });
     } else {
       const dto = DashboardMapper.toDto(dashboard);
-      this.http.post<DashboardRequestDto>(`${API_URL}/dashboards`, dto).subscribe({
-        next: () => this.auditService.loadAuditLogs()
+      this.http.post<DashboardResponseDto>(`${API_URL}/dashboards`, dto).subscribe({
+        next: (createdDto: DashboardResponseDto) => {
+          const created = DashboardMapper.toDomain(createdDto);
+          if (created && created.id) {
+            const current = this.dashboards.filter((d) => d.id !== dashboard.id && d.id !== created.id);
+            this.setDashboards([created, ...current]);
+          }
+          this.loadFromBackend();
+          this.auditService.loadAuditLogs();
+        }
       });
     }
   }
@@ -184,10 +193,10 @@ export class DashboardService {
     });
   }
 
-  createDashboard(partial: Partial<Dashboard>): Dashboard {
-    const newId = uid('d');
+  createDashboard(partial: Partial<Dashboard>): Observable<Dashboard> {
+    const tempId = uid('d');
     const dashboard: Dashboard = {
-      id: newId,
+      id: tempId,
       name: 'Nouveau tableau de bord',
       description: '',
       color: '#2563eb',
@@ -206,24 +215,16 @@ export class DashboardService {
       updatedAt: nowIso(),
       ...partial
     };
-    this.dashboardsSubject.next([dashboard, ...this.dashboards]);
 
     const dto = DashboardMapper.toDto(dashboard);
-      this.http.post<DashboardRequestDto>(`${API_URL}/dashboards`, dto).subscribe({
-      next: (createdDto: DashboardResponseDto) => {
-        const created = DashboardMapper.toDomain(createdDto);
-        if (created && created.id) {
-          const current = this.dashboards;
-          const idx = current.findIndex(d => d.id === newId);
-          if (idx !== -1) {
-            current[idx] = created;
-            this.dashboardsSubject.next([...current]);
-          }
-        }
+    return this.http.post<DashboardResponseDto>(`${API_URL}/dashboards`, dto).pipe(
+      map((createdDto: DashboardResponseDto) => {
+        const created = DashboardMapper.toDomain(createdDto) || dashboard;
+        const current = this.dashboards;
+        this.setDashboards([created, ...current.filter((d) => d.id !== tempId && d.id !== created.id)]);
         this.auditService.loadAuditLogs();
-      }
-    });
-
-    return dashboard;
+        return created;
+      })
+    );
   }
 }

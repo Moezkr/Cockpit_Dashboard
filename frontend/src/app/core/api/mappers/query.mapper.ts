@@ -69,10 +69,29 @@ export class QueryMapper {
   }
 
   private static toTransformationDomain(dto: QueryTransformationDto): QueryTransformation {
-    return { id: dto.id, type: dto.type as any, ...dto.config };
+    return {
+      id: dto.id,
+      type: dto.type as any,
+      fieldId: dto.fieldId,
+      outputLabel: dto.outputLabel,
+      formula: dto.formula,
+      format: dto.format as any,
+      replacementValue: dto.replacementValue,
+      operator: dto.operator as any,
+      value: dto.value
+    };
   }
   private static toTransformationDto(domain: QueryTransformation): QueryTransformationDto {
-    const { id, type, ...config } = domain;
-    return { id, type, config };
+    return {
+      id: domain.id,
+      type: domain.type,
+      fieldId: domain.fieldId,
+      outputLabel: domain.outputLabel,
+      formula: domain.formula,
+      format: domain.format,
+      replacementValue: domain.replacementValue,
+      operator: domain.operator,
+      value: domain.value
+    };
   }
 }

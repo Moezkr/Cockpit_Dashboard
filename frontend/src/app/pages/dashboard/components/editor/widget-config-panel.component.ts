@@ -43,12 +43,63 @@ export class WidgetConfigPanelComponent implements OnChanges {
   queries: DataQuery[] = [];
   dashboards: any[] = [];
   refreshOptions = REFRESH_OPTIONS;
+  querySearchText: string = '';
+  showQueryDropdown: boolean = false;
 
-  constructor(private dashboardService: DashboardService, private queryService: QueryService, private auditService: AuditService, private userService: UserService) {}
+  constructor(public dashboardService: DashboardService, public queryService: QueryService, private auditService: AuditService, private userService: UserService) {}
 
   ngOnChanges(): void {
     this.queries = this.queryService.queries;
     this.dashboards = this.dashboardService.dashboards;
+    if (this.widget?.queryId) {
+      const q = this.queries.find((item) => item.id === this.widget!.queryId);
+      if (q) {
+        this.querySearchText = q.name;
+      }
+    } else {
+      this.querySearchText = '';
+    }
+  }
+
+  get sortedQueries(): DataQuery[] {
+    const list = [...(this.queryService.queries || [])];
+    return list.reverse();
+  }
+
+  get filteredQueries(): DataQuery[] {
+    const qList = this.sortedQueries;
+    if (!this.querySearchText || !this.querySearchText.trim()) {
+      return qList;
+    }
+    const search = this.querySearchText.toLowerCase().trim();
+    return qList.filter(
+      (q) =>
+        q.name.toLowerCase().includes(search) ||
+        this.getQuerySummary(q).toLowerCase().includes(search)
+    );
+  }
+
+  toggleQueryDropdown() {
+    this.showQueryDropdown = !this.showQueryDropdown;
+    if (this.showQueryDropdown) {
+      this.querySearchText = '';
+      setTimeout(() => {
+        const input = document.getElementById('querySearchInput');
+        if (input) input.focus();
+      }, 50);
+    }
+  }
+
+  onQuerySearchBlur() {
+    setTimeout(() => {
+      this.showQueryDropdown = false;
+    }, 200);
+  }
+
+  selectQuery(id?: string) {
+    this.update({ queryId: id || undefined });
+    this.showQueryDropdown = false;
+    this.querySearchText = '';
   }
 
   getWidgetTypeLabel(type: string): string {

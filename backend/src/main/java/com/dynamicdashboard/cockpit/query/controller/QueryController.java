@@ -71,4 +71,9 @@ public class QueryController {
     public ResponseEntity<List<java.util.Map<String, Object>>> executeQueryData(@PathVariable UUID id, @RequestBody(required = false) List<com.dynamicdashboard.cockpit.query.application.dto.RuntimeQueryFilterDto> filters) {
         return ResponseEntity.ok(queryApplicationService.executeQueryData(id, filters));
     }
+
+    @PostMapping("/preview")
+    public ResponseEntity<List<java.util.Map<String, Object>>> previewDraftQuery(@RequestBody QueryRequestDto dto) {
+        return ResponseEntity.ok(queryApplicationService.previewDraftQuery(dto));
+    }
 }

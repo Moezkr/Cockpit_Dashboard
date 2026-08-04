@@ -40,7 +40,7 @@ export interface QueryTransformation {
   fieldId?: string;
   outputLabel?: string;
   formula?: string;
-  format?: 'year' | 'quarter' | 'month' | 'round';
+  format?: 'year' | 'quarter' | 'month';
   formatPattern?: string;
   replacementValue?: string;
   defaultValue?: string;

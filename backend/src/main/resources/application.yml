@@ -3,9 +3,9 @@ spring:
     name: cockpit-backend
 
   datasource:
-    url: ${COCKPIT_DB_URL:jdbc:postgresql://localhost:5433/cockpit_db}
-    username: ${COCKPIT_DB_USER:cockpit}
-    password: ${COCKPIT_DB_PASSWORD:cockpit}
+    url: ${COCKPIT_DB_URL:jdbc:postgresql://localhost:5450/cockpit}
+    username: ${COCKPIT_DB_USER:postgres}
+    password: ${COCKPIT_DB_PASSWORD:postgres}
     hikari:
       minimum-idle: 2
       maximum-pool-size: 16
@@ -28,7 +28,7 @@ spring:
     enabled: true
     schemas: cockpit
     default-schema: cockpit
-    locations: classpath:db/migration/cockpit,classpath:db/seeder/cockpit
+    locations: classpath:db/migration/cockpit
     baseline-on-migrate: true
     validate-on-migrate: false
     repair-on-migrate: true
@@ -65,18 +65,10 @@ cockpit:
   security:
     allowed-origins: ${COCKPIT_ALLOWED_ORIGINS:http://localhost:5173}
     required-audience: ${COCKPIT_JWT_AUDIENCE:cockpit-api}
-  external-connectors:
-    progescode-erp:
-      enabled: true
-      driver-class-name: org.postgresql.Driver
-      url: ${ERP_DB_URL:jdbc:postgresql://localhost:5433/erp_db}
-      username: ${ERP_DB_USER:cockpit}
-      password: ${ERP_DB_PASSWORD:cockpit}
-      hikari:
-        pool-name: ERP-HikariPool
-        maximum-pool-size: 10
-        minimum-idle: 2
-        connection-timeout: 20000
+
+vault:
+  uri: ${VAULT_URI:http://localhost:8200}
+  token: ${VAULT_TOKEN:root}
 
 logging:
   level:

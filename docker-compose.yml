@@ -1,18 +1,17 @@
-name: prestacode-local
+name: cockpit-local
 
 services:
   postgres:
     image: postgres:18-alpine
-    container_name: prestacode-postgres
+    container_name: local-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
     ports:
-      - "5432:5432"
+      - "5450:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - local_postgres_data:/var/lib/postgresql
       - ./backend/src/main/resources/db/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -20,14 +19,13 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - prestacode-net
+      - local-net
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: cockpit-dashboard-backend
-    container_name: prestacode-backend
+    container_name: local-backend
     restart: unless-stopped
     depends_on:
       postgres:
@@ -38,32 +36,45 @@ services:
       COCKPIT_DB_URL: jdbc:postgresql://postgres:5432/cockpit
       COCKPIT_DB_USER: postgres
       COCKPIT_DB_PASSWORD: postgres
-      ERP_DB_URL: jdbc:postgresql://postgres:5432/erp_db
-      ERP_DB_USER: postgres
-      ERP_DB_PASSWORD: postgres
       COCKPIT_ALLOWED_ORIGINS: "*"
       COCKPIT_JWT_ISSUER: "http://localhost:8081/realms/cockpit"
       COCKPIT_SERVER_PORT: 8080
+      VAULT_URI: "http://vault:8200"
+      VAULT_TOKEN: "root"
     networks:
-      - prestacode-net
+      - local-net
+
+  vault:
+    image: hashicorp/vault:1.15
+    container_name: local-vault
+    user: "0:0"
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: "root"
+      VAULT_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+    cap_add:
+      - IPC_LOCK
+    command: server -dev
+    networks:
+      - local-net
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    image: cockpit-dashboard-frontend
-    container_name: prestacode-frontend
+    container_name: local-frontend
     restart: unless-stopped
     depends_on:
       - backend
     ports:
       - "4200:80"
     networks:
-      - prestacode-net
+      - local-net
 
 networks:
-  prestacode-net:
+  local-net:
     driver: bridge
 
 volumes:
-  postgres_data:
+  local_postgres_data:

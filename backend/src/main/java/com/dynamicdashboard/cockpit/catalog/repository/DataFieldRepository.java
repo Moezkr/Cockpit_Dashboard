@@ -14,6 +14,8 @@ public interface DataFieldRepository extends JpaRepository<DataFieldEntity, UUID
 
     Optional<DataFieldEntity> findFirstByFieldKey(String fieldKey);
 
+    Optional<DataFieldEntity> findFirstByFieldLabel(String fieldLabel);
+
     default Optional<DataFieldEntity> findByFieldKey(String fieldKey) {
         return findFirstByFieldKey(fieldKey);
     }

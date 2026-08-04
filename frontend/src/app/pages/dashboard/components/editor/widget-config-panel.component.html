@@ -146,20 +146,83 @@
               ></textarea>
             </div>
 
-            <div *ngIf="widget.type !== 'text'" class="space-y-1 block">
-              <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
-                SOURCE DE DONNÉES (REQUÊTE)
-              </label>
-              <select
-                [ngModel]="widget.queryId || ''"
-                (ngModelChange)="update({ queryId: $event || undefined })"
-                class="h-8 w-full rounded border border-line-strong bg-white px-2 text-xs outline-none focus:border-brand"
+            <div *ngIf="widget.type !== 'text'" class="space-y-1 block relative">
+              <div class="flex items-center justify-between">
+                <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
+                  SOURCE DE DONNÉES (REQUÊTE)
+                </label>
+                <span *ngIf="widget.queryId" class="text-3xs text-brand font-medium">Liée</span>
+              </div>
+
+              <!-- Clickable Select Trigger -->
+              <div class="relative">
+                <button
+                  type="button"
+                  (click)="toggleQueryDropdown()"
+                  class="flex h-8 w-full items-center justify-between rounded border border-line-strong bg-white px-2.5 text-xs text-ink outline-none hover:border-brand focus:border-brand"
+                >
+                  <span class="truncate font-medium text-ink">
+                    {{ assignedQuery ? assignedQuery.name : '— Aucune —' }}
+                  </span>
+                  <span class="text-3xs text-ink-faint ml-1">▼</span>
+                </button>
+                <button
+                  *ngIf="widget.queryId"
+                  type="button"
+                  (mousedown)="selectQuery('')"
+                  class="absolute right-6 top-1/2 -translate-y-1/2 rounded p-0.5 text-ink-faint hover:bg-red-50 hover:text-negative text-xs cursor-pointer"
+                  title="Délier la requête"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <!-- Searchable Dropdown Popup -->
+              <div
+                *ngIf="showQueryDropdown"
+                class="absolute left-0 right-0 z-[100] mt-1 rounded-md border border-line-strong bg-white p-1.5 shadow-2xl dark:bg-slate-800 dark:border-slate-700"
               >
-                <option value="">— Aucune —</option>
-                <option *ngFor="let q of queries" [value]="q.id">
-                  {{ q.name }} · {{ getQuerySummary(q) }}
-                </option>
-              </select>
+                <!-- Search Input inside Dropdown (NO Search Icon) -->
+                <div class="mb-1.5">
+                  <input
+                    id="querySearchInput"
+                    type="text"
+                    [ngModel]="querySearchText"
+                    (ngModelChange)="querySearchText = $event"
+                    (blur)="onQuerySearchBlur()"
+                    placeholder="Rechercher une requête..."
+                    class="h-7 w-full rounded border border-line bg-surface-muted px-2 text-xs text-ink outline-none focus:border-brand focus:bg-white"
+                  />
+                </div>
+
+                <!-- Scrollable Query List -->
+                <div class="max-h-48 overflow-y-auto space-y-0.5">
+                  <div
+                    (mousedown)="selectQuery('')"
+                    class="flex items-center justify-between rounded px-2.5 py-1.5 text-xs text-ink-faint hover:bg-surface-muted dark:hover:bg-slate-700 cursor-pointer"
+                  >
+                    <span>— Aucune —</span>
+                    <span class="text-3xs text-ink-faint">Effacer</span>
+                  </div>
+
+                  <div
+                    *ngFor="let q of filteredQueries"
+                    (mousedown)="selectQuery(q.id)"
+                    class="flex flex-col rounded px-2.5 py-1.5 hover:bg-brand-soft hover:text-brand-strong dark:hover:bg-slate-700 cursor-pointer transition-colors"
+                    [ngClass]="{ 'bg-brand-soft font-semibold text-brand-strong': widget.queryId === q.id }"
+                  >
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="truncate font-medium">{{ q.name }}</span>
+                      <span *ngIf="widget.queryId === q.id" class="text-brand font-bold text-3xs ml-1">✓</span>
+                    </div>
+                    <span class="text-3xs opacity-75 truncate mt-0.5">{{ getQuerySummary(q) }}</span>
+                  </div>
+
+                  <div *ngIf="filteredQueries.length === 0" class="px-2.5 py-3 text-2xs text-ink-faint text-center">
+                    Aucune requête trouvée
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div *ngIf="widget.type === 'kpi'" class="space-y-1 block">

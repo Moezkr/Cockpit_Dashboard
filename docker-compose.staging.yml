@@ -6,16 +6,14 @@ services:
     container_name: staging-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: cockpit
     volumes:
       - staging_postgres_data:/var/lib/postgresql
-  
-  
       - ./backend/src/main/resources/db/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d cockpit"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -23,7 +21,7 @@ services:
       - staging-net
 
   backend:
-    image: ghcr.io/moezkr/cockpit_dashboard-backend:staging
+    image: ghcr.io/moezkr/cockpit-dashboard-backend:staging
     container_name: staging-backend
     restart: unless-stopped
     depends_on:
@@ -31,25 +29,28 @@ services:
         condition: service_healthy
     environment:
       COCKPIT_DB_URL: jdbc:postgresql://postgres:5432/cockpit
-      COCKPIT_DB_USER: postgres
-      COCKPIT_DB_PASSWORD: postgres
-      ERP_DB_URL: jdbc:postgresql://postgres:5432/erp_db
-      ERP_DB_USER: postgres
-      ERP_DB_PASSWORD: postgres
-      COCKPIT_ALLOWED_ORIGINS: "*"
-      COCKPIT_JWT_ISSUER: "http://localhost:8081/realms/cockpit"
+      COCKPIT_DB_USER: ${POSTGRES_USER:-postgres}
+      COCKPIT_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      COCKPIT_ALLOWED_ORIGINS: ${COCKPIT_ALLOWED_ORIGINS:-https://staging.moezkr.site}
+      COCKPIT_JWT_ISSUER: ${COCKPIT_JWT_ISSUER:-http://localhost:8081/realms/cockpit}
       COCKPIT_SERVER_PORT: 8080
+      VAULT_URI: ${VAULT_URI:-http://host.docker.internal:8200}
+      VAULT_TOKEN: ${VAULT_TOKEN:-root}
+    ports:
+      - "127.0.0.1:8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - staging-net
 
   frontend:
-    image: ghcr.io/moezkr/cockpit_dashboard-frontend:staging
+    image: ghcr.io/moezkr/cockpit-dashboard-frontend:staging
     container_name: staging-frontend
     restart: unless-stopped
     depends_on:
       - backend
     ports:
-      - "4200:80"
+      - "127.0.0.1:4200:80"
     networks:
       - staging-net
 

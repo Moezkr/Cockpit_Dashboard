@@ -7,8 +7,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  FRONTEND_IMAGE_NAME: moezkr/cockpit_dashboard-frontend
-  BACKEND_IMAGE_NAME: moezkr/cockpit_dashboard-backend
+  FRONTEND_IMAGE_NAME: moezkr/cockpit-dashboard-frontend
+  BACKEND_IMAGE_NAME: moezkr/cockpit-dashboard-backend
 
 jobs:
   promote-images:
@@ -78,5 +78,6 @@ jobs:
             
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
+            export VAULT_TOKEN="${{ secrets.VAULT_TOKEN }}"
             docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            VAULT_TOKEN="${{ secrets.VAULT_TOKEN }}" docker compose -f docker-compose.prod.yml up -d --remove-orphans

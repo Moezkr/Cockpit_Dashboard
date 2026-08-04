@@ -1,9 +1,8 @@
 package com.dynamicdashboard.cockpit.catalog.domain;
 
+import com.dynamicdashboard.cockpit.datasource.domain.DbConnectionEntity;
 import com.dynamicdashboard.cockpit.shared.persistence.AuditableEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,4 +26,8 @@ public class DataSourceEntity extends AuditableEntity {
 
     @Column(name = "active", nullable = false)
     private boolean active;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "db_connection_id")
+    private DbConnectionEntity dbConnection;
 }

@@ -1,0 +1,51 @@
+name: Provision VPS
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - prod
+
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ansible
+        run: pip install ansible
+
+      - name: Write SSH private key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Write Ansible inventory
+        run: |
+          echo "[vps]" > ansible/inventory.ini
+          echo "cockpit-vps ansible_host=${{ secrets.VPS_HOST }} ansible_user=${{ secrets.VPS_USERNAME }} ansible_ssh_private_key_file=~/.ssh/id_rsa" >> ansible/inventory.ini
+
+      - name: Run Ansible Playbook
+        run: |
+          ansible-playbook ansible/deploy.yml \
+            -i ansible/inventory.ini \
+            --extra-vars "domain_name=${{ secrets.DOMAIN_NAME }}" \
+            --extra-vars "certbot_email=${{ secrets.CERTBOT_EMAIL }}" \
+            --extra-vars "frontend_port=${{ secrets.FRONTEND_PORT }}" \
+            --extra-vars "vault_token=${{ secrets.VAULT_TOKEN }}" \
+            --extra-vars "vault_addr=${{ secrets.VAULT_ADDR }}" \
+            --extra-vars "wg_dashboard_private_key=${{ secrets.WG_DASHBOARD_PRIVATE_KEY }}" \
+            --extra-vars "wg_external_peers=${{ secrets.WG_EXTERNAL_PEERS }}" \
+            --extra-vars "github_actor=${{ github.actor }}" \
+            --extra-vars "github_token=${{ secrets.GITHUB_TOKEN }}" \
+            --extra-vars "github_repository=${{ github.repository }}" \
+            --extra-vars "deploy_branch=${{ github.event.inputs.environment == 'prod' && 'main' || 'staging' }}" \
+            --extra-vars "compose_file=${{ github.event.inputs.environment == 'prod' && 'docker-compose.prod.yml' || 'docker-compose.staging.yml' }}"

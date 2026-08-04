@@ -94,6 +94,60 @@
 
               <div *ngIf="step === 1" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
                 <div>
+                  <h3 class="text-sm font-semibold text-ink dark:text-slate-200">Sélectionnez les connexions</h3>
+                  <p class="text-xs text-ink-faint dark:text-slate-400">Choisissez les bases de données (connexions) que vous souhaitez explorer.</p>
+                </div>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 mt-4">
+                  <div
+                    *ngFor="let conn of availableConnections"
+                    class="group relative flex cursor-pointer items-center gap-3 rounded-lg border p-3.5 transition-colors"
+                    [ngClass]="{
+                      'border-brand bg-brand-soft/30 dark:border-brand-soft dark:bg-brand/20': selectedConnections.includes(conn),
+                      'border-line dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-line-strong dark:hover:border-slate-700': !selectedConnections.includes(conn)
+                    }"
+                    (click)="toggleConnection(conn)"
+                  >
+                    <app-svg-icon
+                      name="Database"
+                      class="h-5 w-5 shrink-0 transition-colors"
+                      [ngClass]="{
+                        'text-brand dark:text-brand-soft': selectedConnections.includes(conn),
+                        'text-ink-soft dark:text-slate-400 group-hover:text-brand dark:group-hover:text-brand-soft': !selectedConnections.includes(conn)
+                      }"
+                    ></app-svg-icon>
+
+                    <div class="flex-1 min-w-0 pr-5">
+                      <div class="font-medium text-ink dark:text-slate-200 text-sm truncate">
+                        {{ conn }}
+                      </div>
+                      <div class="mt-0.5 flex items-center gap-1.5">
+                        <span class="inline-flex items-center gap-1 rounded bg-surface-sunken dark:bg-slate-800 px-2 py-0.5 text-2xs font-normal text-ink-faint dark:text-slate-400">
+                          <app-svg-icon name="Layers" class="h-3 w-3"></app-svg-icon>
+                          {{ getTableCountForConnection(conn) }} table{{ getTableCountForConnection(conn) > 1 ? 's' : '' }}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div
+                      class="absolute top-3.5 right-3.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors"
+                      [ngClass]="{
+                        'border-brand bg-brand text-white dark:border-brand-soft dark:bg-brand-soft': selectedConnections.includes(conn),
+                        'border-line dark:border-slate-700 bg-surface-muted dark:bg-slate-800 text-transparent': !selectedConnections.includes(conn)
+                      }"
+                    >
+                      <app-svg-icon name="Check" class="h-3 w-3 stroke-[2.5]"></app-svg-icon>
+                    </div>
+                  </div>
+
+                  <div *ngIf="availableConnections.length === 0" class="col-span-full py-8 text-center">
+                    <p class="text-xs text-ink-faint dark:text-slate-400">Aucune connexion disponible.</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Étape 2 : Tables -->
+              <div *ngIf="step === 2" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
+                <div>
                   <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
                     Sélectionnez une ou plusieurs sources
                   </label>
@@ -120,7 +174,7 @@
 
                 <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <button
-                    *ngFor="let source of sources"
+                    *ngFor="let source of filteredSources"
                     type="button"
                     (click)="toggleSource(source.id)"
                     class="rounded-md border p-2.5 text-left transition-colors cursor-pointer"
@@ -141,7 +195,8 @@
                 </div>
               </div>
 
-              <div *ngIf="step === 2" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
+                <!-- Étape 3 : Relations -->
+              <div *ngIf="step === 3" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
                 <div class="flex items-start justify-between gap-3">
                   <div>
                     <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
@@ -237,7 +292,8 @@
                 </div>
               </div>
 
-              <div *ngIf="step === 3" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
+                <!-- Étape 4 : Champs -->
+              <div *ngIf="step === 4" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
                 <div>
                   <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
                     Champs à inclure
@@ -299,7 +355,8 @@
                 </div>
               </div>
 
-              <div *ngIf="step === 4" class="space-y-2" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
+              <!-- Étape 5 : Filtres -->
+              <div *ngIf="step === 5" class="space-y-2" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
                 <div class="flex items-start justify-between">
                   <div>
                     <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
@@ -366,7 +423,8 @@
                 </div>
               </div>
 
-              <div *ngIf="step === 5" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
+                <!-- Étape 6 : Transformations -->
+              <div *ngIf="step === 6" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
                 <div class="flex items-start justify-between">
                   <div>
                     <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
@@ -441,7 +499,6 @@
                       <option value="year">Extraire l'année</option>
                       <option value="quarter">Extraire le trimestre</option>
                       <option value="month">Extraire le mois</option>
-                      <option value="round">Arrondir le nombre</option>
                     </select>
                   </div>
 
@@ -499,7 +556,8 @@
                 </div>
               </div>
 
-              <div *ngIf="step === 6" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
+                <!-- Étape 7 : Regroupement (Group By) -->
+              <div *ngIf="step === 7" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
                 <div>
                   <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
                     Regroupement et agrégation
@@ -529,6 +587,7 @@
                     <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">Agrégation</label>
                     <select
                       [(ngModel)]="query.aggregation"
+                      (ngModelChange)="fetchDraftPreview()"
                       class="h-7 w-full rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
                     >
                       <option value="none">Aucune (somme par défaut visuelle)</option>
@@ -545,6 +604,7 @@
                     <select
                       [disabled]="query.aggregation === 'none'"
                       [(ngModel)]="query.aggregationFieldId"
+                      (ngModelChange)="fetchDraftPreview()"
                       class="h-7 w-full rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none disabled:opacity-50"
                     >
                       <option value="">—</option>
@@ -554,7 +614,8 @@
                 </div>
               </div>
 
-              <div *ngIf="step === 7" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
+                <!-- Étape 8 : Tri (Order By) -->
+              <div *ngIf="step === 8" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
                 <div>
                   <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">Tri et limite</label>
                   <p class="text-2xs text-ink-faint dark:text-slate-400">
@@ -571,6 +632,7 @@
                       class="h-7 w-full rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
                     >
                       <option value="">— Aucun —</option>
+                      <option *ngIf="query.aggregation && query.aggregation !== 'none'" value="__agg_value__">⬛ Valeur agrégée</option>
                       <option *ngFor="let field of catalogFields" [value]="field.id">{{ field.sourceLabel }} · {{ field.label }}</option>
                     </select>
                   </div>
@@ -601,7 +663,8 @@
                 </div>
               </div>
 
-              <div *ngIf="step === 8" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
+                <!-- Étape 9 : Valider & Prévisualiser -->
+              <div *ngIf="step === 9" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
                 <div class="rounded-md border border-line dark:border-slate-800 bg-surface-muted dark:bg-slate-800/60 p-3 space-y-1">
                   <h3 class="text-sm font-semibold text-ink dark:text-white">
                     {{ query.name || 'Requête sans nom' }}

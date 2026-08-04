@@ -319,7 +319,6 @@ export class DashboardEditorComponent implements OnInit, OnDestroy {
 
   navigateBack() {
     if (this.draft) {
-      this.save();
       this.router.navigate(['/tableau', this.draft.id]);
     } else {
       this.router.navigate(['/']);

@@ -35,7 +35,7 @@ export function dataGridVisibleColumns(
   config?: DataGridConfig
 ): string[] {
   const available = dataGridAvailableColumns(rows);
-  if (!config?.visibleColumns) return available;
+  if (!config?.visibleColumns || config.visibleColumns.length === 0) return available;
   return config.visibleColumns.filter((column) => available.includes(column));
 }
 

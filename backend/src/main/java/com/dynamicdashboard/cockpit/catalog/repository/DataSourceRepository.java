@@ -8,4 +8,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface DataSourceRepository extends JpaRepository<DataSourceEntity, UUID> {
 
     Optional<DataSourceEntity> findBySourceKey(String sourceKey);
+
+    Optional<DataSourceEntity> findFirstBySourceLabel(String sourceLabel);
+
+    long countByDbConnectionId(UUID dbConnectionId);
+
+    java.util.List<DataSourceEntity> findByDbConnectionId(UUID dbConnectionId);
 }

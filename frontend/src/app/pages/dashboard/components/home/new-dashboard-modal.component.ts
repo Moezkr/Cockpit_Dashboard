@@ -116,6 +116,7 @@ export class NewDashboardModalComponent implements OnChanges {
   description: string = '';
   selectedColor: string = COLOR_PALETTE[0];
   selectedTemplate: string = 'blank';
+  isSubmitting: boolean = false;
 
   colors = COLOR_PALETTE;
 
@@ -157,14 +158,19 @@ export class NewDashboardModalComponent implements OnChanges {
       this.description = '';
       this.selectedColor = COLOR_PALETTE[0];
       this.selectedTemplate = 'blank';
+      this.isSubmitting = false;
     }
   }
 
   handleClose() {
+    if (this.isSubmitting) return;
     this.onClose.emit();
   }
 
   submit() {
+    if (this.isSubmitting) return;
+    this.isSubmitting = true;
+
     let widgets: any[] = [];
     if (this.selectedTemplate !== 'blank') {
       const tmpl = this.dashboardService.dashboards.find((d) => d.id === this.selectedTemplate);
@@ -173,14 +179,21 @@ export class NewDashboardModalComponent implements OnChanges {
       }
     }
 
-    const created = this.dashboardService.createDashboard({
+    this.dashboardService.createDashboard({
       name: this.name.trim() || 'Nouveau tableau de bord',
       description: this.description.trim(),
       color: this.selectedColor,
       widgets
+    }).subscribe({
+      next: (created) => {
+        this.isSubmitting = false;
+        this.onClose.emit();
+        this.router.navigate(['/editeur', created.id]);
+      },
+      error: () => {
+        this.isSubmitting = false;
+        this.onClose.emit();
+      }
     });
-
-    this.onClose.emit();
-    this.router.navigate(['/editeur', created.id]);
   }
 }

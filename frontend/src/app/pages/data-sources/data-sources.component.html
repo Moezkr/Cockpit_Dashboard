@@ -1,0 +1,115 @@
+<div class="mx-auto max-w-[1400px] p-5">
+  <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand">
+        <app-svg-icon name="Database" class="h-5 w-5"></app-svg-icon>
+      </div>
+      <div>
+        <h1 class="text-lg font-semibold text-ink">Sources de données</h1>
+        <p class="text-xs text-ink-faint mt-0.5">Configurez des connexions en lecture seule pour alimenter les requêtes et tableaux de bord, comme dans Grafana.</p>
+      </div>
+    </div>
+    <div class="flex gap-2 shrink-0 self-start mt-1 sm:mt-0">
+      <app-button variant="secondary" size="md" (onClick)="goToQueries()">
+        <app-svg-icon name="Link2" class="h-4 w-4 mr-1.5"></app-svg-icon>
+        Créer une requête
+      </app-button>
+      <app-button variant="primary" size="md" (onClick)="openEditor()">
+        <app-svg-icon name="Plus" class="h-4 w-4 mr-1.5"></app-svg-icon>
+        Ajouter une source
+      </app-button>
+    </div>
+  </div>
+
+  <!-- SECTION 1: CONNEXIONS CONFIGURÉES (ALWAYS DISPLAYED STABLE PROMPT) -->
+  <section class="mb-6">
+    <div class="mb-3 flex items-center justify-between">
+      <div>
+        <h2 class="text-sm font-semibold text-ink">Connexions configurées</h2>
+        <p class="text-2xs text-ink-faint">Les tests et les résultats affichés utilisent des données simulées dans cette version.</p>
+      </div>
+      <app-badge tone="brand">{{ databases.length }} connexion{{ databases.length > 1 ? 's' : '' }}</app-badge>
+    </div>
+    
+    <div class="flex flex-col items-center justify-center rounded-lg border border-dashed border-line-strong bg-surface-muted p-10 text-center">
+        <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-surface-sunken text-ink-soft shadow-sm border border-line">
+          <app-svg-icon name="Database" class="h-6 w-6"></app-svg-icon>
+        </div>
+        <h3 class="mb-1 text-sm font-semibold text-ink">Aucune base externe configurée</h3>
+        <p class="mb-4 max-w-sm text-xs text-ink-faint">Ajoutez PostgreSQL, MySQL ou SQL Server pour les rendre disponibles dans les requêtes.</p>
+        <app-button variant="primary" (onClick)="openEditor()">
+            <app-svg-icon name="Plus" class="h-3.5 w-3.5"></app-svg-icon>
+            Ajouter une source
+        </app-button>
+    </div>
+  </section>
+
+  <!-- SECTION 2: SOURCES APPLICATIVES DISPONIBLES (DYNAMIC ADDED DATABASE CARDS) -->
+  <section class="mb-6">
+    <div class="mb-3 flex items-center justify-between">
+      <div>
+        <h2 class="text-sm font-semibold text-ink">Sources applicatives disponibles</h2>
+        <p class="text-2xs text-ink-faint">Sources métier fournies par les applications hôtes, disponibles par défaut.</p>
+      </div>
+      <app-badge tone="brand">{{ databases.length }} source{{ databases.length > 1 ? 's' : '' }}</app-badge>
+    </div>
+
+    <div *ngIf="databases.length === 0" class="flex flex-col items-center justify-center rounded-lg border border-dashed border-line-strong bg-surface-muted p-8 text-center">
+      <app-svg-icon name="Database" class="mb-2 h-6 w-6 text-ink-soft"></app-svg-icon>
+      <p class="text-xs text-ink-faint">Aucune source connectée disponible pour le moment. Cliquez sur "Ajouter une source" ci-dessus pour connecter votre base de données.</p>
+    </div>
+
+    <div *ngIf="databases.length > 0" class="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <article *ngFor="let db of databases" class="rounded-lg border border-line bg-white p-4 shadow-card flex items-center justify-between hover:border-brand/30 transition-colors">
+        <div class="flex items-start gap-3 min-w-0 flex-1">
+          <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand font-bold">
+            <app-svg-icon name="Database" class="h-5 w-5"></app-svg-icon>
+          </span>
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="text-sm font-semibold text-ink truncate">{{ db.connectionName }}</h3>
+              <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-2xs font-medium text-emerald-700">Actif</span>
+              <span *ngIf="db.useSsl" class="flex items-center gap-1 text-emerald-600 font-medium text-2xs ml-1">
+                <app-svg-icon name="Shield" class="h-3 w-3"></app-svg-icon> SSL
+              </span>
+              <span *ngIf="!db.useSsl" class="flex items-center gap-1 text-negative font-medium opacity-80 text-2xs ml-1">
+                <app-svg-icon name="Shield" class="h-3 w-3"></app-svg-icon> <span class="line-through">SSL</span>
+              </span>
+              <span class="flex items-center gap-1 text-amber-500 font-medium text-2xs ml-1">
+                <app-svg-icon name="Lock" class="h-3 w-3"></app-svg-icon> + WireGuard
+              </span>
+            </div>
+            <p class="text-xs text-ink-soft mt-0.5 font-mono truncate">{{ db.dbHost }}:{{ db.dbPort }} / {{ db.dbName }}</p>
+            <div class="mt-2 flex flex-wrap items-center gap-3 text-2xs text-ink-faint">
+              <app-badge [tone]="db.dbType === 'POSTGRESQL' ? 'brand' : (db.dbType === 'MYSQL' ? 'caution' : 'neutral')">
+                {{ db.dbType }}
+              </app-badge>
+              <span>User: <strong class="text-ink">{{ db.dbUsername }}</strong></span>
+              <span *ngIf="db.tableCount !== undefined" class="text-brand font-semibold">
+                {{ db.tableCount }} table{{ db.tableCount > 1 ? 's' : '' }} extraite{{ db.tableCount > 1 ? 's' : '' }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-1 ml-3 shrink-0">
+          <button (click)="openEditor(db)" class="p-1.5 text-ink-faint hover:text-brand hover:bg-surface-muted rounded-md transition-colors" title="Modifier la source">
+            <app-svg-icon name="Pencil" class="h-4 w-4"></app-svg-icon>
+          </button>
+          <button (click)="promptDelete(db)" class="p-1.5 text-ink-faint hover:text-negative hover:bg-negative-soft rounded-md transition-colors" title="Supprimer la source">
+            <app-svg-icon name="Trash2" class="h-4 w-4"></app-svg-icon>
+          </button>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <app-data-source-modal [open]="showEditor" [source]="selectedSource" (onClose)="onModalClose()"></app-data-source-modal>
+
+  <app-confirm-modal
+    [open]="showDeleteModal"
+    title="Supprimer la source de données"
+    [message]="'Voulez-vous vraiment supprimer la connexion ' + (dbToDelete?.connectionName || '') + ' ? Toutes les tables et requêtes associées seront retirées.'"
+    (onClose)="showDeleteModal = false"
+    (onConfirm)="confirmDelete()"
+  ></app-confirm-modal>
+</div>

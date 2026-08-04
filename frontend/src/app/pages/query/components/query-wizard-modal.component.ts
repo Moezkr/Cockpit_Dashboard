@@ -11,7 +11,8 @@ import { LIVE_QUERY_DATA } from '@pages/query/services/query-execution.service';
 
 const STEPS = [
   'Nom & description',
-  'Sources',
+  'Connexions',
+  'Tables',
   'Relations',
   'Champs',
   'Filtres',
@@ -71,6 +72,39 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
   relationError: string = '';
   query: DataQuery = this.createEmptyQuery();
 
+  selectedConnections: string[] = [];
+
+  get availableConnections(): string[] {
+    const apps = this.sources.map(s => s.app);
+    return [...new Set(apps)].filter(Boolean) as string[];
+  }
+
+  get filteredSources(): any[] {
+    if (this.selectedConnections.length === 0) return this.sources;
+    return this.sources.filter(s => this.selectedConnections.includes(s.app));
+  }
+
+  getTableCountForConnection(conn: string): number {
+    if (!this.sources || !Array.isArray(this.sources)) return 0;
+    return this.sources.filter(s => s.app === conn).length;
+  }
+
+  toggleConnection(conn: string) {
+    const isSelected = this.selectedConnections.includes(conn);
+    this.selectedConnections = isSelected 
+      ? this.selectedConnections.filter(c => c !== conn)
+      : [...this.selectedConnections, conn];
+      
+    // When removing a connection, remove all its tables from the query
+    const tablesToRemove = isSelected ? this.sources.filter(s => s.app === conn) : [];
+    tablesToRemove.forEach(t => {
+      const targetId = t.id || t.key;
+      if (this.query.sourceIds.includes(targetId)) {
+        this.toggleSource(targetId);
+      }
+    });
+  }
+
   private sourcesSub?: Subscription;
 
   constructor(private queryService: QueryService, private cdr: ChangeDetectorRef) {}
@@ -82,6 +116,10 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
         this.sources = srcs;
         if (this.open && this.queryToEdit) {
           this.query = this.normalizeQueryForWizard(this.queryToEdit);
+          const selectedApps = this.sources.filter(s => this.query.sourceIds.includes(s.id || s.key)).map(s => s.app);
+          this.selectedConnections = [...new Set(selectedApps)].filter(Boolean) as string[];
+        } else {
+          this.selectedConnections = [];
         }
         this.cdr.markForCheck();
       }
@@ -108,6 +146,7 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       }
       this.relationError = '';
       this.slideDirection = 'right';
+      this.fetchDraftPreview();
     }
   }
 
@@ -204,6 +243,16 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       });
     }
 
+    if (q.transformations) {
+      q.transformations = q.transformations.map((t: any) => {
+        let fld = resolveFieldId(t.fieldId, q.sourceIds);
+        return {
+          ...t,
+          fieldId: fld
+        };
+      });
+    }
+
     if (q.selectedFieldIds) {
       q.selectedFieldIds = q.selectedFieldIds.map((id: string) => resolveFieldId(id, q.sourceIds));
     }
@@ -227,6 +276,23 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
     if (nextStep === this.step) return;
     this.slideDirection = nextStep > this.step ? 'right' : 'left';
     this.step = nextStep;
+    if (this.step >= 6) {
+      this.fetchDraftPreview();
+    }
+  }
+
+  fetchDraftPreview() {
+    if (!this.query || !this.query.sourceIds || this.query.sourceIds.length === 0) return;
+    this.queryService.previewQuery(this.query).subscribe({
+      next: (rows) => {
+        if (rows && Array.isArray(rows)) {
+          LIVE_QUERY_DATA[this.query.id] = rows;
+          this.cdr.markForCheck();
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err) => console.warn('Draft query preview failed:', err)
+    });
   }
 
   getSourceFields(sourceId: string): any[] {
@@ -304,15 +370,37 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   getLivePreviewColumns(): { id: string; label: string; key: string }[] {
+    if (this.query.aggregation && this.query.aggregation !== 'none') {
+      return [
+        { id: 'label', key: 'label', label: 'GROUPE (LABEL)' },
+        { id: 'value', key: 'value', label: 'VALEUR AGRÉGÉE' }
+      ];
+    }
+
     if (this.query.selectedFieldIds && this.query.selectedFieldIds.length > 0) {
-      return this.query.selectedFieldIds.map((id) => {
+      // For transformations like rename, we should ideally use the outputLabel if it exists.
+      // But for simplicity, we just check if it's renamed.
+      const columns = this.query.selectedFieldIds.map((id) => {
         const f = this.catalogFields.find((field) => field.id === id);
+        let colLabel = f ? `${(f.sourceLabel || '').toUpperCase()} · ${(f.label || '').toUpperCase()}` : id.toUpperCase();
+        let colKey = f ? (f.key || f.fieldKey || id) : id;
+        
+        // Handle Rename Transformation for preview columns
+        if (this.query.transformations && this.query.transformations.length > 0) {
+          const rename = this.query.transformations.find(t => t.type === 'rename' && t.fieldId === id);
+          if (rename && rename.outputLabel) {
+            colLabel = rename.outputLabel.toUpperCase();
+            colKey = rename.outputLabel; // For the getCellValue lookup if we transformed the row
+          }
+        }
+        
         return {
           id,
-          key: f ? (f.key || f.fieldKey || id) : id,
-          label: f ? `${(f.sourceLabel || '').toUpperCase()} · ${(f.label || '').toUpperCase()}` : id.toUpperCase()
+          key: colKey,
+          label: colLabel
         };
       });
+      return columns;
     }
     const realRows = LIVE_QUERY_DATA[this.query.id];
     if (realRows && realRows.length > 0) {
@@ -331,37 +419,124 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
     if (row[colObj.id] !== undefined && row[colObj.id] !== null) return row[colObj.id];
 
     const keyLower = (colObj.key || '').toLowerCase();
-    const foundKey = Object.keys(row).find((k) => k.toLowerCase() === keyLower || k.toLowerCase().includes(keyLower));
+    const foundKey = Object.keys(row).find((k) => {
+      const rowKeyLower = k.toLowerCase();
+      return rowKeyLower === keyLower || 
+             keyLower.endsWith('.' + rowKeyLower) || 
+             rowKeyLower.includes(keyLower) || 
+             keyLower.includes(rowKeyLower);
+    });
     if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) {
       return row[foundKey];
     }
 
-    const values = Object.values(row);
-    if (colIndex < values.length && values[colIndex] !== undefined && values[colIndex] !== null) {
-      return values[colIndex];
-    }
     return '—';
+  }
+
+  private getExactRowKey(row: Record<string, any>, colKey: string, fieldId?: string): string | undefined {
+    let exactKey = Object.keys(row).find(k => k.toLowerCase() === colKey.toLowerCase() || k.endsWith('.' + colKey.toLowerCase()) || k.endsWith(colKey));
+    if (!exactKey && row['label'] !== undefined && fieldId && this.query.groupByFieldIds?.includes(fieldId)) {
+      return 'label';
+    }
+    return exactKey;
+  }
+
+  private applyRenameTransform(rows: Record<string, any>[], colKey: string, outLabel: string, fieldId: string): Record<string, any>[] {
+    return rows.map(r => {
+      const exactKey = this.getExactRowKey(r, colKey, fieldId);
+      if (exactKey && r[exactKey] !== undefined) {
+        r[outLabel] = r[exactKey];
+      }
+      return r;
+    });
+  }
+
+  private applyFormatTransform(rows: Record<string, any>[], colKey: string, formatStr: string, fieldId: string): Record<string, any>[] {
+    return rows.map(r => {
+      const exactKey = this.getExactRowKey(r, colKey, fieldId);
+      if (exactKey && r[exactKey] !== undefined) {
+        const d = new Date(r[exactKey]);
+        if (!isNaN(d.getTime())) {
+          if (formatStr === 'year') {
+            r[exactKey] = d.getFullYear().toString();
+          } else if (formatStr === 'month') {
+            r[exactKey] = (d.getMonth() + 1).toString().padStart(2, '0');
+          }
+        }
+      }
+      return r;
+    });
+  }
+
+  private applyFilterTransform(rows: Record<string, any>[], colKey: string, op: string, filterVal: string, fieldId: string): Record<string, any>[] {
+    return rows.filter(r => {
+      const exactKey = this.getExactRowKey(r, colKey, fieldId);
+      if (!exactKey || r[exactKey] === undefined) return true;
+      
+      const cellVal = r[exactKey];
+      switch (op) {
+        case 'eq': return String(cellVal) === String(filterVal);
+        case 'neq': return String(cellVal) !== String(filterVal);
+        case 'gt': return Number(cellVal) > Number(filterVal);
+        case 'lt': return Number(cellVal) < Number(filterVal);
+        case 'contains': return String(cellVal).toLowerCase().includes(String(filterVal).toLowerCase());
+        default: return true;
+      }
+    });
   }
 
   getLivePreviewRows(): Record<string, any>[] {
     const realRows = LIVE_QUERY_DATA[this.query.id];
+    let rows: Record<string, any>[] = [];
     if (realRows && Array.isArray(realRows) && realRows.length > 0) {
-      return realRows;
+      rows = realRows.map(r => ({ ...r }));
     }
-    return [];
+
+    if (!this.query.transformations?.length || (this.query.aggregation && this.query.aggregation !== 'none')) {
+      return rows;
+    }
+
+    for (const tr of this.query.transformations) {
+      if (!tr.fieldId) continue;
+      
+      const f = this.catalogFields.find(cf => cf.id === tr.fieldId);
+      if (!f) continue;
+      
+      const colKey = f.key || f.fieldKey || f.id;
+
+      switch (tr.type) {
+        case 'rename':
+          if (tr.outputLabel) rows = this.applyRenameTransform(rows, colKey, tr.outputLabel, tr.fieldId);
+          break;
+        case 'format':
+          if (tr.format) rows = this.applyFormatTransform(rows, colKey, tr.format, tr.fieldId);
+          break;
+        case 'filterRows':
+          if (tr.operator && tr.value !== undefined) rows = this.applyFilterTransform(rows, colKey, tr.operator, tr.value, tr.fieldId);
+          break;
+      }
+    }
+    return rows;
   }
 
   toggleSource(idOrKey: any) {
-    const targetKey = typeof idOrKey === 'string' ? idOrKey : (idOrKey.id || idOrKey.key);
+    const targetKey = typeof idOrKey === 'string' ? idOrKey : (idOrKey?.id || idOrKey?.key);
     const src = this.getSource(targetKey);
-    const sid = src ? (src.id || src.key) : targetKey;
-    const skey = src ? (src.key || src.id) : targetKey;
+    const sid = src?.id || targetKey;
+    const skey = src?.key || targetKey;
 
-    if (this.query.sourceIds.includes(sid) || this.query.sourceIds.includes(skey)) {
-      this.query.sourceIds = this.query.sourceIds.filter((s) => s !== sid && s !== skey);
-    } else {
-      this.query.sourceIds = [...this.query.sourceIds, sid];
-    }
+    const isSelected = this.query.sourceIds.includes(sid) || this.query.sourceIds.includes(skey);
+    
+    this.query.sourceIds = isSelected 
+      ? this.query.sourceIds.filter(s => s !== sid && s !== skey)
+      : [...this.query.sourceIds, sid];
+      
+    const removedFieldIds = isSelected ? (src?.fields?.map((f: any) => f.id || f.key || f.fieldKey) || []) : [];
+    
+    this.query.selectedFieldIds = (this.query.selectedFieldIds || []).filter(id => !removedFieldIds.includes(id));
+    this.query.groupByFieldIds = (this.query.groupByFieldIds || []).filter(id => !removedFieldIds.includes(id));
+    this.query.aggregationFieldId = removedFieldIds.includes(this.query.aggregationFieldId!) ? '' : this.query.aggregationFieldId;
+    this.query.joins = (this.query.joins || []).filter(j => !isSelected || (j.leftSourceId !== sid && j.rightSourceId !== sid && j.leftSourceId !== skey && j.rightSourceId !== skey));
   }
 
   toggleField(fieldId: string) {
@@ -478,10 +653,12 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       fieldId: this.catalogFields.length ? this.catalogFields[0].id : '',
       outputLabel: ''
     });
+    this.fetchDraftPreview();
   }
 
   deleteTransformation(id: string) {
     this.query.transformations = this.query.transformations.filter((t) => t.id !== id);
+    this.fetchDraftPreview();
   }
 
   toggleGroupBy(fieldId: string) {
@@ -490,6 +667,7 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
     } else {
       this.query.groupByFieldIds = [...this.query.groupByFieldIds, fieldId];
     }
+    this.fetchDraftPreview();
   }
 
   setSortField(fieldId: string) {
@@ -511,16 +689,22 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
 
   get canProceed(): boolean {
     if (this.step === 0) return this.query.name.trim().length > 0;
-    if (this.step === 1) return this.query.sourceIds.length > 0;
-    if (this.step === 3) return this.query.selectedFieldIds.length > 0;
+    if (this.step === 1) return this.selectedConnections.length > 0;
+    if (this.step === 2) return this.query.sourceIds.length > 0;
+    if (this.step === 4) return this.query.selectedFieldIds.length > 0;
     return true;
   }
 
+  isSubmitting: boolean = false;
+
   handleClose() {
+    if (this.isSubmitting) return;
     this.onClose.emit();
   }
 
   submit() {
+    if (this.isSubmitting) return;
+    this.isSubmitting = true;
     this.onSave.emit(this.query);
     this.onClose.emit();
   }

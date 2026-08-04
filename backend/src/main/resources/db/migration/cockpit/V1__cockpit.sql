@@ -95,6 +95,24 @@ CREATE TABLE IF NOT EXISTS cockpit.user_group_membership (
     CONSTRAINT ck_group_membership_role CHECK (membership_role IN ('OWNER', 'ADMIN', 'MEMBER', 'READER'))
 );
 
+CREATE TABLE IF NOT EXISTS cockpit.db_connection (
+    id UUID PRIMARY KEY,
+    version BIGINT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    created_by VARCHAR(100) NOT NULL,
+    updated_by VARCHAR(100) NOT NULL,
+    connection_name VARCHAR(120) NOT NULL,
+    db_type VARCHAR(40) NOT NULL,
+    db_host VARCHAR(255) NOT NULL,
+    db_port INTEGER NOT NULL,
+    db_name VARCHAR(120) NOT NULL,
+    db_username VARCHAR(120) NOT NULL,
+    use_ssl BOOLEAN NOT NULL DEFAULT FALSE,
+    vault_secret_key VARCHAR(255) NOT NULL,
+    CONSTRAINT uk_db_connection_name UNIQUE (connection_name)
+);
+
 CREATE TABLE IF NOT EXISTS cockpit.data_source (
     id UUID PRIMARY KEY,
     version BIGINT NOT NULL,
@@ -106,8 +124,10 @@ CREATE TABLE IF NOT EXISTS cockpit.data_source (
     source_label VARCHAR(160) NOT NULL,
     source_description VARCHAR(400),
     host_application VARCHAR(40) NOT NULL,
+    db_connection_id UUID,
     active BOOLEAN NOT NULL DEFAULT TRUE,
-    CONSTRAINT uk_data_source_key UNIQUE (source_key)
+    CONSTRAINT uk_data_source_key UNIQUE (source_key),
+    CONSTRAINT fk_data_source_db_connection FOREIGN KEY (db_connection_id) REFERENCES cockpit.db_connection(id)
 );
 
 CREATE TABLE IF NOT EXISTS cockpit.data_field (
@@ -474,3 +494,4 @@ CREATE INDEX IF NOT EXISTS idx_query_join_query ON cockpit.query_join (query_id)
 CREATE INDEX IF NOT EXISTS idx_audit_event_occurred_at ON cockpit.audit_event (occurred_at DESC);
 CREATE INDEX IF NOT EXISTS idx_dashboard_share_dashboard ON cockpit.dashboard_share_grant (dashboard_id);
 CREATE INDEX IF NOT EXISTS idx_query_share_query ON cockpit.query_share_grant (query_id);
+CREATE INDEX IF NOT EXISTS idx_data_source_db_connection ON cockpit.data_source(db_connection_id);

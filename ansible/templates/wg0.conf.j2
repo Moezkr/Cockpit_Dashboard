@@ -1,0 +1,14 @@
+[Interface]
+Address = 10.8.0.1/24
+PrivateKey = {{ wg_dashboard_private_key }}
+ListenPort = 51820
+{% for peer in wg_peers %}
+
+[Peer]
+PublicKey = {{ peer.public_key }}
+AllowedIPs = {{ peer.vpn_ip }}/32
+{% if peer.endpoint is defined and peer.endpoint %}
+Endpoint = {{ peer.endpoint }}
+{% endif %}
+PersistentKeepalive = 25
+{% endfor %}
