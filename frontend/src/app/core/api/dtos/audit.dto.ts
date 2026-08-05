@@ -6,7 +6,6 @@ export interface AuditEventDto {
   actorName?: string;
   occurredAt?: string;
 }
-
 export interface CreateAuditEventRequestDto {
   eventType: string;
   targetType?: string;

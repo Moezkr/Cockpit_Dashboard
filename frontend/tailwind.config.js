@@ -1,4 +1,3 @@
-/** @type {import('tailwindcss').Config} */
 export default {
   darkMode: 'class',
   content: [
@@ -11,7 +10,6 @@ export default {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       fontSize: {
-        // Compact type scale
         '2xs': ['0.6875rem', { lineHeight: '0.875rem' }],
         xs: ['0.75rem', { lineHeight: '1rem' }],
         sm: ['0.8125rem', { lineHeight: '1.125rem' }],

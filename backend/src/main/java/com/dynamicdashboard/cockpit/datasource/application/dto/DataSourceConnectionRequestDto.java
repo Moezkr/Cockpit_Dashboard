@@ -1,8 +1,6 @@
 package com.dynamicdashboard.cockpit.datasource.application.dto;
-
 import com.dynamicdashboard.cockpit.datasource.domain.DbType;
 import lombok.Data;
-
 @Data
 public class DataSourceConnectionRequestDto {
     private String connectionName;

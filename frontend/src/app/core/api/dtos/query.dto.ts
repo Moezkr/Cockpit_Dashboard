@@ -6,7 +6,6 @@ export interface QueryJoinDto {
   rightSourceId: string;
   rightFieldId: string;
 }
-
 export interface QueryConditionDto {
   id: string;
   fieldId: string;
@@ -14,7 +13,6 @@ export interface QueryConditionDto {
   value: any;
   logicalOperator?: string;
 }
-
 export interface QueryTransformationDto {
   id: string;
   type: string;
@@ -26,12 +24,10 @@ export interface QueryTransformationDto {
   operator?: string;
   value?: string;
 }
-
 export interface QuerySortDto {
   fieldId: string;
   direction: string;
 }
-
 export interface QueryResponseDto {
   id: string;
   name: string;
@@ -53,5 +49,4 @@ export interface QueryResponseDto {
   createdAt?: string;
   updatedAt?: string;
 }
-
 export interface QueryRequestDto extends QueryResponseDto {}

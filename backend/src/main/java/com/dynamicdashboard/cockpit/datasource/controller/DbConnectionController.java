@@ -1,35 +1,28 @@
 package com.dynamicdashboard.cockpit.datasource.controller;
-
 import com.dynamicdashboard.cockpit.datasource.application.DbConnectionApplicationService;
 import com.dynamicdashboard.cockpit.datasource.application.dto.DataSourceConnectionRequestDto;
 import com.dynamicdashboard.cockpit.datasource.application.dto.DbConnectionResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 @RestController
 @RequestMapping("/api/db-connections")
 @RequiredArgsConstructor
 public class DbConnectionController {
-
     private final DbConnectionApplicationService dbConnectionApplicationService;
-
     @PostMapping("/test")
     public ResponseEntity<Map<String, Object>> testConnection(@RequestBody DataSourceConnectionRequestDto request) {
         Map<String, Object> result = dbConnectionApplicationService.testConnection(request);
         return ResponseEntity.ok(result);
     }
-
     @PostMapping
     public ResponseEntity<String> createConnection(@RequestBody DataSourceConnectionRequestDto request) {
         String id = dbConnectionApplicationService.createConnection(request);
         return ResponseEntity.ok(id);
     }
-
     @PutMapping("/{id}")
     public ResponseEntity<?> updateConnection(@PathVariable UUID id, @RequestBody DataSourceConnectionRequestDto request) {
         try {
@@ -39,7 +32,6 @@ public class DbConnectionController {
             return ResponseEntity.badRequest().body(Map.of("message", "Erreur lors de la mise à jour : " + e.getMessage()));
         }
     }
-
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteConnection(@PathVariable UUID id) {
         try {
@@ -49,7 +41,6 @@ public class DbConnectionController {
             return ResponseEntity.badRequest().body(Map.of("message", "Erreur lors de la suppression : " + e.getMessage()));
         }
     }
-
     @GetMapping
     public ResponseEntity<List<DbConnectionResponseDto>> getAllConnections() {
         return ResponseEntity.ok(dbConnectionApplicationService.getAllConnections());

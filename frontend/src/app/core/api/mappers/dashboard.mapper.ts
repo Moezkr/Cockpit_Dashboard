@@ -1,6 +1,5 @@
 import { DashboardResponseDto, DashboardRequestDto, WidgetDto, WidgetLayoutDto, WidgetFilterDto, GlobalFilterDto } from '../dtos/dashboard.dto';
 import { Dashboard, Widget, WidgetLayout, WidgetFilter, GlobalFilter } from '@core/models/types';
-
 export class DashboardMapper {
   static toDomain(dto: DashboardResponseDto): Dashboard {
     return {
@@ -24,7 +23,6 @@ export class DashboardMapper {
       sharedWithMe: dto.sharedWithMe
     };
   }
-
   static toDto(domain: Dashboard): DashboardRequestDto {
     return {
       id: domain.id,
@@ -47,7 +45,6 @@ export class DashboardMapper {
       sharedWithMe: domain.sharedWithMe
     };
   }
-
   private static toWidgetDomain(dto: WidgetDto): Widget {
     return {
       id: dto.id,
@@ -64,7 +61,6 @@ export class DashboardMapper {
       navigateToDashboardId: dto.config?.navigateToDashboardId
     };
   }
-
   private static toWidgetDto(domain: Widget): WidgetDto {
     return {
       id: domain.id,
@@ -81,15 +77,12 @@ export class DashboardMapper {
       filters: domain.filters?.map(f => this.toWidgetFilterDto(f))
     };
   }
-
   private static toWidgetLayoutDomain(dto: WidgetLayoutDto): WidgetLayout {
     return { x: dto.x, y: dto.y, w: dto.w, h: dto.h };
   }
-
   private static toWidgetLayoutDto(domain: WidgetLayout): WidgetLayoutDto {
     return { x: domain.x, y: domain.y, w: domain.w, h: domain.h };
   }
-
   private static toWidgetFilterDomain(dto: WidgetFilterDto): WidgetFilter {
     return {
       id: dto.id,
@@ -99,7 +92,6 @@ export class DashboardMapper {
       value: dto.value
     };
   }
-
   private static toWidgetFilterDto(domain: WidgetFilter): WidgetFilterDto {
     return {
       id: domain.id,
@@ -110,7 +102,6 @@ export class DashboardMapper {
       value: domain.value
     };
   }
-
   private static toGlobalFilterDomain(dto: GlobalFilterDto): GlobalFilter {
     return {
       id: dto.id,
@@ -124,7 +115,6 @@ export class DashboardMapper {
       readerVisible: dto.readerVisible !== undefined ? dto.readerVisible : true
     };
   }
-
   private static toGlobalFilterDto(domain: GlobalFilter): GlobalFilterDto {
     return {
       id: domain.id,

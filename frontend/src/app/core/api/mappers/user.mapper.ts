@@ -1,6 +1,5 @@
 import { UserAccountDto } from '../dtos/user.dto';
 import { UserProfile } from '@core/services/user.service';
-
 export class UserMapper {
   static toDomain(dto: UserAccountDto): UserProfile {
     const names = (dto.displayName || dto.username).trim().split(' ');

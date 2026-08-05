@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { WidgetType } from '@core/models/types';
-
 export interface WidgetCatalogItem {
   type: WidgetType;
   label: string;
@@ -9,9 +8,7 @@ export interface WidgetCatalogItem {
   defaultW: number;
   defaultH: number;
 }
-
 export type WidgetTypeMeta = WidgetCatalogItem;
-
 export const WIDGET_CATALOG: WidgetCatalogItem[] = [
   {
     type: 'kpi',
@@ -94,11 +91,9 @@ export const WIDGET_CATALOG: WidgetCatalogItem[] = [
     defaultH: 2
   }
 ];
-
 export function widgetMeta(type: WidgetType): WidgetCatalogItem | undefined {
   return WIDGET_CATALOG.find((item) => item.type === type);
 }
-
 @Injectable({
   providedIn: 'root'
 })

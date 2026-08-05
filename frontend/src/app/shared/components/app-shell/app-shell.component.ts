@@ -7,7 +7,6 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component';
-
 @Component({
   selector: 'app-shell',
   standalone: true,
@@ -19,7 +18,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
         (click)="closeSidebarOnMobile()"
         class="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs transition-opacity md:hidden"
       ></div>
-
       <aside
         [ngClass]="{
           'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-line dark:border-zinc-800 bg-white dark:bg-zinc-900 transition-all duration-200 ease-in-out md:static md:z-auto': true,
@@ -40,7 +38,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
               <app-svg-icon name="Menu" class="h-4 w-4"></app-svg-icon>
             </button>
           </ng-container>
-
           <ng-container *ngIf="sidebarOpen || isMobile">
             <div class="flex items-center gap-2 overflow-hidden">
               <div class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-brand text-white">
@@ -51,7 +48,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
                 <div class="text-2xs text-ink-faint dark:text-zinc-400 truncate">ProgesCode</div>
               </div>
             </div>
-
             <button
               type="button"
               (click)="toggleSidebar()"
@@ -62,7 +58,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
             </button>
           </ng-container>
         </div>
-
         <nav class="flex-1 space-y-1 p-2">
           <a
             routerLink="/"
@@ -76,7 +71,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
             <app-svg-icon name="LayoutGrid" class="h-4 w-4 flex-shrink-0"></app-svg-icon>
             <span *ngIf="sidebarOpen || isMobile" class="truncate">Tableaux de bord</span>
           </a>
-
           <a
             routerLink="/requetes"
             (click)="closeSidebarOnMobile()"
@@ -88,7 +82,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
             <app-svg-icon name="Layers" class="h-4 w-4 flex-shrink-0"></app-svg-icon>
             <span *ngIf="sidebarOpen || isMobile" class="truncate">Requêtes</span>
           </a>
-
           <a
             routerLink="/sources-de-donnees"
             (click)="closeSidebarOnMobile()"
@@ -100,7 +93,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
             <app-svg-icon name="Database" class="h-4 w-4 flex-shrink-0"></app-svg-icon>
             <span *ngIf="sidebarOpen || isMobile" class="truncate">Sources de données</span>
           </a>
-
           <a
             routerLink="/parametres"
             (click)="closeSidebarOnMobile()"
@@ -113,7 +105,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
             <span *ngIf="sidebarOpen || isMobile" class="truncate">Paramètres</span>
           </a>
         </nav>
-
         <div class="border-t border-line dark:border-zinc-800 p-2 bg-white dark:bg-zinc-900 mt-auto">
           <button
             class="flex w-full items-center gap-2 rounded-md p-1.5 text-left text-xs text-ink-soft dark:text-zinc-300 hover:bg-surface-sunken dark:hover:bg-zinc-800 cursor-pointer"
@@ -130,7 +121,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
           </button>
         </div>
       </aside>
-
       <div class="flex min-w-0 flex-1 flex-col">
         <header class="flex h-12 flex-shrink-0 items-center gap-3 border-b border-line dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 transition-colors">
           <button
@@ -143,7 +133,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
           >
             <app-svg-icon name="Menu" class="h-4 w-4"></app-svg-icon>
           </button>
-
           <div class="relative w-full max-w-xs md:w-[380px] flex items-center">
             <div class="pointer-events-none absolute left-2.5 flex items-center justify-center text-ink-faint dark:text-zinc-400">
               <app-svg-icon name="Search" class="h-3.5 w-3.5"></app-svg-icon>
@@ -154,7 +143,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
               style="padding-left: 2.25rem !important;"
             />
           </div>
-
           <div class="ml-auto flex items-center gap-1">
             <button
               type="button"
@@ -165,7 +153,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
             >
               <app-svg-icon [name]="isDark ? 'Sun' : 'Moon'" class="h-4 w-4"></app-svg-icon>
             </button>
-
             <button
               type="button"
               aria-label="Aide"
@@ -173,7 +160,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
             >
               <app-svg-icon name="HelpCircle" class="h-4 w-4"></app-svg-icon>
             </button>
-
             <button
               type="button"
               aria-label="Notifications"
@@ -184,13 +170,11 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
             </button>
           </div>
         </header>
-
         <main class="min-h-0 flex-1 overflow-auto bg-surface-muted dark:bg-black transition-colors">
           <router-outlet></router-outlet>
         </main>
       </div>
     </div>
-
     <ng-template #bareLayout>
       <router-outlet></router-outlet>
     </ng-template>
@@ -202,7 +186,6 @@ export class AppShellComponent implements OnInit {
   sidebarOpen: boolean = true;
   isMobile: boolean = false;
   currentUser: UserProfile | null = null;
-
   constructor(private router: Router, private dashboardService: DashboardService, private queryService: QueryService, private auditService: AuditService, private userService: UserService) {
     this.router.events
       .pipe(filter((e) => e instanceof NavigationEnd))
@@ -214,7 +197,6 @@ export class AppShellComponent implements OnInit {
         }
       });
   }
-
   ngOnInit(): void {
     this.checkScreenSize();
     this.isDark = document.documentElement.classList.contains('dark') || localStorage.getItem('theme') === 'dark';
@@ -223,12 +205,10 @@ export class AppShellComponent implements OnInit {
       this.currentUser = user;
     });
   }
-
   @HostListener('window:resize')
   onResize(): void {
     this.checkScreenSize();
   }
-
   private checkScreenSize(): void {
     const wasMobile = this.isMobile;
     this.isMobile = window.innerWidth < 768;
@@ -238,23 +218,19 @@ export class AppShellComponent implements OnInit {
       this.sidebarOpen = true;
     }
   }
-
   toggleSidebar(): void {
     this.sidebarOpen = !this.sidebarOpen;
   }
-
   closeSidebarOnMobile(): void {
     if (this.isMobile) {
       this.sidebarOpen = false;
     }
   }
-
   toggleTheme(): void {
     this.isDark = !this.isDark;
     localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
     this.applyTheme();
   }
-
   private applyTheme(): void {
     if (this.isDark) {
       document.documentElement.classList.add('dark');

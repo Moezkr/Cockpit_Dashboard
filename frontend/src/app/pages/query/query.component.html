@@ -11,7 +11,6 @@
             </p>
           </div>
         </div>
-
         <div class="shrink-0 self-start sm:self-auto mt-1 sm:mt-0">
           <app-button variant="primary" size="md" (onClick)="openWizard()">
             <app-svg-icon name="Plus" class="h-4 w-4 mr-1.5"></app-svg-icon>
@@ -19,7 +18,6 @@
           </app-button>
         </div>
       </div>
-
       <div class="relative w-80 max-w-full flex items-center">
         <div class="pointer-events-none absolute left-3 flex items-center justify-center text-ink-faint">
           <app-svg-icon name="Search" class="h-3.5 w-3.5"></app-svg-icon>
@@ -31,7 +29,6 @@
           style="padding-left: 2.25rem !important;"
         />
       </div>
-
       <div class="overflow-x-auto max-w-full rounded-lg border border-line bg-white shadow-card">
         <table class="w-full min-w-[700px] table-fixed border-collapse text-left text-xs">
           <thead class="border-b border-line bg-surface-muted text-2xs font-semibold uppercase tracking-wider text-ink-faint select-none">
@@ -59,7 +56,6 @@
                   ></app-svg-icon>
                 </div>
               </th>
-
               <th
                 (click)="toggleSort('sources')"
                 class="w-[18%] px-4 py-2.5 cursor-pointer hover:text-ink transition-colors group"
@@ -83,7 +79,6 @@
                   ></app-svg-icon>
                 </div>
               </th>
-
               <th
                 (click)="toggleSort('visibility')"
                 class="w-[15%] px-4 py-2.5 cursor-pointer hover:text-ink transition-colors group"
@@ -107,7 +102,6 @@
                   ></app-svg-icon>
                 </div>
               </th>
-
               <th
                 (click)="toggleSort('usedByWidgets')"
                 class="w-[13%] px-4 py-2.5 cursor-pointer hover:text-ink transition-colors group"
@@ -131,7 +125,6 @@
                   ></app-svg-icon>
                 </div>
               </th>
-
               <th
                 (click)="toggleSort('updatedAt')"
                 class="w-[12%] px-4 py-2.5 cursor-pointer hover:text-ink transition-colors group"
@@ -155,11 +148,9 @@
                   ></app-svg-icon>
                 </div>
               </th>
-
               <th class="w-[10%] px-4 py-2.5 text-right">ACTIONS</th>
             </tr>
           </thead>
-
           <tbody class="divide-y divide-line bg-white">
             <tr
               *ngFor="let q of paginatedQueries"
@@ -176,7 +167,6 @@
                   {{ q.description || 'Aucune description.' }}
                 </div>
               </td>
-
               <td class="px-4 py-3">
                 <div class="flex items-center gap-1.5 flex-nowrap">
                   <span
@@ -195,7 +185,6 @@
                   </span>
                 </div>
               </td>
-
               <td class="px-4 py-3 truncate">
                 <span
                   class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-2xs font-medium shrink-0"
@@ -205,15 +194,12 @@
                   {{ q.visibility === 'shared' ? 'Partagée' : 'Personnelle' }}
                 </span>
               </td>
-
               <td class="px-4 py-3 truncate text-ink-soft">
                 {{ q.usedByWidgets }} widget(s)
               </td>
-
               <td class="px-4 py-3 truncate text-ink-faint">
                 {{ getModifiedText(q) }}
               </td>
-
               <td class="px-4 py-3 truncate text-right">
                 <div class="inline-flex items-center gap-1">
                   <button
@@ -240,7 +226,6 @@
                 </div>
               </td>
             </tr>
-
             <tr *ngIf="paginatedQueries.length === 0">
               <td colspan="6" class="px-4 py-8 text-center text-ink-faint">
                 Aucune requête trouvée.
@@ -248,8 +233,6 @@
             </tr>
           </tbody>
         </table>
-
-
         <div class="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-line bg-surface-muted px-4 py-2.5 text-xs text-ink-faint">
           <div class="flex items-center gap-2">
             <span>Affichage de {{ sortedQueries.length ? startIndex : 0 }} à {{ endIndex }} sur {{ sortedQueries.length }} entrées</span>
@@ -264,7 +247,6 @@
               <option [ngValue]="50">50 / page</option>
             </select>
           </div>
-
           <div class="flex items-center gap-1">
             <button
               type="button"
@@ -274,7 +256,6 @@
             >
               Précédent
             </button>
-
             <div class="flex items-center gap-1 px-1">
               <button
                 *ngFor="let page of pageNumbers"
@@ -286,7 +267,6 @@
                 {{ page }}
               </button>
             </div>
-
             <button
               type="button"
               [disabled]="currentPage >= totalPages"
@@ -298,7 +278,6 @@
           </div>
         </div>
       </div>
-
       <app-query-wizard-modal
         [open]="showWizard"
         [queryToEdit]="editingQuery"
@@ -306,7 +285,6 @@
         (onClose)="showWizard = false"
         (onSave)="saveQuery($event)"
       ></app-query-wizard-modal>
-
       <app-confirm-modal
         [open]="deleteConfirmOpen"
         title="Supprimer la requête"

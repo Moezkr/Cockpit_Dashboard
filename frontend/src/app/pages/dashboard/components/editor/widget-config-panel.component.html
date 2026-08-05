@@ -16,7 +16,6 @@
             <app-svg-icon name="Trash2" class="h-3.5 w-3.5"></app-svg-icon>
           </button>
         </div>
-
         <section class="border-b border-line bg-surface-muted p-3">
           <div class="mb-2 flex items-center justify-between">
             <p class="text-2xs font-semibold uppercase tracking-wide text-ink-faint">
@@ -74,7 +73,6 @@
             Les collisions sont réorganisées automatiquement.
           </p>
         </section>
-
         <div class="flex border-b border-line">
           <button
             type="button"
@@ -109,7 +107,6 @@
             Interactions
           </button>
         </div>
-
         <div class="flex-1 space-y-3 overflow-auto p-3">
           <ng-container *ngIf="activeTab === 'data'">
             <div class="space-y-1 block">
@@ -122,7 +119,6 @@
                 class="h-8 w-full rounded border border-line-strong bg-white px-2 text-xs outline-none focus:border-brand"
               />
             </div>
-
             <label class="flex items-center gap-2 text-xs text-ink-soft cursor-pointer">
               <input
                 type="checkbox"
@@ -132,7 +128,6 @@
               />
               Afficher le titre / en-tête
             </label>
-
             <div class="space-y-1 block">
               <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
                 DESCRIPTION
@@ -145,7 +140,6 @@
                 class="w-full rounded border border-line-strong bg-white p-2 text-xs outline-none focus:border-brand resize-none"
               ></textarea>
             </div>
-
             <div *ngIf="widget.type !== 'text'" class="space-y-1 block relative">
               <div class="flex items-center justify-between">
                 <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
@@ -153,8 +147,6 @@
                 </label>
                 <span *ngIf="widget.queryId" class="text-3xs text-brand font-medium">Liée</span>
               </div>
-
-              <!-- Clickable Select Trigger -->
               <div class="relative">
                 <button
                   type="button"
@@ -176,13 +168,10 @@
                   ✕
                 </button>
               </div>
-
-              <!-- Searchable Dropdown Popup -->
               <div
                 *ngIf="showQueryDropdown"
                 class="absolute left-0 right-0 z-[100] mt-1 rounded-md border border-line-strong bg-white p-1.5 shadow-2xl dark:bg-slate-800 dark:border-slate-700"
               >
-                <!-- Search Input inside Dropdown (NO Search Icon) -->
                 <div class="mb-1.5">
                   <input
                     id="querySearchInput"
@@ -194,8 +183,6 @@
                     class="h-7 w-full rounded border border-line bg-surface-muted px-2 text-xs text-ink outline-none focus:border-brand focus:bg-white"
                   />
                 </div>
-
-                <!-- Scrollable Query List -->
                 <div class="max-h-48 overflow-y-auto space-y-0.5">
                   <div
                     (mousedown)="selectQuery('')"
@@ -204,7 +191,6 @@
                     <span>— Aucune —</span>
                     <span class="text-3xs text-ink-faint">Effacer</span>
                   </div>
-
                   <div
                     *ngFor="let q of filteredQueries"
                     (mousedown)="selectQuery(q.id)"
@@ -217,14 +203,12 @@
                     </div>
                     <span class="text-3xs opacity-75 truncate mt-0.5">{{ getQuerySummary(q) }}</span>
                   </div>
-
                   <div *ngIf="filteredQueries.length === 0" class="px-2.5 py-3 text-2xs text-ink-faint text-center">
                     Aucune requête trouvée
                   </div>
                 </div>
               </div>
             </div>
-
             <div *ngIf="widget.type === 'kpi'" class="space-y-1 block">
               <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
                 FORMAT DE LA VALEUR
@@ -239,14 +223,12 @@
                 <option value="integer">Nombre entier</option>
               </select>
             </div>
-
             <div *ngIf="widget.type === 'datagrid'">
               <app-data-grid-config-fields
                 [widget]="widget"
                 (onChange)="update({ datagrid: $event })"
               ></app-data-grid-config-fields>
             </div>
-
             <div *ngIf="widget.type === 'text'" class="space-y-1 block">
               <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
                 CONTENU
@@ -260,7 +242,6 @@
               ></textarea>
             </div>
           </ng-container>
-
           <ng-container *ngIf="activeTab === 'display'">
             <div class="space-y-1 block">
               <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
@@ -277,18 +258,15 @@
                 </option>
               </select>
             </div>
-
             <div class="rounded-md bg-surface-muted p-2 text-2xs text-ink-faint">
               Bordure, ombre et transparence sont réglables ici. Un aperçu en temps réel reflète les changements sur la grille.
             </div>
           </ng-container>
-
           <ng-container *ngIf="activeTab === 'filters'">
             <div class="space-y-2">
               <p class="text-2xs text-ink-faint">
                 Filtres additionnels propres à ce widget, s’ajoutant aux filtres globaux. En cas de conflit, le filtre spécifique prime.
               </p>
-
               <ng-container *ngIf="widget.filters?.length; else noFilters">
                 <div class="space-y-2">
                   <div
@@ -341,7 +319,6 @@
                           <option value="between">Entre</option>
                         </select>
                       </div>
-
                       <ng-container *ngIf="filter.operator === 'between'; else singleValueInput">
                         <div class="grid grid-cols-2 gap-1.5">
                           <div class="space-y-1">
@@ -368,7 +345,6 @@
                           </div>
                         </div>
                       </ng-container>
-
                       <ng-template #singleValueInput>
                         <div class="space-y-1">
                           <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
@@ -395,13 +371,11 @@
                   </div>
                 </div>
               </ng-container>
-
               <ng-template #noFilters>
                 <div class="rounded-md border border-line p-3 text-2xs text-ink-faint">
                   Aucun filtre spécifique défini.
                 </div>
               </ng-template>
-
               <app-button
                 variant="secondary"
                 size="sm"
@@ -412,7 +386,6 @@
               </app-button>
             </div>
           </ng-container>
-
           <ng-container *ngIf="activeTab === 'interactions'">
             <div class="space-y-1 block">
               <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
@@ -435,7 +408,6 @@
           </ng-container>
         </div>
       </ng-container>
-
       <ng-template #noSelection>
         <div class="flex flex-1 items-center justify-center p-6 text-center text-2xs text-ink-faint">
           Sélectionnez un widget sur la grille pour le configurer, le déplacer ou ajuster sa taille.

@@ -5,7 +5,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
 import { AuditTableComponent } from './components/audit-table.component';
 import { DashboardService } from '@pages/dashboard/services/dashboard.service';
 import { QueryService } from '@pages/query/services/query.service';
-
 @Component({
   selector: 'app-settings',
   standalone: true,
@@ -24,12 +23,10 @@ export class SettingsComponent implements OnInit {
     '30 minutes',
     '1 heure'
   ];
-
   constructor(
     private dashboardService: DashboardService,
     private queryService: QueryService
   ) {}
-
   ngOnInit(): void {
     this.dashboardService.loadFromBackend();
     this.queryService.loadFromBackend();

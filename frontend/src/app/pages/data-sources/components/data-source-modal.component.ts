@@ -5,7 +5,6 @@ import { ModalComponent } from '@shared/components/ui/modal.component';
 import { ButtonComponent } from '@shared/components/ui/button.component';
 import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component';
 import { DbConnectionService, DbConnectionRequest, SchemaFieldPreview } from '../services/db-connection.service';
-
 @Component({
   selector: 'app-data-source-modal',
   standalone: true,
@@ -16,36 +15,29 @@ export class DataSourceModalComponent implements OnChanges {
   @Input() open: boolean = false;
   @Input() source: any = null;
   @Output() onClose = new EventEmitter<void>();
-
   databaseTypes = [
     { kind: 'postgresql', label: 'PostgreSQL', detail: 'Base relationnelle open source', port: 5432 },
     { kind: 'mysql', label: 'MySQL', detail: 'Base relationnelle MySQL / MariaDB', port: 3306 },
     { kind: 'sqlserver', label: 'SQL Server', detail: 'Microsoft SQL Server', port: 1433 }
   ];
-
   draft: any = this.createDraft('postgresql');
   testing: boolean = false;
   saving: boolean = false;
   testResult: 'success' | 'error' | null = null;
   errorMessage: string = '';
   detectedSchema: SchemaFieldPreview[] = [];
-
   constructor(
     private dbConnectionService: DbConnectionService,
     private cdr: ChangeDetectorRef
   ) {}
-
   get connector() {
     return this.databaseTypes.find((item) => item.kind === this.draft.kind);
   }
-
   get isValid() {
     return Boolean(this.draft.label?.trim() && this.draft.host?.trim() && this.draft.database?.trim() && this.draft.username?.trim());
   }
-
   get groupedSchema(): { tableName: string; fields: SchemaFieldPreview[] }[] {
     if (!this.detectedSchema || this.detectedSchema.length === 0) return [];
-    
     const groupsMap = new Map<string, SchemaFieldPreview[]>();
     for (const item of this.detectedSchema) {
       const tName = item.tableName || 'Table';
@@ -54,13 +46,11 @@ export class DataSourceModalComponent implements OnChanges {
       }
       groupsMap.get(tName)!.push(item);
     }
-
     return Array.from(groupsMap.entries()).map(([tableName, fields]) => ({
       tableName,
       fields
     }));
   }
-
   ngOnChanges(changes: SimpleChanges) {
     if (changes['open'] && changes['open'].currentValue) {
       if (this.source) {
@@ -91,7 +81,6 @@ export class DataSourceModalComponent implements OnChanges {
       this.detectedSchema = [];
     }
   }
-
   createDraft(kind: string) {
     const type = this.databaseTypes.find((item) => item.kind === kind)!;
     return {
@@ -109,7 +98,6 @@ export class DataSourceModalComponent implements OnChanges {
       ssl: false
     };
   }
-
   chooseKind(kind: string) {
     const next = this.createDraft(kind);
     this.draft.kind = kind;
@@ -118,21 +106,17 @@ export class DataSourceModalComponent implements OnChanges {
     this.errorMessage = '';
     this.detectedSchema = [];
   }
-
   runTest() {
     if (!this.isValid) return;
-
     this.testing = true;
     this.testResult = null;
     this.errorMessage = '';
     this.detectedSchema = [];
-
     const dbTypeMap: Record<string, string> = {
       'postgresql': 'POSTGRESQL',
       'mysql': 'MYSQL',
       'sqlserver': 'SQL_SERVER'
     };
-
     const request: DbConnectionRequest = {
       connectionName: this.draft.label || 'Test Connection',
       dbType: dbTypeMap[this.draft.kind] || 'POSTGRESQL',
@@ -143,7 +127,6 @@ export class DataSourceModalComponent implements OnChanges {
       dbPassword: this.draft.password,
       useSsl: Boolean(this.draft.ssl)
     };
-
     this.dbConnectionService.testConnection(request).subscribe({
       next: (res) => {
         this.testing = false;
@@ -164,20 +147,16 @@ export class DataSourceModalComponent implements OnChanges {
       }
     });
   }
-
   save() {
     if (!this.isValid) return;
-    
     this.saving = true;
     this.testResult = null;
     this.errorMessage = '';
-
     const dbTypeMap: Record<string, string> = {
       'postgresql': 'POSTGRESQL',
       'mysql': 'MYSQL',
       'sqlserver': 'SQL_SERVER'
     };
-
     const request: DbConnectionRequest = {
       connectionName: this.draft.label,
       dbType: dbTypeMap[this.draft.kind] || 'POSTGRESQL',
@@ -188,7 +167,6 @@ export class DataSourceModalComponent implements OnChanges {
       dbPassword: this.draft.password,
       useSsl: Boolean(this.draft.ssl)
     };
-
     if (this.draft.id && !this.draft.id.startsWith('draft_')) {
       this.dbConnectionService.updateConnection(this.draft.id, request).subscribe({
         next: () => {

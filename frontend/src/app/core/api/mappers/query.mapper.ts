@@ -1,6 +1,5 @@
 import { QueryResponseDto, QueryRequestDto, QueryJoinDto, QueryConditionDto, QueryTransformationDto, QuerySortDto } from '../dtos/query.dto';
 import { DataQuery, QueryJoin, QueryCondition, QueryTransformation, QuerySort } from '@core/models/types';
-
 export class QueryMapper {
   static toDomain(dto: QueryResponseDto): DataQuery {
     return {
@@ -22,7 +21,6 @@ export class QueryMapper {
       updatedAt: dto.updatedAt ? String(dto.updatedAt) : new Date().toISOString()
     };
   }
-
   static toDto(domain: DataQuery): QueryRequestDto {
     return {
       id: domain.id,
@@ -46,28 +44,24 @@ export class QueryMapper {
       updatedAt: domain.updatedAt
     };
   }
-
   private static toJoinDomain(dto: QueryJoinDto): QueryJoin {
     return { id: dto.id, type: dto.type as any, leftSourceId: dto.leftSourceId, leftFieldId: dto.leftFieldId, rightSourceId: dto.rightSourceId, rightFieldId: dto.rightFieldId };
   }
   private static toJoinDto(domain: QueryJoin): QueryJoinDto {
     return { id: domain.id, type: domain.type, leftSourceId: domain.leftSourceId, leftFieldId: domain.leftFieldId, rightSourceId: domain.rightSourceId, rightFieldId: domain.rightFieldId };
   }
-
   private static toConditionDomain(dto: QueryConditionDto): QueryCondition {
     return { id: dto.id, fieldId: dto.fieldId, operator: dto.operator as any, value: dto.value, logical: (dto.logicalOperator as any) || 'AND', parametrable: false };
   }
   private static toConditionDto(domain: QueryCondition): QueryConditionDto {
     return { id: domain.id, fieldId: domain.fieldId, operator: domain.operator, value: domain.value, logicalOperator: domain.logical };
   }
-
   private static toSortDomain(dto: QuerySortDto): QuerySort {
     return { fieldId: dto.fieldId, direction: dto.direction as any };
   }
   private static toSortDto(domain: QuerySort): QuerySortDto {
     return { fieldId: domain.fieldId, direction: domain.direction };
   }
-
   private static toTransformationDomain(dto: QueryTransformationDto): QueryTransformation {
     return {
       id: dto.id,

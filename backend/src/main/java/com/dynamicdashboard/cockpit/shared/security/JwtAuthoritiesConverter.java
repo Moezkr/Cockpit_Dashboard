@@ -1,5 +1,4 @@
 package com.dynamicdashboard.cockpit.shared.security;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -9,13 +8,10 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
-
 public class JwtAuthoritiesConverter implements Converter<Jwt, Collection<GrantedAuthority>> {
-
     @Override
     public Collection<GrantedAuthority> convert(Jwt jwt) {
         Set<GrantedAuthority> authorities = new HashSet<>();
-
         Object scopeClaim = jwt.getClaims().get("scope");
         if (scopeClaim instanceof String scope) {
             for (String value : scope.split(" ")) {
@@ -24,7 +20,6 @@ public class JwtAuthoritiesConverter implements Converter<Jwt, Collection<Grante
                 }
             }
         }
-
         Object scpClaim = jwt.getClaims().get("scp");
         if (scpClaim instanceof List<?> scopes) {
             for (Object scope : scopes) {
@@ -36,7 +31,6 @@ public class JwtAuthoritiesConverter implements Converter<Jwt, Collection<Grante
                 }
             }
         }
-
         Object realmAccess = jwt.getClaims().get("realm_access");
         if (realmAccess instanceof Map<?, ?> realmAccessMap) {
             Object roles = realmAccessMap.get("roles");
@@ -51,7 +45,6 @@ public class JwtAuthoritiesConverter implements Converter<Jwt, Collection<Grante
                 }
             }
         }
-
         return authorities;
     }
 }

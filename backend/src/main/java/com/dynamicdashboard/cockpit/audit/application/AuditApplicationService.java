@@ -1,5 +1,4 @@
 package com.dynamicdashboard.cockpit.audit.application;
-
 import com.dynamicdashboard.cockpit.audit.application.dto.AuditEventDto;
 import com.dynamicdashboard.cockpit.audit.application.dto.CreateAuditEventRequestDto;
 import com.dynamicdashboard.cockpit.audit.application.mapper.AuditMapper;
@@ -11,28 +10,23 @@ import com.dynamicdashboard.cockpit.shared.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 public class AuditApplicationService {
-
     private final AuditEventRepository auditEventRepository;
     private final UserAccountRepository userAccountRepository;
     private final CurrentUserService currentUserService;
     private final AuditMapper auditMapper;
-
     @Transactional
     public AuditEventDto logAuditEvent(CreateAuditEventRequestDto dto) {
         UserAccountEntity user = currentUserService.getCurrentUser();
         String username = user != null ? user.getUsername() : "ahaddad";
         return logEvent(dto.getEventType(), dto.getTargetType(), dto.getTargetId(), dto.getDetailsJson(), username);
     }
-
     @Transactional
     public AuditEventDto logEvent(String eventType, String targetType, Object targetId, String detailsJson, String username) {
         UserAccountEntity actor = null;
@@ -44,7 +38,6 @@ public class AuditApplicationService {
         if (actor == null) {
             actor = currentUserService.getCurrentUser();
         }
-
         AuditEventEntity event = new AuditEventEntity();
         event.setActorUser(actor);
         event.setEventType(eventType);
@@ -62,11 +55,9 @@ public class AuditApplicationService {
         event.setSourceIp("127.0.0.1");
         event.setUserAgent("Chrome");
         event.setOccurredAt(Instant.now());
-
         AuditEventEntity saved = auditEventRepository.save(event);
         return auditMapper.toDto(saved);
     }
-
     @Transactional(readOnly = true)
     public List<AuditEventDto> getRecentEvents() {
         return auditEventRepository.findAllByOrderByOccurredAtDesc()
@@ -75,4 +66,3 @@ public class AuditApplicationService {
                 .collect(Collectors.toList());
     }
 }
-

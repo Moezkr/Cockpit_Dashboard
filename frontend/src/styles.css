@@ -1,9 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
-
 :root {
   color-scheme: light;
 }
@@ -29,7 +27,6 @@ html.dark body {
   background-color: #000000;
   color: #ffffff;
 }
-
 html.dark .bg-white {
   background-color: #121212 !important;
   color: #ffffff !important;
@@ -87,7 +84,6 @@ html.dark input::placeholder,
 html.dark textarea::placeholder {
   color: #71717a !important;
 }
-
 *:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 1px;

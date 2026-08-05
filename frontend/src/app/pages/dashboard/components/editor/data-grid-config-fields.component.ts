@@ -9,7 +9,6 @@ import { DataGridConfig, Widget, DataQuery } from '@core/models/types';
 import { executeDisplayRows } from '@pages/query/services/query-execution.service';
 import { queryFieldCatalog } from '@pages/query/services/query-model.service';
 import { dataGridAvailableColumns, resolveDataGridConfig } from '@pages/dashboard/services/datagrid.service';
-
 @Component({
   selector: 'app-data-grid-config-fields',
   standalone: true,
@@ -25,7 +24,6 @@ import { dataGridAvailableColumns, resolveDataGridConfig } from '@pages/dashboar
           <p class="text-2xs text-ink-faint">Colonnes et interaction lecteur.</p>
         </div>
       </div>
-
       <div class="space-y-1 block">
         <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block">
           COLONNES AFFICHÉES ET ORDRE
@@ -62,7 +60,6 @@ import { dataGridAvailableColumns, resolveDataGridConfig } from '@pages/dashboar
               ↓
             </button>
           </div>
-
           <label
             *ngFor="let col of unselectedColumns"
             class="flex cursor-pointer items-center gap-2 rounded border border-dashed border-line px-1.5 py-1 text-2xs text-ink-faint hover:bg-surface-muted"
@@ -77,7 +74,6 @@ import { dataGridAvailableColumns, resolveDataGridConfig } from '@pages/dashboar
           </label>
         </div>
       </div>
-
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block mb-1">
@@ -94,7 +90,6 @@ import { dataGridAvailableColumns, resolveDataGridConfig } from '@pages/dashboar
             <option [value]="50">50</option>
           </select>
         </div>
-
         <div>
           <label class="text-2xs font-medium uppercase tracking-wide text-ink-faint block mb-1">
             DENSITÉ
@@ -110,7 +105,6 @@ import { dataGridAvailableColumns, resolveDataGridConfig } from '@pages/dashboar
           </select>
         </div>
       </div>
-
       <fieldset class="space-y-1.5 border-t border-line pt-2">
         <legend class="text-2xs font-semibold uppercase tracking-wide text-ink-faint">
           FONCTIONNALITÉS
@@ -180,16 +174,12 @@ import { dataGridAvailableColumns, resolveDataGridConfig } from '@pages/dashboar
 export class DataGridConfigFieldsComponent implements OnChanges {
   @Input() widget!: Widget;
   @Output() onChange = new EventEmitter<DataGridConfig>();
-
   cfg: Required<DataGridConfig> = resolveDataGridConfig();
   availableCols: string[] = [];
-
   constructor(private dashboardService: DashboardService, private queryService: QueryService, private auditService: AuditService, private userService: UserService) {}
-
   ngOnChanges(): void {
     if (!this.widget) return;
     this.cfg = resolveDataGridConfig(this.widget.datagrid);
-
     if (this.widget.queryId) {
       const query = this.queryService.queries.find((q) => q.id === this.widget.queryId);
       if (query) {
@@ -198,7 +188,6 @@ export class DataGridConfigFieldsComponent implements OnChanges {
       }
     }
   }
-
   getColumnLabel(col: string): string {
     if (!this.widget?.queryId) return col;
     const query = this.queryService.queries.find((q) => q.id === this.widget.queryId);
@@ -208,17 +197,14 @@ export class DataGridConfigFieldsComponent implements OnChanges {
     if (field) return `${field.sourceLabel} · ${field.label}`;
     return col;
   }
-
   private cachedSelectedCols: string[] = [];
   private cachedUnselectedCols: string[] = [];
   private lastColsKeyStr: string = '';
-
   private computeColsCache() {
     const rawVisible = this.cfg.visibleColumns || [];
     const key = (this.availableCols || []).join(',') + '___' + rawVisible.join(',');
     if (key === this.lastColsKeyStr) return;
     this.lastColsKeyStr = key;
-
     if (!rawVisible.length) {
       this.cachedSelectedCols = [...this.availableCols];
     } else {
@@ -226,28 +212,22 @@ export class DataGridConfigFieldsComponent implements OnChanges {
     }
     this.cachedUnselectedCols = this.availableCols.filter((c) => !this.cachedSelectedCols.includes(c));
   }
-
   get selectedColumns(): string[] {
     this.computeColsCache();
     return this.cachedSelectedCols;
   }
-
   get unselectedColumns(): string[] {
     this.computeColsCache();
     return this.cachedUnselectedCols;
   }
-
   toggleColumn(col: string) {
     const isVisible = this.selectedColumns.includes(col);
     if (isVisible && this.selectedColumns.length === 1) return;
-
     const next = isVisible
       ? this.selectedColumns.filter((item) => item !== col)
       : [...this.selectedColumns, col];
-
     this.update({ visibleColumns: next });
   }
-
   move(index: number, direction: -1 | 1) {
     const target = index + direction;
     if (target < 0 || target >= this.selectedColumns.length) return;
@@ -255,7 +235,6 @@ export class DataGridConfigFieldsComponent implements OnChanges {
     [next[index], next[target]] = [next[target], next[index]];
     this.update({ visibleColumns: next });
   }
-
   update(partial: Partial<DataGridConfig>) {
     this.cfg = { ...this.cfg, ...partial };
     this.onChange.emit(this.cfg);

@@ -1,16 +1,14 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RefreshInterval } from '@core/models/types';
 import { refreshLabel } from '@core/services/utils';
-
 @Component({
   selector: 'app-refresh-control',
   standalone: true,
   imports: [CommonModule],
   template: `
     <div class="flex items-center gap-1.5">
-
-      <!-- Auto-refresh countdown badge: only shown when interval is active -->
+      <!-- Auto-refresh countdown badge -->
       <div
         *ngIf="interval !== 'off'"
         class="flex items-center gap-1.5 rounded-md border border-line bg-white px-2 py-1 text-2xs text-ink-soft shadow-xs"
@@ -23,30 +21,25 @@ import { refreshLabel } from '@core/services/utils';
         <span class="font-medium tabular-nums">
           {{ paused ? 'En pause' : countdown + 's' }}
         </span>
-        <span class="text-ink-faint">({{ getLabel(interval) }})</span>
-
+        <span class="text-ink-faint hidden xs:inline">({{ getLabel(interval) }})</span>
         <button
           (click)="onTogglePause.emit()"
           [title]="paused ? 'Reprendre' : 'Mettre en pause'"
-          class="ml-1 rounded p-0.5 text-ink-faint hover:text-ink transition-colors"
+          class="ml-1 rounded p-0.5 text-ink-faint hover:text-ink transition-colors cursor-pointer"
         >
           {{ paused ? '▶' : '❚❚' }}
         </button>
       </div>
-
-      <!-- Manual refresh button: ALWAYS visible, spins while refreshing -->
+      <!-- Manual refresh button -->
       <button
         (click)="triggerRefresh()"
         [disabled]="refreshing"
         title="Rafraîchir maintenant"
-        class="flex h-7 items-center gap-1.5 rounded-md border border-line-strong bg-white px-2 text-xs transition-all"
-        [class.opacity-50]="refreshing"
-        [class.cursor-not-allowed]="refreshing"
-        [class.cursor-pointer]="!refreshing"
+        class="flex h-7 items-center gap-1.5 rounded-md border border-line-strong bg-white px-2 text-xs transition-all cursor-pointer"
+        [class.opacity-70]="refreshing"
+        [class.text-brand]="refreshing"
         [class.text-ink-soft]="!refreshing"
         [class.hover:bg-surface-muted]="!refreshing"
-        [class.hover:text-ink]="!refreshing"
-        [class.text-brand]="refreshing"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -64,9 +57,8 @@ import { refreshLabel } from '@core/services/utils';
           <path d="M3 22v-6h6"/>
           <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
         </svg>
-        <span *ngIf="refreshing" class="text-2xs font-medium">Sync...</span>
+        <span class="text-2xs font-medium">{{ refreshing ? 'Sync...' : 'Actualiser' }}</span>
       </button>
-
     </div>
   `
 })
@@ -74,22 +66,20 @@ export class RefreshControlComponent {
   @Input() interval: RefreshInterval = 'off';
   @Input() countdown: number = 0;
   @Input() paused: boolean = false;
-
   @Output() onTogglePause = new EventEmitter<void>();
   @Output() onRefresh = new EventEmitter<void>();
-
   refreshing = false;
-
+  constructor(private cdr: ChangeDetectorRef) {}
   triggerRefresh() {
     if (this.refreshing) return;
     this.refreshing = true;
     this.onRefresh.emit();
-
+    this.cdr.markForCheck();
     setTimeout(() => {
       this.refreshing = false;
-    }, 1500);
+      this.cdr.markForCheck();
+    }, 800);
   }
-
   getLabel(val: RefreshInterval): string {
     return refreshLabel(val);
   }

@@ -4,7 +4,6 @@ import {
   DataSource,
   QueryTransformation
 } from '@core/models/types';
-
 export function querySourceIds(
   query: Pick<DataQuery, 'sourceIds' | 'sourceId'>
 ): string[] {
@@ -15,7 +14,6 @@ export function querySourceIds(
     ? [query.sourceId]
     : [];
 }
-
 export function normalizeQuery(query: DataQuery): DataQuery {
   const sourceIds = querySourceIds(query);
   return {
@@ -25,16 +23,13 @@ export function normalizeQuery(query: DataQuery): DataQuery {
     transformations: query.transformations ?? []
   };
 }
-
 export function normalizeQueries(queries: DataQuery[]): DataQuery[] {
   return queries.map(normalizeQuery);
 }
-
 export interface CatalogField extends DataField {
   sourceId: string;
   sourceLabel: string;
 }
-
 export function queryFieldCatalog(
   query: DataQuery,
   sources: DataSource[]
@@ -56,7 +51,6 @@ export function queryFieldCatalog(
       }))
     );
 }
-
 export function fieldLabel(
   fieldId: string,
   query: DataQuery,
@@ -71,7 +65,6 @@ export function fieldLabel(
   if (calculated) return calculated.outputLabel ?? fieldId;
   return field ? `${field.sourceLabel} · ${field.label}` : fieldId;
 }
-
 export function transformationReferencesField(
   transformation: QueryTransformation,
   fieldId: string
@@ -81,7 +74,6 @@ export function transformationReferencesField(
     transformation.formula?.includes(fieldId) === true
   );
 }
-
 export function querySourceSummary(query: DataQuery): string {
   const sources = querySourceIds(query).length;
   const transforms = query.transformations?.length ?? 0;

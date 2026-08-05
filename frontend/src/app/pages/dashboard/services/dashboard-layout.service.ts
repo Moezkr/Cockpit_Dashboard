@@ -1,11 +1,8 @@
 import { Widget, WidgetLayout } from '@core/models/types';
-
 export type WidgetLayouts = Record<string, WidgetLayout>;
-
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(Math.round(value), min), max);
 }
-
 export function clampWidgetLayout(
   layout: WidgetLayout,
   columns: number
@@ -13,7 +10,6 @@ export function clampWidgetLayout(
   const safeColumns = Math.max(1, columns);
   const w = clamp(layout.w, 1, safeColumns);
   const h = Math.max(1, Math.round(layout.h));
-
   return {
     x: clamp(layout.x, 0, safeColumns - w),
     y: Math.max(0, Math.round(layout.y)),
@@ -21,13 +17,11 @@ export function clampWidgetLayout(
     h
   };
 }
-
 export function layoutsOverlap(a: WidgetLayout, b: WidgetLayout): boolean {
   return (
     a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y
   );
 }
-
 export function findNextAvailablePosition(
   occupied: WidgetLayout[],
   columns: number,
@@ -41,7 +35,6 @@ export function findNextAvailablePosition(
       (x) => x !== candidate.x
     )
   ];
-
   for (let y = candidate.y; y < candidate.y + 1000; y += 1) {
     for (const x of xOrder) {
       const positioned = { ...candidate, x, y };
@@ -50,10 +43,8 @@ export function findNextAvailablePosition(
       }
     }
   }
-
   return { ...candidate, y: candidate.y + 1000 };
 }
-
 export function normalizeWidgetLayouts(
   widgets: Widget[],
   columns: number
@@ -67,20 +58,17 @@ export function normalizeWidgetLayouts(
         a.widget.layout.x - b.widget.layout.x ||
         a.index - b.index
     );
-
   const layouts: WidgetLayouts = {};
   ordered.forEach(({ widget }) => {
     const layout = findNextAvailablePosition(occupied, columns, widget.layout);
     occupied.push(layout);
     layouts[widget.id] = layout;
   });
-
   return widgets.map((widget) => ({
     ...widget,
     layout: layouts[widget.id]
   }));
 }
-
 export function resolveWidgetLayouts(
   widgets: Widget[],
   widgetId: string,
@@ -92,7 +80,6 @@ export function resolveWidgetLayouts(
     return Object.fromEntries(
       widgets.map((widget) => [widget.id, widget.layout])
     );
-
   const layouts: WidgetLayouts = {
     [widgetId]: clampWidgetLayout(requestedLayout, columns)
   };
@@ -106,16 +93,13 @@ export function resolveWidgetLayouts(
         a.widget.layout.x - b.widget.layout.x ||
         a.index - b.index
     );
-
   orderedOthers.forEach(({ widget }) => {
     const layout = findNextAvailablePosition(occupied, columns, widget.layout);
     occupied.push(layout);
     layouts[widget.id] = layout;
   });
-
   return layouts;
 }
-
 export function applyWidgetLayouts(
   widgets: Widget[],
   layouts: WidgetLayouts

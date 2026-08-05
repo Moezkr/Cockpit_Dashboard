@@ -8,7 +8,6 @@ import { ButtonComponent } from '@shared/components/ui/button.component';
 import { BadgeComponent } from '@shared/components/ui/badge.component';
 import { DataSourceModalComponent } from './components/data-source-modal.component';
 import { ConfirmModalComponent } from '@shared/components/ui/confirm-modal.component';
-
 export interface CatalogDataSource {
   id: string;
   key: string;
@@ -18,7 +17,6 @@ export interface CatalogDataSource {
   active: boolean;
   fields?: any[];
 }
-
 @Component({
   selector: 'app-data-sources',
   standalone: true,
@@ -30,24 +28,19 @@ export class DataSourcesComponent implements OnInit {
   catalogSources: CatalogDataSource[] = [];
   loading = false;
   error = '';
-  
   showEditor = false;
   selectedSource: any = null;
-
   showDeleteModal = false;
   dbToDelete: DbConnectionResponse | null = null;
-
   constructor(
     private router: Router, 
     private dbConnectionService: DbConnectionService,
     private http: HttpClient,
     private cdr: ChangeDetectorRef
   ) {}
-
   ngOnInit() {
     this.fetchConnections();
   }
-
   fetchConnections() {
     this.dbConnectionService.getAllConnections().subscribe({
       next: (data) => {
@@ -62,7 +55,6 @@ export class DataSourcesComponent implements OnInit {
       }
     });
   }
-
   fetchCatalogSources() {
     this.http.get<CatalogDataSource[]>('/api/catalog/data-sources').subscribe({
       next: (sources) => {
@@ -75,12 +67,10 @@ export class DataSourcesComponent implements OnInit {
       }
     });
   }
-
   promptDelete(db: DbConnectionResponse) {
     this.dbToDelete = db;
     this.showDeleteModal = true;
   }
-
   confirmDelete() {
     if (!this.dbToDelete) return;
     this.dbConnectionService.deleteConnection(this.dbToDelete.id).subscribe({
@@ -94,19 +84,15 @@ export class DataSourcesComponent implements OnInit {
       }
     });
   }
-
   openEditor(source?: any) {
     this.selectedSource = source || null;
     this.showEditor = true;
   }
-
   onModalClose() {
     this.showEditor = false;
     this.fetchConnections();
   }
-
   goToQueries() {
     this.router.navigate(['/requetes']);
   }
 }
-

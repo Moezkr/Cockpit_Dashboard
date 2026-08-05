@@ -3,7 +3,6 @@
     <app-svg-icon name="Clock" class="h-4 w-4 text-ink-faint"></app-svg-icon>
     <h2 class="text-xs font-bold text-ink">Journal d'audit</h2>
   </div>
-
   <div class="overflow-x-auto max-w-full">
     <table class="w-full min-w-[650px] table-fixed border-collapse text-left text-xs">
       <thead class="border-b border-line bg-surface-muted text-2xs font-semibold uppercase tracking-wider text-ink-faint select-none">
@@ -16,7 +15,6 @@
               <app-svg-icon *ngIf="sortField !== 'event'" name="ChevronDown" class="h-3 w-3 text-ink-faint opacity-40 group-hover:opacity-100 transition-opacity"></app-svg-icon>
             </div>
           </th>
-
           <th (click)="toggleSort('detail')" class="w-[42%] px-4 py-2.5 cursor-pointer hover:text-ink transition-colors group">
             <div class="flex items-center gap-1">
               <span>DÉTAIL</span>
@@ -25,7 +23,6 @@
               <app-svg-icon *ngIf="sortField !== 'detail'" name="ChevronDown" class="h-3 w-3 text-ink-faint opacity-40 group-hover:opacity-100 transition-opacity"></app-svg-icon>
             </div>
           </th>
-
           <th (click)="toggleSort('author')" class="w-[18%] px-4 py-2.5 cursor-pointer hover:text-ink transition-colors group">
             <div class="flex items-center gap-1">
               <span>AUTEUR</span>
@@ -34,7 +31,6 @@
               <app-svg-icon *ngIf="sortField !== 'author'" name="ChevronDown" class="h-3 w-3 text-ink-faint opacity-40 group-hover:opacity-100 transition-opacity"></app-svg-icon>
             </div>
           </th>
-
           <th (click)="toggleSort('date')" class="w-[18%] px-4 py-2.5 cursor-pointer hover:text-ink transition-colors group">
             <div class="flex items-center gap-1">
               <span>DATE</span>
@@ -45,7 +41,6 @@
           </th>
         </tr>
       </thead>
-
       <tbody class="divide-y divide-line bg-white text-ink-soft">
         <tr *ngFor="let log of paginatedAuditLogs" class="hover:bg-surface-sunken/60 transition-colors">
           <td class="px-4 py-3 font-semibold text-ink truncate" [title]="log.event">
@@ -69,7 +64,6 @@
       </tbody>
     </table>
   </div>
-
   <div class="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-line bg-surface-muted px-4 py-2.5 text-xs text-ink-faint">
     <div class="flex items-center gap-2">
       <span>Affichage de {{ auditLogs.length ? startIndex : 0 }} à {{ endIndex }} sur {{ auditLogs.length }} entrées</span>
@@ -80,7 +74,6 @@
         <option [ngValue]="50">50 / page</option>
       </select>
     </div>
-
     <div class="flex items-center gap-1">
       <button type="button" [disabled]="currentPage <= 1" (click)="prevPage()" class="inline-flex h-7 px-2.5 items-center justify-center rounded border border-line bg-white text-xs font-medium text-ink shadow-2xs hover:bg-surface-sunken disabled:opacity-40 disabled:cursor-not-allowed transition-colors">Précédent</button>
       <div class="flex items-center gap-1 px-1">

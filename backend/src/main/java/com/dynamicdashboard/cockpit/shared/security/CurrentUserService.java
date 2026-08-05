@@ -1,5 +1,4 @@
 package com.dynamicdashboard.cockpit.shared.security;
-
 import com.dynamicdashboard.cockpit.identity.domain.UserAccountEntity;
 import com.dynamicdashboard.cockpit.identity.repository.UserAccountRepository;
 import com.dynamicdashboard.cockpit.shared.domain.DomainEnums.AccountStatus;
@@ -8,13 +7,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 @Service
 @RequiredArgsConstructor
 public class CurrentUserService {
-
     private final UserAccountRepository userAccountRepository;
-
     @Transactional(readOnly = true)
     public UserAccountEntity getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -26,7 +22,6 @@ public class CurrentUserService {
         }
         return getDefaultSeededUser();
     }
-
     @Transactional(readOnly = true)
     public UserAccountEntity getDefaultSeededUser() {
         return userAccountRepository.findByUsername("ahaddad")

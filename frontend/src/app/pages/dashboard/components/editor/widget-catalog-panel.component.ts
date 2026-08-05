@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { WidgetType } from '@core/models/types';
 import { WIDGET_CATALOG, WidgetTypeMeta } from '@pages/dashboard/services/widget-catalog.service';
 import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component';
-
 @Component({
   selector: 'app-widget-catalog-panel',
   standalone: true,
@@ -28,7 +27,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
           />
         </div>
       </div>
-
       <div class="flex-1 overflow-auto p-2 space-y-1">
         <button
           *ngFor="let item of filteredCatalog"
@@ -53,13 +51,10 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
 })
 export class WidgetCatalogPanelComponent {
   @Output() onAdd = new EventEmitter<WidgetType>();
-
   search: string = '';
   catalog = WIDGET_CATALOG;
-
   private cachedFilteredCatalog: WidgetTypeMeta[] = [];
   private lastSearchStr: string | null = null;
-
   get filteredCatalog(): WidgetTypeMeta[] {
     const searchTrimmed = (this.search || '').trim().toLowerCase();
     if (searchTrimmed === this.lastSearchStr) {

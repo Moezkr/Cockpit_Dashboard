@@ -1,5 +1,4 @@
 package com.dynamicdashboard.cockpit.dashboard.application.mapper;
-
 import com.dynamicdashboard.cockpit.dashboard.application.dto.DataGridConfigDto;
 import com.dynamicdashboard.cockpit.dashboard.application.dto.WidgetDto;
 import com.dynamicdashboard.cockpit.dashboard.application.dto.WidgetFilterDto;
@@ -11,22 +10,17 @@ import com.dynamicdashboard.cockpit.dashboard.repository.WidgetDatagridVisibleCo
 import com.dynamicdashboard.cockpit.dashboard.repository.WidgetFilterRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 @Component
 @RequiredArgsConstructor
 public class WidgetMapper {
-
     private final WidgetDatagridConfigRepository widgetDatagridConfigRepository;
     private final WidgetDatagridVisibleColumnRepository widgetDatagridVisibleColumnRepository;
     private final WidgetFilterRepository widgetFilterRepository;
-
     public WidgetDto toDto(WidgetEntity entity) {
         if (entity == null) return null;
-
         DataGridConfigDto dgDto = null;
         Optional<WidgetDatagridConfigEntity> dgOpt = widgetDatagridConfigRepository.findById(entity.getId());
         if (dgOpt.isPresent()) {
@@ -35,7 +29,6 @@ public class WidgetMapper {
                     .stream()
                     .map(vc -> vc.getId().getColumnName())
                     .collect(Collectors.toList());
-
             dgDto = DataGridConfigDto.builder()
                     .visibleColumns(visCols)
                     .rowsPerPage(dg.getRowsPerPage())
@@ -48,7 +41,6 @@ public class WidgetMapper {
                     .filterable(dg.getFilterable())
                     .build();
         }
-
         List<WidgetFilterDto> filters = widgetFilterRepository.findByWidgetIdOrderByPositionIndexAsc(entity.getId())
                 .stream()
                 .map(f -> WidgetFilterDto.builder()
@@ -59,7 +51,6 @@ public class WidgetMapper {
                         .value(f.getFilterValue())
                         .build())
                 .collect(Collectors.toList());
-
         return WidgetDto.builder()
                 .id(entity.getId() != null ? entity.getId().toString() : null)
                 .type(entity.getWidgetType() != null ? entity.getWidgetType().name().toLowerCase() : "kpi")

@@ -1,7 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonComponent } from '@shared/components/ui/button.component';
-
 @Component({
   selector: 'app-modal',
   standalone: true,
@@ -28,6 +27,5 @@ export class ModalComponent {
   @Input() open: boolean = false;
   @Input() title: string = '';
   @Input() width: string = 'max-w-lg';
-
   @Output() onClose = new EventEmitter<void>();
 }

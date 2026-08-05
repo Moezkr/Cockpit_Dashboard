@@ -1,6 +1,5 @@
 <div *ngIf="open" class="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div class="absolute inset-0 bg-ink/30 dark:bg-black/60 backdrop-blur-[1px]" (click)="handleClose()"></div>
-
       <div class="relative w-full max-w-5xl rounded-lg bg-white dark:bg-slate-900 shadow-pop flex flex-col h-[560px] max-h-[85vh] overflow-hidden border border-line dark:border-slate-800 z-10">
         <div class="flex items-center justify-between border-b border-line dark:border-slate-800 px-4 py-2.5 bg-white dark:bg-slate-900 flex-shrink-0">
           <h2 class="text-sm font-semibold text-ink dark:text-white">
@@ -15,7 +14,6 @@
             ✕
           </button>
         </div>
-
         <div class="p-4 flex-1 min-h-0 bg-white dark:bg-slate-900 overflow-hidden flex flex-col">
           <div class="flex gap-4 flex-1 min-h-0 h-full">
             <ol class="hidden w-40 flex-shrink-0 space-y-0.5 md:block select-none overflow-y-auto pr-1 h-full" aria-label="Étapes de la requête">
@@ -37,7 +35,6 @@
                 </button>
               </li>
             </ol>
-
             <div class="relative flex-1 min-w-0 h-full overflow-hidden">
               <div class="absolute inset-0 overflow-y-auto overflow-x-hidden pr-2">
                 <div *ngIf="step === 0" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
@@ -51,7 +48,6 @@
                     class="h-7 w-full rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-xs text-ink dark:text-white placeholder:text-ink-faint dark:placeholder:text-slate-500 focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-colors"
                   />
                 </div>
-
                 <div>
                   <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
                     Description <span class="ml-1 font-normal normal-case tracking-normal text-ink-faint dark:text-slate-500">— optionnel</span>
@@ -63,7 +59,6 @@
                     class="w-full rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1.5 text-xs text-ink dark:text-white placeholder:text-ink-faint dark:placeholder:text-slate-500 focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-colors resize-none"
                   ></textarea>
                 </div>
-
                 <div>
                   <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
                     Visibilité
@@ -78,7 +73,6 @@
                       <div class="text-xs font-medium text-ink dark:text-white">Personnelle</div>
                       <div class="text-2xs text-ink-faint dark:text-slate-400">Vous uniquement</div>
                     </button>
-
                     <button
                       type="button"
                       (click)="query.visibility = 'shared'"
@@ -91,7 +85,6 @@
                   </div>
                 </div>
               </div>
-
               <div *ngIf="step === 1" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
                 <div>
                   <h3 class="text-sm font-semibold text-ink dark:text-slate-200">Sélectionnez les connexions</h3>
@@ -115,7 +108,6 @@
                         'text-ink-soft dark:text-slate-400 group-hover:text-brand dark:group-hover:text-brand-soft': !selectedConnections.includes(conn)
                       }"
                     ></app-svg-icon>
-
                     <div class="flex-1 min-w-0 pr-5">
                       <div class="font-medium text-ink dark:text-slate-200 text-sm truncate">
                         {{ conn }}
@@ -127,7 +119,6 @@
                         </span>
                       </div>
                     </div>
-
                     <div
                       class="absolute top-3.5 right-3.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors"
                       [ngClass]="{
@@ -138,14 +129,11 @@
                       <app-svg-icon name="Check" class="h-3 w-3 stroke-[2.5]"></app-svg-icon>
                     </div>
                   </div>
-
                   <div *ngIf="availableConnections.length === 0" class="col-span-full py-8 text-center">
                     <p class="text-xs text-ink-faint dark:text-slate-400">Aucune connexion disponible.</p>
                   </div>
                 </div>
               </div>
-
-              <!-- Étape 2 : Tables -->
               <div *ngIf="step === 2" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
                 <div>
                   <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
@@ -155,7 +143,6 @@
                     Combinez les tables métier nécessaires à votre analyse. Au moins une source est requise.
                   </p>
                 </div>
-
                 <div *ngIf="selectedSources.length > 0" class="flex flex-wrap gap-1.5 rounded-md border border-brand/20 bg-brand-soft/40 dark:bg-brand/10 p-2">
                   <span
                     *ngFor="let source of selectedSources"
@@ -171,7 +158,6 @@
                     </button>
                   </span>
                 </div>
-
                 <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <button
                     *ngFor="let source of filteredSources"
@@ -194,8 +180,6 @@
                   </button>
                 </div>
               </div>
-
-                <!-- Étape 3 : Relations -->
               <div *ngIf="step === 3" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
                 <div class="flex items-start justify-between gap-3">
                   <div>
@@ -223,17 +207,14 @@
                     </button>
                   </div>
                 </div>
-
                 <div *ngIf="relationError" role="alert" class="rounded-md bg-red-50 dark:bg-red-950/40 px-2 py-1.5 text-2xs text-negative">
                   {{ relationError }}
                 </div>
-
                 <div *ngIf="query.joins.length === 0" class="flex flex-col items-center justify-center rounded-md border border-dashed border-line-strong dark:border-slate-700 bg-surface-muted dark:bg-slate-800/50 px-4 py-8 text-center space-y-1">
                   <div class="text-base text-ink-faint dark:text-slate-400">🔗</div>
                   <div class="font-semibold text-ink dark:text-white text-xs">Aucune relation définie</div>
                   <div class="text-2xs text-ink-faint dark:text-slate-400">Utilisez une suggestion ou ajoutez une relation manuellement.</div>
                 </div>
-
                 <div *ngIf="query.joins.length > 0" class="space-y-2">
                   <div *ngFor="let join of query.joins; let i = index" class="rounded-md border border-line dark:border-slate-800 p-2 bg-white dark:bg-slate-800 space-y-1.5">
                     <div class="grid grid-cols-[1fr_1fr_74px_1fr_1fr_auto] items-center gap-1.5">
@@ -244,7 +225,6 @@
                       >
                         <option *ngFor="let id of query.sourceIds" [value]="id">{{ getSource(id)?.label }}</option>
                       </select>
-
                       <select
                         [ngModel]="join.leftFieldId"
                         (ngModelChange)="updateJoin(join.id, { leftFieldId: $event })"
@@ -252,7 +232,6 @@
                       >
                         <option *ngFor="let field of getSourceFields(join.leftSourceId)" [value]="field.id">{{ field.label }}</option>
                       </select>
-
                       <select
                         [ngModel]="join.type"
                         (ngModelChange)="updateJoin(join.id, { type: $event })"
@@ -260,7 +239,6 @@
                       >
                         <option *ngFor="let jt of joinTypes" [value]="jt.value">{{ jt.label }}</option>
                       </select>
-
                       <select
                         [ngModel]="join.rightSourceId"
                         (ngModelChange)="updateJoin(join.id, { rightSourceId: $event, rightFieldId: getSourceFirstField($event) })"
@@ -268,7 +246,6 @@
                       >
                         <option *ngFor="let id of query.sourceIds" [value]="id">{{ getSource(id)?.label }}</option>
                       </select>
-
                       <select
                         [ngModel]="join.rightFieldId"
                         (ngModelChange)="updateJoin(join.id, { rightFieldId: $event })"
@@ -276,7 +253,6 @@
                       >
                         <option *ngFor="let field of getSourceFields(join.rightSourceId)" [value]="field.id">{{ field.label }}</option>
                       </select>
-
                       <button
                         (click)="deleteJoin(join.id)"
                         aria-label="Supprimer la relation"
@@ -291,8 +267,6 @@
                   </div>
                 </div>
               </div>
-
-                <!-- Étape 4 : Champs -->
               <div *ngIf="step === 4" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
                 <div>
                   <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
@@ -302,7 +276,6 @@
                     Les champs sont regroupés par source pour lever toute ambiguïté.
                   </p>
                 </div>
-
                 <section *ngFor="let source of selectedSources" class="rounded-md border border-line dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden space-y-0">
                   <div class="border-b border-line dark:border-slate-800 bg-surface-muted dark:bg-slate-800/60 px-2 py-1.5 text-xs font-semibold text-ink dark:text-white flex items-center justify-between">
                     <span>{{ source.label }}</span>
@@ -328,7 +301,6 @@
                     </label>
                   </div>
                 </section>
-
                 <div *ngIf="query.selectedFieldIds.length > 0" class="pt-2">
                   <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1.5">
                     Ordre de sortie
@@ -354,8 +326,6 @@
                   </div>
                 </div>
               </div>
-
-              <!-- Étape 5 : Filtres -->
               <div *ngIf="step === 5" class="space-y-2" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
                 <div class="flex items-start justify-between">
                   <div>
@@ -374,13 +344,11 @@
                     <span>+</span> Critère
                   </button>
                 </div>
-
                 <div *ngIf="query.conditions.length === 0" class="flex flex-col items-center justify-center rounded-md border border-dashed border-line-strong dark:border-slate-700 bg-surface-muted dark:bg-slate-800/50 px-4 py-8 text-center space-y-1">
                   <app-svg-icon name="Sparkles" class="h-5 w-5 text-ink-faint dark:text-slate-400 mb-1.5"></app-svg-icon>
                   <div class="font-semibold text-ink dark:text-white text-xs">Aucun filtre source</div>
                   <div class="text-2xs text-ink-faint dark:text-slate-400">La requête retournera toutes les lignes jointes.</div>
                 </div>
-
                 <div *ngFor="let condition of query.conditions; let index = index" class="space-y-1.5 rounded-md border border-line dark:border-slate-800 p-2 bg-white dark:bg-slate-800">
                   <div class="flex items-center gap-1.5">
                     <select
@@ -391,27 +359,23 @@
                       <option value="AND">ET</option>
                       <option value="OR">OU</option>
                     </select>
-
                     <select
                       [(ngModel)]="condition.fieldId"
                       class="h-7 flex-1 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white outline-none"
                     >
                       <option *ngFor="let f of catalogFields" [value]="f.id">{{ f.sourceLabel }} · {{ f.label }}</option>
                     </select>
-
                     <select
                       [(ngModel)]="condition.operator"
                       class="h-7 w-28 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white outline-none"
                     >
                       <option *ngFor="let op of operators" [value]="op.value">{{ op.label }}</option>
                     </select>
-
                     <input
                       [(ngModel)]="condition.value"
                       placeholder="Valeur"
                       class="h-7 w-28 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white outline-none"
                     />
-
                     <button (click)="deleteCondition(condition.id)" aria-label="Supprimer" class="rounded p-1 text-ink-faint dark:text-slate-400 hover:text-negative cursor-pointer">
                       <app-svg-icon name="Trash2" class="h-3.5 w-3.5"></app-svg-icon>
                     </button>
@@ -422,8 +386,6 @@
                   </label>
                 </div>
               </div>
-
-                <!-- Étape 6 : Transformations -->
               <div *ngIf="step === 6" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
                 <div class="flex items-start justify-between">
                   <div>
@@ -442,13 +404,11 @@
                     + Transformation
                   </button>
                 </div>
-
                 <div *ngIf="query.transformations.length === 0" class="flex flex-col items-center justify-center rounded-md border border-dashed border-line-strong dark:border-slate-700 bg-surface-muted dark:bg-slate-800/50 px-4 py-8 text-center space-y-1">
                   <app-svg-icon name="Sparkles" class="h-5 w-5 text-ink-faint dark:text-slate-400 mb-1.5"></app-svg-icon>
                   <div class="font-semibold text-ink dark:text-white text-xs">Aucune transformation</div>
                   <div class="text-2xs text-ink-faint dark:text-slate-400">Ajoutez un renommage, un calcul, un formatage ou un filtre post-jointure.</div>
                 </div>
-
                 <div *ngFor="let t of query.transformations; let i = index" class="rounded-md border border-line dark:border-slate-800 p-2 bg-white dark:bg-slate-800 space-y-1.5">
                   <div class="flex items-center gap-1.5">
                     <select
@@ -457,7 +417,6 @@
                     >
                       <option *ngFor="let tt of transformTypes" [value]="tt.value">{{ tt.label }}</option>
                     </select>
-
                     <select
                       [(ngModel)]="t.fieldId"
                       class="h-7 flex-1 min-w-0 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
@@ -465,12 +424,10 @@
                       <option value="">— Champ —</option>
                       <option *ngFor="let f of catalogFields" [value]="f.id">{{ f.sourceLabel }} · {{ f.label }}</option>
                     </select>
-
                     <button (click)="deleteTransformation(t.id)" aria-label="Supprimer" class="rounded p-1 text-ink-faint dark:text-slate-400 hover:text-negative cursor-pointer">
                       <app-svg-icon name="Trash2" class="h-3.5 w-3.5"></app-svg-icon>
                     </button>
                   </div>
-
                   <div *ngIf="t.type === 'rename' || t.type === 'calculated'" class="flex items-center gap-1.5">
                     <label class="text-2xs text-ink-faint dark:text-slate-400 w-24 flex-shrink-0">Nouveau libellé</label>
                     <input
@@ -479,7 +436,6 @@
                       class="h-7 flex-1 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
                     />
                   </div>
-
                   <div *ngIf="t.type === 'calculated'" class="flex items-center gap-1.5">
                     <label class="text-2xs text-ink-faint dark:text-slate-400 w-24 flex-shrink-0">Formule</label>
                     <input
@@ -488,7 +444,6 @@
                       class="h-7 flex-1 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none font-mono"
                     />
                   </div>
-
                   <div *ngIf="t.type === 'format'" class="flex items-center gap-1.5">
                     <label class="text-2xs text-ink-faint dark:text-slate-400 w-24 flex-shrink-0">Type de format</label>
                     <select
@@ -501,7 +456,6 @@
                       <option value="month">Extraire le mois</option>
                     </select>
                   </div>
-
                   <div *ngIf="t.type === 'replaceEmpty'" class="flex items-center gap-1.5">
                     <label class="text-2xs text-ink-faint dark:text-slate-400 w-24 flex-shrink-0">Valeur par défaut</label>
                     <input
@@ -510,7 +464,6 @@
                       class="h-7 flex-1 rounded-md border border-line-strong dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs text-ink dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none"
                     />
                   </div>
-
                   <div *ngIf="t.type === 'filterRows'" class="flex items-center gap-1.5">
                     <label class="text-2xs text-ink-faint dark:text-slate-400 w-24 flex-shrink-0">Condition</label>
                     <select
@@ -526,7 +479,6 @@
                     />
                   </div>
                 </div>
-
                 <div *ngIf="query.transformations.length > 0 && getLivePreviewColumns().length > 0" class="mt-4 border-t border-line dark:border-slate-800 pt-3">
                   <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1.5">
                     APERÇU TRANSFORMÉ
@@ -555,8 +507,6 @@
                   </div>
                 </div>
               </div>
-
-                <!-- Étape 7 : Regroupement (Group By) -->
               <div *ngIf="step === 7" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
                 <div>
                   <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">
@@ -566,7 +516,6 @@
                     Les calculs sont effectués après les transformations.
                   </p>
                 </div>
-
                 <div>
                   <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">Regrouper par</label>
                   <div class="flex flex-wrap gap-1.5">
@@ -581,7 +530,6 @@
                     </button>
                   </div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-3">
                   <div>
                     <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">Agrégation</label>
@@ -598,7 +546,6 @@
                       <option value="count">Comptage</option>
                     </select>
                   </div>
-
                   <div>
                     <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">Champ agrégé</label>
                     <select
@@ -613,8 +560,6 @@
                   </div>
                 </div>
               </div>
-
-                <!-- Étape 8 : Tri (Order By) -->
               <div *ngIf="step === 8" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
                 <div>
                   <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">Tri et limite</label>
@@ -622,7 +567,6 @@
                     Le tri est la dernière opération de traitement.
                   </p>
                 </div>
-
                 <div class="grid grid-cols-2 gap-3">
                   <div>
                     <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">Trier par</label>
@@ -636,7 +580,6 @@
                       <option *ngFor="let field of catalogFields" [value]="field.id">{{ field.sourceLabel }} · {{ field.label }}</option>
                     </select>
                   </div>
-
                   <div>
                     <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">Direction</label>
                     <select
@@ -650,7 +593,6 @@
                     </select>
                   </div>
                 </div>
-
                 <div>
                   <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400 mb-1">Nombre maximum de lignes</label>
                   <input
@@ -662,8 +604,6 @@
                   />
                 </div>
               </div>
-
-                <!-- Étape 9 : Valider & Prévisualiser -->
               <div *ngIf="step === 9" class="space-y-3" [ngClass]="slideDirection === 'right' ? 'step-enter-right' : 'step-enter-left'">
                 <div class="rounded-md border border-line dark:border-slate-800 bg-surface-muted dark:bg-slate-800/60 p-3 space-y-1">
                   <h3 class="text-sm font-semibold text-ink dark:text-white">
@@ -687,11 +627,9 @@
                     </span>
                   </div>
                 </div>
-
                 <div class="rounded-md border border-brand/20 bg-brand-soft/40 dark:bg-brand/10 p-2 text-2xs text-brand-strong dark:text-brand">
                   <span class="font-semibold">Ordre de traitement :</span> Sources → Relations → Filtres → Transformations → Agrégation → Tri
                 </div>
-
                 <div *ngIf="getLivePreviewColumns().length > 0" class="mt-4 border-t border-line dark:border-slate-800 pt-3 space-y-2">
                   <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint dark:text-slate-400">
                     APERÇU FINAL
@@ -723,12 +661,10 @@
             </div>
           </div>
         </div>
-
         <div class="mt-auto flex items-center justify-between border-t border-line dark:border-slate-800 px-4 py-2.5 bg-white dark:bg-slate-900 select-none">
           <span class="text-2xs text-ink-faint dark:text-slate-400">
             Étape {{ step + 1 }} sur {{ steps.length }} — {{ steps[step] }}
           </span>
-
           <div class="flex gap-2">
             <app-button
               *ngIf="step > 0"
@@ -738,7 +674,6 @@
             >
               Précédent
             </app-button>
-
             <app-button
               *ngIf="step < steps.length - 1"
               variant="primary"
@@ -748,7 +683,6 @@
             >
               Suivant ›
             </app-button>
-
             <app-button
               *ngIf="step === steps.length - 1"
               variant="primary"

@@ -10,7 +10,6 @@ import {
   isNumericDataGridColumn
 } from '@pages/dashboard/services/datagrid.service';
 import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component';
-
 @Component({
   selector: 'app-data-grid-view',
   standalone: true,
@@ -40,7 +39,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
             ✕
           </button>
         </div>
-
         <div class="ml-auto flex items-center gap-1">
           <span class="text-2xs text-ink-faint">{{ filteredRows.length }} enregistrements</span>
           <button
@@ -52,16 +50,14 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
           </button>
         </div>
       </div>
-
-      <div class="min-h-0 flex-1 overflow-auto">
-        <table class="w-full table-fixed border-collapse text-left">
+      <div class="min-h-0 flex-1 overflow-x-auto overflow-y-auto">
+        <table class="min-w-full border-collapse text-left">
           <thead class="sticky top-0 z-10 border-b border-line bg-surface-muted text-2xs font-semibold text-ink-soft">
             <tr>
               <th
                 *ngFor="let col of visibleCols; let i = index"
                 (click)="sort(col)"
-                class="px-3 py-2 select-none truncate"
-                [style.width.%]="100 / (visibleCols.length || 1)"
+                class="px-3 py-2 select-none whitespace-nowrap min-w-[110px]"
                 [ngClass]="[
                   cfg.sortable ? 'cursor-pointer hover:bg-surface-sunken' : '',
                   getColumnAlign(col, i)
@@ -76,7 +72,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
               </th>
             </tr>
           </thead>
-
           <tbody class="divide-y divide-line bg-white">
             <tr
               *ngFor="let row of pageRows"
@@ -84,8 +79,7 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
             >
               <td
                 *ngFor="let col of visibleCols; let i = index"
-                class="px-3 truncate"
-                [style.width.%]="100 / (visibleCols.length || 1)"
+                class="px-3 whitespace-nowrap min-w-[110px]"
                 [ngClass]="[
                   densityPaddingClass,
                   getColumnAlign(col, i),
@@ -95,14 +89,12 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
                 {{ formatValue(row[col], col) }}
               </td>
             </tr>
-
             <tr *ngIf="pageRows.length === 0">
               <td [attr.colspan]="visibleCols.length" class="px-3 py-6 text-center text-ink-faint">
                 Aucune donnée disponible.
               </td>
             </tr>
           </tbody>
-
           <tfoot *ngIf="cfg.showTotals && filteredRows.length > 0" class="border-t-2 border-line bg-surface-muted font-semibold text-ink">
             <tr>
               <td
@@ -119,7 +111,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
           </tfoot>
         </table>
       </div>
-
       <div
         *ngIf="cfg.showPagination && totalPages > 1"
         class="flex flex-shrink-0 items-center justify-between border-t border-line bg-white px-2 py-1 text-2xs text-ink-faint"
@@ -127,7 +118,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
         <span>
           Page {{ currentPage }} / {{ totalPages }}
         </span>
-
         <div class="flex items-center gap-1">
           <button
             [disabled]="currentPage <= 1"
@@ -151,43 +141,35 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
 export class DataGridViewComponent implements OnChanges {
   @Input() rows: Array<Record<string, unknown>> = [];
   @Input() config?: DataGridConfig;
-
   cfg: Required<DataGridConfig> = resolveDataGridConfig();
   visibleCols: string[] = [];
   search: string = '';
   sortColumn: string | null = null;
   sortDirection: 'asc' | 'desc' = 'asc';
   currentPage: number = 1;
-
   filteredRows: Array<Record<string, unknown>> = [];
   pageRows: Array<Record<string, unknown>> = [];
-
   ngOnChanges(changes: SimpleChanges): void {
     this.cfg = resolveDataGridConfig(this.config);
     this.visibleCols = dataGridVisibleColumns(this.rows, this.config);
     this.applyFiltersAndSort();
   }
-
   get densityPaddingClass(): string {
     if (this.cfg.density === 'compact') return 'py-1';
     if (this.cfg.density === 'comfortable') return 'py-2.5';
     return 'py-1.5';
   }
-
   isNumeric(col: string): boolean {
     return isNumericDataGridColumn(this.rows, col);
   }
-
   getColumnAlign(col: string, index: number): 'text-left' | 'text-right' {
     if (index === 0) return 'text-left';
     if (index === this.visibleCols.length - 1) return 'text-right';
     return this.isNumeric(col) ? 'text-right' : 'text-left';
   }
-
   formatValue(val: unknown, col: string): string {
     return formatDataGridValue(val, col);
   }
-
   sort(col: string) {
     if (!this.cfg.sortable) return;
     if (this.sortColumn === col) {
@@ -202,12 +184,10 @@ export class DataGridViewComponent implements OnChanges {
     }
     this.applyFiltersAndSort();
   }
-
   onSearchChange() {
     this.currentPage = 1;
     this.applyFiltersAndSort();
   }
-
   resetFilters() {
     this.search = '';
     this.sortColumn = null;
@@ -215,10 +195,8 @@ export class DataGridViewComponent implements OnChanges {
     this.currentPage = 1;
     this.applyFiltersAndSort();
   }
-
   applyFiltersAndSort() {
     let list = [...this.rows];
-
     if (this.search.trim()) {
       const q = this.search.toLowerCase();
       list = list.filter((row) =>
@@ -227,29 +205,24 @@ export class DataGridViewComponent implements OnChanges {
         )
       );
     }
-
     if (this.sortColumn) {
       const col = this.sortColumn;
       const dir = this.sortDirection === 'asc' ? 1 : -1;
       list.sort((a, b) => compareDataGridValues(a[col], b[col]) * dir);
     }
-
     this.filteredRows = list;
     this.updatePageRows();
   }
-
   get totalPages(): number {
     const pageSize = this.cfg.rowsPerPage || 10;
     return Math.max(1, Math.ceil(this.filteredRows.length / pageSize));
   }
-
   updatePageRows() {
     if (this.currentPage > this.totalPages) this.currentPage = this.totalPages;
     const pageSize = this.cfg.rowsPerPage || 10;
     const start = (this.currentPage - 1) * pageSize;
     this.pageRows = this.filteredRows.slice(start, start + pageSize);
   }
-
   getColumnTotal(col: string): number {
     return this.filteredRows.reduce((sum, row) => {
       const val = Number(row[col]);

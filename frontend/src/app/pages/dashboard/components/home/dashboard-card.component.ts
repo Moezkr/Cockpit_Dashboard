@@ -11,14 +11,12 @@ import { BadgeComponent } from '@shared/components/ui/badge.component';
 import { ShareModalComponent } from '@pages/dashboard/components/home/share-modal.component';
 import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component';
 import { ConfirmModalComponent } from '@shared/components/ui/confirm-modal.component';
-
 const SHARE_LABELS: Record<string, string> = {
   private: 'Privé',
   users: 'Utilisateurs',
   group: 'Groupe',
   organization: 'Organisation'
 };
-
 @Component({
   selector: 'app-dashboard-card',
   standalone: true,
@@ -30,7 +28,6 @@ const SHARE_LABELS: Record<string, string> = {
       [class.z-30]="menuOpen"
     >
       <div class="h-1 rounded-t-lg" [style.backgroundColor]="dashboard.color"></div>
-
       <div class="p-3">
         <div class="mb-1.5 flex items-start justify-between gap-2">
           <div class="flex min-w-0 items-center gap-1.5">
@@ -41,7 +38,6 @@ const SHARE_LABELS: Record<string, string> = {
               Brouillon
             </app-badge>
           </div>
-
           <div class="flex flex-shrink-0 items-center gap-0.5" (click)="$event.stopPropagation()">
             <button
               (click)="toggleFav()"
@@ -53,7 +49,6 @@ const SHARE_LABELS: Record<string, string> = {
                 [class]="'h-3.5 w-3.5 ' + (dashboard.favorite ? 'fill-caution text-caution' : '')"
               ></app-svg-icon>
             </button>
-
             <div class="relative">
               <button
                 (click)="menuOpen = !menuOpen"
@@ -61,7 +56,6 @@ const SHARE_LABELS: Record<string, string> = {
               >
                 ⋮
               </button>
-
               <div *ngIf="menuOpen" class="fixed inset-0 z-20" (click)="menuOpen = false"></div>
               <div
                 *ngIf="menuOpen"
@@ -107,11 +101,9 @@ const SHARE_LABELS: Record<string, string> = {
             </div>
           </div>
         </div>
-
         <p class="mb-3 line-clamp-2 h-8 text-xs text-ink-faint">
           {{ dashboard.description || 'Aucune description.' }}
         </p>
-
         <div class="flex flex-wrap items-center gap-2.5 text-2xs text-ink-faint">
           <span class="inline-flex items-center gap-1">
             <app-svg-icon name="Layers" class="h-3.5 w-3.5"></app-svg-icon>
@@ -125,13 +117,11 @@ const SHARE_LABELS: Record<string, string> = {
         </div>
       </div>
     </div>
-
     <app-share-modal
       [dashboard]="dashboard"
       [open]="shareOpen"
       (onClose)="shareOpen = false"
     ></app-share-modal>
-
     <app-confirm-modal
       [open]="deleteConfirmOpen"
       title="Supprimer le tableau de bord"
@@ -144,53 +134,42 @@ const SHARE_LABELS: Record<string, string> = {
 export class DashboardCardComponent {
   @Input() dashboard!: Dashboard;
   @Output() onOpen = new EventEmitter<void>();
-
   menuOpen: boolean = false;
   shareOpen: boolean = false;
   deleteConfirmOpen: boolean = false;
-
   constructor(
     private dashboardService: DashboardService, private queryService: QueryService, private auditService: AuditService, private userService: UserService,
     private router: Router
   ) {}
-
   getShareLabel(level: string): string {
     return SHARE_LABELS[level] || level;
   }
-
   getShareIcon(level: string): string {
     if (level === 'private') return 'User';
     return 'Users';
   }
-
   getRelDate(iso: string, createdAt?: string): string {
     return relativeDate(iso, createdAt);
   }
-
   toggleFav() {
     this.dashboardService.toggleFavorite(this.dashboard.id);
   }
-
   duplicate() {
     this.dashboardService.duplicateDashboard(this.dashboard.id);
     this.menuOpen = false;
   }
-
   archive() {
     this.dashboardService.archiveDashboard(this.dashboard.id);
     this.menuOpen = false;
   }
-
   deleteDash() {
     this.menuOpen = false;
     this.deleteConfirmOpen = true;
   }
-
   confirmDeleteDash() {
     this.dashboardService.deleteDashboard(this.dashboard.id);
     this.deleteConfirmOpen = false;
   }
-
   navigate(path: string) {
     this.menuOpen = false;
     this.router.navigateByUrl(path);

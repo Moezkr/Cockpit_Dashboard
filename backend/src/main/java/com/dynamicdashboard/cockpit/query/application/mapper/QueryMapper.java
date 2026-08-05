@@ -1,5 +1,4 @@
 package com.dynamicdashboard.cockpit.query.application.mapper;
-
 import com.dynamicdashboard.cockpit.dashboard.repository.WidgetRepository;
 import com.dynamicdashboard.cockpit.query.application.dto.QueryConditionDto;
 import com.dynamicdashboard.cockpit.query.application.dto.QueryJoinDto;
@@ -16,14 +15,11 @@ import com.dynamicdashboard.cockpit.query.repository.QuerySourceBindingRepositor
 import com.dynamicdashboard.cockpit.query.repository.QueryTransformationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.stream.Collectors;
-
 @Component
 @RequiredArgsConstructor
 public class QueryMapper {
-
     private final QuerySourceBindingRepository querySourceBindingRepository;
     private final QuerySelectedFieldRepository querySelectedFieldRepository;
     private final QueryGroupByFieldRepository queryGroupByFieldRepository;
@@ -32,25 +28,20 @@ public class QueryMapper {
     private final QueryTransformationRepository queryTransformationRepository;
     private final QuerySortRepository querySortRepository;
     private final WidgetRepository widgetRepository;
-
     public QueryResponseDto toDto(DataQueryEntity entity) {
         if (entity == null) return null;
-
         List<String> sourceIds = querySourceBindingRepository.findByQueryIdOrderByPositionIndexAsc(entity.getId())
                 .stream()
                 .map(sb -> sb.getDataSource().getSourceKey())
                 .collect(Collectors.toList());
-
         List<String> selectedFieldIds = querySelectedFieldRepository.findByIdQueryIdOrderByPositionIndexAsc(entity.getId())
                 .stream()
                 .map(sf -> sf.getField().getFieldKey())
                 .collect(Collectors.toList());
-
         List<String> groupByFieldIds = queryGroupByFieldRepository.findByIdQueryIdOrderByPositionIndexAsc(entity.getId())
                 .stream()
                 .map(gb -> gb.getField().getFieldKey())
                 .collect(Collectors.toList());
-
         List<QueryJoinDto> joins = queryJoinRepository.findByQueryId(entity.getId())
                 .stream()
                 .map(j -> QueryJoinDto.builder()
@@ -62,7 +53,6 @@ public class QueryMapper {
                         .rightFieldId(j.getRightField().getFieldKey())
                         .build())
                 .collect(Collectors.toList());
-
         List<QueryConditionDto> conditions = queryConditionRepository.findByQueryId(entity.getId())
                 .stream()
                 .map(c -> QueryConditionDto.builder()
@@ -74,7 +64,6 @@ public class QueryMapper {
                         .parametrable(c.isParameterizable())
                         .build())
                 .collect(Collectors.toList());
-
         List<QueryTransformationDto> transformations = queryTransformationRepository.findByQueryId(entity.getId())
                 .stream()
                 .map(t -> QueryTransformationDto.builder()
@@ -89,16 +78,13 @@ public class QueryMapper {
                         .value(t.getComparisonValue())
                         .build())
                 .collect(Collectors.toList());
-
         QuerySortDto sortDto = querySortRepository.findById(entity.getId())
                 .map(s -> QuerySortDto.builder()
                         .fieldId(s.getField().getFieldKey())
                         .direction(s.getDirection().name().toLowerCase())
                         .build())
                 .orElse(null);
-
         int usedByWidgetsCount = widgetRepository.countByQueryId(entity.getId());
-
         return QueryResponseDto.builder()
                 .id(entity.getId())
                 .name(entity.getQueryName())

@@ -9,9 +9,7 @@ import { Router } from '@angular/router';
 import { ModalComponent } from '@shared/components/ui/modal.component';
 import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component';
 import { ButtonComponent } from '@shared/components/ui/button.component';
-
 const COLOR_PALETTE = ['#2563eb', '#16a34a', '#d97706', '#9333ea', '#dc2626', '#0891b2'];
-
 @Component({
   selector: 'app-new-dashboard-modal',
   standalone: true,
@@ -33,7 +31,6 @@ const COLOR_PALETTE = ['#2563eb', '#16a34a', '#d97706', '#9333ea', '#dc2626', '#
             class="h-9 w-full rounded-md border border-line-strong bg-white px-3 text-xs outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all"
           />
         </div>
-
         <div>
           <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint mb-1">
             DESCRIPTION <span class="font-normal text-ink-faint">— optionnel</span>
@@ -45,7 +42,6 @@ const COLOR_PALETTE = ['#2563eb', '#16a34a', '#d97706', '#9333ea', '#dc2626', '#
             class="w-full rounded-md border border-line-strong bg-white p-2.5 text-xs outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all resize-none"
           ></textarea>
         </div>
-
         <div>
           <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint mb-1.5">
             COULEUR D'IDENTIFICATION
@@ -65,7 +61,6 @@ const COLOR_PALETTE = ['#2563eb', '#16a34a', '#d97706', '#9333ea', '#dc2626', '#
             </button>
           </div>
         </div>
-
         <div>
           <label class="block text-2xs font-semibold uppercase tracking-wide text-ink-faint mb-1.5">
             MODÈLE DE DÉPART
@@ -95,7 +90,6 @@ const COLOR_PALETTE = ['#2563eb', '#16a34a', '#d97706', '#9333ea', '#dc2626', '#
             </button>
           </div>
         </div>
-
         <div class="flex items-center justify-end gap-2 border-t border-line pt-3 mt-4">
           <app-button variant="secondary" size="md" (onClick)="handleClose()">
             Annuler
@@ -111,15 +105,12 @@ const COLOR_PALETTE = ['#2563eb', '#16a34a', '#d97706', '#9333ea', '#dc2626', '#
 export class NewDashboardModalComponent implements OnChanges {
   @Input() open: boolean = false;
   @Output() onClose = new EventEmitter<void>();
-
   name: string = '';
   description: string = '';
   selectedColor: string = COLOR_PALETTE[0];
   selectedTemplate: string = 'blank';
   isSubmitting: boolean = false;
-
   colors = COLOR_PALETTE;
-
   templateOptions = [
     {
       id: 'blank',
@@ -146,12 +137,10 @@ export class NewDashboardModalComponent implements OnChanges {
       icon: 'List'
     }
   ];
-
   constructor(
     private dashboardService: DashboardService, private queryService: QueryService, private auditService: AuditService, private userService: UserService,
     private router: Router
   ) {}
-
   ngOnChanges(): void {
     if (this.open) {
       this.name = '';
@@ -161,16 +150,13 @@ export class NewDashboardModalComponent implements OnChanges {
       this.isSubmitting = false;
     }
   }
-
   handleClose() {
     if (this.isSubmitting) return;
     this.onClose.emit();
   }
-
   submit() {
     if (this.isSubmitting) return;
     this.isSubmitting = true;
-
     let widgets: any[] = [];
     if (this.selectedTemplate !== 'blank') {
       const tmpl = this.dashboardService.dashboards.find((d) => d.id === this.selectedTemplate);
@@ -178,7 +164,6 @@ export class NewDashboardModalComponent implements OnChanges {
         widgets = JSON.parse(JSON.stringify(tmpl.widgets));
       }
     }
-
     this.dashboardService.createDashboard({
       name: this.name.trim() || 'Nouveau tableau de bord',
       description: this.description.trim(),

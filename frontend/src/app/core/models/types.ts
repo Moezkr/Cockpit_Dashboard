@@ -1,5 +1,4 @@
 export type FieldType = 'text' | 'number' | 'date' | 'amount' | 'percent';
-
 export interface DataField {
   id: string;
   key?: string;
@@ -7,7 +6,6 @@ export interface DataField {
   type: FieldType;
   description?: string;
 }
-
 export interface DataSource {
   id: string;
   label: string;
@@ -15,9 +13,7 @@ export interface DataSource {
   app: HostApp;
   fields: DataField[];
 }
-
 export type QueryJoinType = 'inner' | 'left' | 'right' | 'full';
-
 export interface QueryJoin {
   id: string;
   leftSourceId: string;
@@ -26,14 +22,12 @@ export interface QueryJoin {
   rightSourceId: string;
   rightFieldId: string;
 }
-
 export type QueryTransformationType =
   | 'rename'
   | 'calculated'
   | 'format'
   | 'replaceEmpty'
   | 'filterRows';
-
 export interface QueryTransformation {
   id: string;
   type: QueryTransformationType;
@@ -49,9 +43,7 @@ export interface QueryTransformation {
   value?: string;
   filterValue?: string;
 }
-
 export type HostApp = 'ProgesCode' | 'HealthPilot' | 'Care at Home';
-
 export type FilterOperator =
   | 'eq'
   | 'neq'
@@ -60,7 +52,6 @@ export type FilterOperator =
   | 'contains'
   | 'in'
   | 'between';
-
 export interface QueryCondition {
   id: string;
   fieldId: string;
@@ -69,16 +60,12 @@ export interface QueryCondition {
   logical: 'AND' | 'OR';
   parametrable: boolean;
 }
-
 export type Aggregation = 'none' | 'sum' | 'avg' | 'min' | 'max' | 'count';
-
 export interface QuerySort {
   fieldId: string;
   direction: 'asc' | 'desc';
 }
-
 export type QueryVisibility = 'personal' | 'shared';
-
 export interface DataQuery {
   id: string;
   name: string;
@@ -98,7 +85,6 @@ export interface DataQuery {
   usedByWidgets: number;
   updatedAt: string;
 }
-
 export type WidgetType =
   | 'kpi'
   | 'bar'
@@ -110,16 +96,13 @@ export type WidgetType =
   | 'gauge'
   | 'datagrid'
   | 'text';
-
 export interface WidgetLayout {
   x: number;
   y: number;
   w: number;
   h: number;
 }
-
 export type DataGridDensity = 'compact' | 'normal' | 'comfortable';
-
 export interface DataGridConfig {
   visibleColumns?: string[];
   rowsPerPage?: number;
@@ -131,7 +114,6 @@ export interface DataGridConfig {
   sortable?: boolean;
   filterable?: boolean;
 }
-
 export interface WidgetFilter {
   id: string;
   label?: string;
@@ -139,7 +121,6 @@ export interface WidgetFilter {
   operator: FilterOperator;
   value: string;
 }
-
 export interface Widget {
   id: string;
   type: WidgetType;
@@ -155,7 +136,6 @@ export interface Widget {
   datagrid?: DataGridConfig;
   text?: string;
 }
-
 export type RefreshInterval =
   | 'off'
   | '5s'
@@ -166,14 +146,12 @@ export type RefreshInterval =
   | '15min'
   | '30min'
   | '1h';
-
 export type GlobalFilterInput =
   | 'select'
   | 'date'
   | 'daterange'
   | 'text'
   | 'multiselect';
-
 export interface GlobalFilter {
   id: string;
   name: string;
@@ -185,10 +163,8 @@ export interface GlobalFilter {
   defaultValue: string;
   readerVisible: boolean;
 }
-
 export type DashboardStatus = 'draft' | 'published';
 export type ShareLevel = 'private' | 'users' | 'group' | 'organization';
-
 export interface Dashboard {
   id: string;
   name: string;
@@ -209,13 +185,10 @@ export interface Dashboard {
   updatedAt: string;
   sharedWithMe?: boolean;
 }
-
 export interface Datum {
   [key: string]: string | number;
 }
-
 export type SourceRow = Record<string, string | number | null>;
-
 export const DATA_SOURCES: DataSource[] = [];
 export const MOCK_SOURCE_ROWS: Record<string, SourceRow[]> = {};
 export const MOCK_QUERIES: DataQuery[] = [];

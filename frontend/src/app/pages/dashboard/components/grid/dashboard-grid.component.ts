@@ -16,12 +16,9 @@ import {
   WidgetLayouts
 } from '@pages/dashboard/services/dashboard-layout.service';
 import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component';
-
 const ROW_H = 44;
 const GAP = 8;
-
 type InteractionMode = 'move' | 'resize-east' | 'resize-south' | 'resize-corner';
-
 interface ActiveInteraction {
   id: string;
   mode: InteractionMode;
@@ -31,7 +28,6 @@ interface ActiveInteraction {
   origin: WidgetLayout;
   captureElement: HTMLElement;
 }
-
 @Component({
   selector: 'app-dashboard-grid',
   standalone: true,
@@ -48,18 +44,16 @@ interface ActiveInteraction {
       <p *ngIf="editable" id="grid-instructions" class="sr-only">
         Sélectionnez un widget. Utilisez sa poignée pour le déplacer et ses poignées de bord pour le redimensionner.
       </p>
-
       <div
         *ngIf="previewedLayout"
         class="pointer-events-none absolute z-30 rounded-lg border-2 border-dashed border-brand bg-brand-soft/20"
         [ngStyle]="styleForLayout(previewedLayout)"
       ></div>
-
       <div
         *ngFor="let widget of widgets; trackBy: trackById"
         class="group absolute"
         [ngClass]="getWidgetWrapperClass(widget)"
-        [ngStyle]="styleForLayout(getLayout(widget))"
+        [ngStyle]="styleForLayout(getLayout(widget), widget)"
         (click)="onWidgetClick($event, widget)"
         (focus)="onWidgetFocus(widget)"
         (keydown)="handleWidgetKeyDown(widget, $event)"
@@ -76,7 +70,6 @@ interface ActiveInteraction {
             *ngTemplateOutlet="widgetTemplate; context: { $implicit: widget }"
           ></ng-container>
         </div>
-
         <ng-container *ngIf="editable">
           <button
             type="button"
@@ -87,7 +80,6 @@ interface ActiveInteraction {
           >
             ⋮⋮
           </button>
-
           <button
             type="button"
             [attr.aria-label]="'Agrandir ou réduire la largeur de ' + widget.title"
@@ -97,7 +89,6 @@ interface ActiveInteraction {
           >
             ↔
           </button>
-
           <button
             type="button"
             [attr.aria-label]="'Agrandir ou réduire la hauteur de ' + widget.title"
@@ -107,7 +98,6 @@ interface ActiveInteraction {
           >
             ↕
           </button>
-
           <button
             type="button"
             [attr.aria-label]="'Redimensionner ' + widget.title"
@@ -119,7 +109,6 @@ interface ActiveInteraction {
           </button>
         </ng-container>
       </div>
-
       <div
         *ngIf="previewedLayout && activeId"
         class="pointer-events-none absolute bottom-2 left-2 z-40 rounded-md bg-ink px-2 py-1 text-2xs font-medium tabular-nums text-white shadow-pop"
@@ -136,26 +125,77 @@ export class DashboardGridComponent {
   @Input() editable: boolean = false;
   @Input() selectedId?: string;
   @Input() widgetTemplate: any;
-
   @Output() onLayoutsChange = new EventEmitter<WidgetLayouts>();
   @Output() onSelect = new EventEmitter<string | undefined>();
-
   @ViewChild('container') containerRef!: ElementRef<HTMLDivElement>;
-
   activeInteraction: ActiveInteraction | null = null;
   activeId: string | null = null;
   previewLayouts: WidgetLayouts | null = null;
-
   trackById(index: number, widget: Widget): string {
     return widget.id;
   }
-
+  isMobile: boolean = false;
+  @HostListener('window:resize')
+  checkMobile() {
+    if (typeof window !== 'undefined') {
+      this.isMobile = window.innerWidth < 768;
+    }
+  }
+  ngOnInit() {
+    this.checkMobile();
+  }
   get backgroundSizeStyle(): string {
+    if (this.isMobile && !this.editable) return 'none';
     const percent = 100 / this.columns;
     return `calc(${percent}% + ${GAP / this.columns}px) ${ROW_H + GAP}px`;
   }
-
+  private getMobileLayoutMap(): Record<string, { top: number; left: string; width: string; height: number }> {
+    const map: Record<string, { top: number; left: string; width: string; height: number }> = {};
+    const sorted = [...this.widgets].sort((a, b) => {
+      const la = this.getLayout(a);
+      const lb = this.getLayout(b);
+      return la.y !== lb.y ? la.y - lb.y : la.x - lb.x;
+    });
+    let currentY = 0;
+    let inKpiRow = false;
+    let kpiRowY = 0;
+    const isSmallPhone = typeof window !== 'undefined' ? window.innerWidth < 480 : false;
+    for (let i = 0; i < sorted.length; i++) {
+      const w = sorted[i];
+      const l = this.getLayout(w);
+      const isKpi = w.type === 'kpi' || (l.w <= 4 && l.h <= 3);
+      if (isKpi) {
+        if (inKpiRow) {
+          currentY = kpiRowY + 130 + GAP;
+          inKpiRow = false;
+        }
+        let kpiHeight = 130;
+        map[w.id] = { top: currentY, left: '0px', width: '100%', height: kpiHeight };
+        currentY += kpiHeight + GAP;
+      } else {
+        if (inKpiRow) {
+          currentY = kpiRowY + 130 + GAP;
+          inKpiRow = false;
+        }
+        let h = 250;
+        if (w.type === 'datagrid') h = 360;
+        else if (w.type === 'kpi') h = 130;
+        else if (l.h > 6) h = 320;
+        map[w.id] = { top: currentY, left: '0px', width: '100%', height: h };
+        currentY += h + GAP;
+      }
+    }
+    return map;
+  }
   get gridHeight(): number {
+    if (this.isMobile && !this.editable) {
+      const mobileMap = this.getMobileLayoutMap();
+      let maxBottom = 0;
+      Object.values(mobileMap).forEach(m => {
+        maxBottom = Math.max(maxBottom, m.top + m.height);
+      });
+      return maxBottom || 400;
+    }
     const layouts =
       this.previewLayouts ??
       Object.fromEntries(this.widgets.map((w) => [w.id, w.layout]));
@@ -166,20 +206,29 @@ export class DashboardGridComponent {
     const gridRows = Math.max(2, maxRow + (this.editable ? 3 : 0));
     return gridRows * (ROW_H + GAP) - GAP;
   }
-
   get previewedLayout(): WidgetLayout | undefined {
     return this.activeId && this.previewLayouts
       ? this.previewLayouts[this.activeId]
       : undefined;
   }
-
   getLayout(widget: Widget): WidgetLayout {
     return (
       (this.previewLayouts && this.previewLayouts[widget.id]) || widget.layout
     );
   }
-
-  styleForLayout(layout: WidgetLayout): Record<string, string> {
+  styleForLayout(layout: WidgetLayout, widget?: Widget): Record<string, string> {
+    if (this.isMobile && !this.editable && widget) {
+      const mobileMap = this.getMobileLayoutMap();
+      const m = mobileMap[widget.id];
+      if (m) {
+        return {
+          left: m.left,
+          top: `${m.top}px`,
+          width: m.width,
+          height: `${m.height}px`
+        };
+      }
+    }
     const percent = 100 / this.columns;
     return {
       left: `calc(${layout.x * percent}% + ${(layout.x * GAP) / this.columns}px)`,
@@ -188,20 +237,16 @@ export class DashboardGridComponent {
       height: `${layout.h * ROW_H + (layout.h - 1) * GAP}px`
     };
   }
-
   getWidgetWrapperClass(widget: Widget): string {
     const isActive = this.activeId === widget.id;
     return `${!isActive ? 'transition-[left,top,width,height] duration-150' : ''} ${isActive ? 'z-20' : ''}`;
   }
-
   onCanvasClick(event: MouseEvent) {
     if (this.editable && event.target === event.currentTarget) {
       this.onSelect.emit(undefined);
     }
   }
-
   constructor(private router: Router) {}
-
   onWidgetClick(event: MouseEvent, widget: Widget) {
     if (this.editable) {
       event.stopPropagation();
@@ -211,11 +256,9 @@ export class DashboardGridComponent {
       this.router.navigate(['/tableau', widget.navigateToDashboardId]);
     }
   }
-
   onWidgetFocus(widget: Widget) {
     if (this.editable) this.onSelect.emit(widget.id);
   }
-
   beginInteraction(
     mode: InteractionMode,
     widget: Widget,
@@ -225,10 +268,8 @@ export class DashboardGridComponent {
       return;
     event.preventDefault();
     event.stopPropagation();
-
     const targetEl = event.currentTarget as HTMLElement;
     targetEl.setPointerCapture?.(event.pointerId);
-
     this.onSelect.emit(widget.id);
     this.activeInteraction = {
       id: widget.id,
@@ -247,24 +288,20 @@ export class DashboardGridComponent {
       this.columns
     );
   }
-
   @HostListener('window:pointermove', ['$event'])
   onPointerMove(event: PointerEvent) {
     const interaction = this.activeInteraction;
     if (!interaction || event.pointerId !== interaction.pointerId) return;
-
     const canvasWidth = this.containerRef?.nativeElement?.clientWidth ?? 1;
     const currentColumns = Math.max(1, this.columns);
     const columnWidth =
       (canvasWidth - GAP * (currentColumns - 1)) / currentColumns;
-
     const deltaX = Math.round(
       (event.clientX - interaction.startX) / (columnWidth + GAP)
     );
     const deltaY = Math.round(
       (event.clientY - interaction.startY) / (ROW_H + GAP)
     );
-
     let requested = interaction.origin;
     if (interaction.mode === 'move') {
       requested = {
@@ -289,7 +326,6 @@ export class DashboardGridComponent {
         h: interaction.origin.h + deltaY
       };
     }
-
     const next = clampWidgetLayout(requested, currentColumns);
     this.previewLayouts = resolveWidgetLayouts(
       this.widgets,
@@ -298,21 +334,18 @@ export class DashboardGridComponent {
       currentColumns
     );
   }
-
   @HostListener('window:pointerup', ['$event'])
   onPointerUp(event: PointerEvent) {
     if (this.activeInteraction?.pointerId === event.pointerId) {
       this.commitInteraction();
     }
   }
-
   @HostListener('window:pointercancel', ['$event'])
   onPointerCancel(event: PointerEvent) {
     if (this.activeInteraction?.pointerId === event.pointerId) {
       this.clearInteraction();
     }
   }
-
   @HostListener('window:keydown', ['$event'])
   onKeyDown(event: KeyboardEvent) {
     if (event.key === 'Escape' && this.activeInteraction) {
@@ -320,7 +353,6 @@ export class DashboardGridComponent {
       this.clearInteraction();
     }
   }
-
   private clearInteraction() {
     if (this.activeInteraction?.captureElement.hasPointerCapture?.(this.activeInteraction.pointerId)) {
       this.activeInteraction.captureElement.releasePointerCapture(this.activeInteraction.pointerId);
@@ -329,14 +361,12 @@ export class DashboardGridComponent {
     this.activeId = null;
     this.previewLayouts = null;
   }
-
   private commitInteraction() {
     if (this.previewLayouts) {
       this.onLayoutsChange.emit(this.previewLayouts);
     }
     this.clearInteraction();
   }
-
   handleWidgetKeyDown(widget: Widget, event: KeyboardEvent) {
     if (!this.editable) return;
     if (event.key === 'Escape') {
@@ -348,11 +378,9 @@ export class DashboardGridComponent {
     }
     event.preventDefault();
     event.stopPropagation();
-
     const current = widget.layout;
     const amount = event.altKey ? 2 : 1;
     let requested = current;
-
     if (event.shiftKey) {
       if (event.key === 'ArrowLeft') requested = { ...current, w: current.w - amount };
       if (event.key === 'ArrowRight') requested = { ...current, w: current.w + amount };
@@ -364,7 +392,6 @@ export class DashboardGridComponent {
       if (event.key === 'ArrowUp') requested = { ...current, y: current.y - amount };
       if (event.key === 'ArrowDown') requested = { ...current, y: current.y + amount };
     }
-
     const resolved = resolveWidgetLayouts(
       this.widgets,
       widget.id,

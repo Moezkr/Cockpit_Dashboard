@@ -1,5 +1,4 @@
 package com.dynamicdashboard.cockpit.query.application;
-
 import com.dynamicdashboard.cockpit.catalog.domain.DataFieldEntity;
 import com.dynamicdashboard.cockpit.catalog.repository.DataFieldRepository;
 import com.dynamicdashboard.cockpit.catalog.repository.DataSourceRepository;
@@ -41,21 +40,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 public class QueryApplicationService {
-
     private final DataQueryRepository dataQueryRepository;
     private final QueryConditionRepository queryConditionRepository;
     private final QueryGroupByFieldRepository queryGroupByFieldRepository;
@@ -71,42 +65,34 @@ public class QueryApplicationService {
     private final com.dynamicdashboard.cockpit.audit.application.AuditApplicationService auditApplicationService;
     private final com.dynamicdashboard.cockpit.dashboard.repository.WidgetRepository widgetRepository;
     private final com.dynamicdashboard.cockpit.datasource.application.VaultSecretService vaultSecretService;
-
-
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private QueryApplicationService self;
     private static final java.util.Map<String, com.zaxxer.hikari.HikariDataSource> HIKARI_DATA_SOURCES = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final java.util.Map<String, CachedQueryResult> QUERY_RESULT_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
-
+    private static final java.util.Map<String, CachedQueryResult> FAST_QUERY_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
     private record WorkingCredentials(String host, String password) {}
     private record CachedQueryResult(long timestamp, List<Map<String, Object>> data) {}
-
     @Transactional(readOnly = true)
     public List<Map<String, Object>> executeQueryData(UUID queryId, List<com.dynamicdashboard.cockpit.query.application.dto.RuntimeQueryFilterDto> filters) {
         long now = System.currentTimeMillis();
         String queryCacheKey = queryId.toString() + "_" + (filters != null ? filters.hashCode() : 0);
-        CachedQueryResult cachedResult = QUERY_RESULT_CACHE.get(queryCacheKey);
-        if (cachedResult != null && (now - cachedResult.timestamp()) < 2500) {
-            return cachedResult.data();
+        CachedQueryResult cached = FAST_QUERY_CACHE.get(queryCacheKey);
+        if (cached != null && (now - cached.timestamp()) < 3000) {
+            return cached.data();
         }
-
         DataQueryEntity query = dataQueryRepository.findById(queryId).orElse(null);
         if (query == null) return java.util.Collections.emptyList();
-
         List<QuerySourceBindingEntity> sources = querySourceBindingRepository.findByQueryIdOrderByPositionIndexAsc(query.getId());
         if (sources.isEmpty()) return java.util.Collections.emptyList();
-
         String primaryTable = getPhysicalTableName(sources.get(0).getDataSource());
         if (primaryTable == null || primaryTable.isBlank()) return java.util.Collections.emptyList();
-
         com.dynamicdashboard.cockpit.datasource.domain.DbConnectionEntity conn = sources.get(0).getDataSource().getDbConnection();
         com.dynamicdashboard.cockpit.shared.utils.DatabaseDriverStrategy strategy = com.dynamicdashboard.cockpit.shared.utils.DatabaseDriverStrategy.from(conn != null ? conn.getDbType() : null);
-
         org.jooq.DSLContext dsl = org.jooq.impl.DSL.using(strategy.getDialect());
         List<QueryGroupByFieldEntity> groupByFields = queryGroupByFieldRepository.findByIdQueryIdOrderByPositionIndexAsc(query.getId());
         List<QueryTransformationEntity> transformations = queryTransformationRepository.findByQueryId(query.getId());
-        
         org.jooq.SelectJoinStep<?> jooqQuery;
         org.jooq.Field<?> groupByExpr = null;
-        
         if (query.getAggregation() != null && !AggregationType.NONE.equals(query.getAggregation())) {
             org.jooq.Field<?> groupByColumn = org.jooq.impl.DSL.val("Tous").as("label");
             if (!groupByFields.isEmpty()) {
@@ -115,17 +101,14 @@ public class QueryApplicationService {
                 groupByExpr = applyDateTransformationEntity(rawCol, gbField, transformations);
                 groupByColumn = groupByExpr.as("label");
             }
-                    
             String aggColumnName = query.getAggregationField() != null
                 ? getFieldColumnName(query.getAggregationField())
                 : "*";
-                
             DataFieldEntity aggFieldEntity = query.getAggregationField();
             boolean isNumericField = aggFieldEntity != null && 
                 (com.dynamicdashboard.cockpit.shared.domain.DomainEnums.FieldType.AMOUNT.equals(aggFieldEntity.getFieldType()) || 
                  com.dynamicdashboard.cockpit.shared.domain.DomainEnums.FieldType.NUMBER.equals(aggFieldEntity.getFieldType()) ||
                  com.dynamicdashboard.cockpit.shared.domain.DomainEnums.FieldType.PERCENT.equals(aggFieldEntity.getFieldType()));
-                
             org.jooq.Field<?> aggColumn;
             if (AggregationType.SUM.equals(query.getAggregation())) {
                 if (isNumericField) {
@@ -148,15 +131,12 @@ public class QueryApplicationService {
             } else {
                 aggColumn = buildJooqField(aggColumnName).as("value");
             }
-            
             jooqQuery = dsl.select(groupByColumn, aggColumn).from(buildJooqTable(primaryTable));
         } else {
             jooqQuery = dsl.select(org.jooq.impl.DSL.asterisk()).from(buildJooqTable(primaryTable));
         }
-
         java.util.Set<String> includedTables = new java.util.HashSet<>();
         includedTables.add(primaryTable.toLowerCase());
-
         List<QueryJoinEntity> joins = queryJoinRepository.findByQueryId(query.getId());
         for (QueryJoinEntity join : joins) {
             if (join.getLeftSource() != null && join.getRightSource() != null && join.getLeftField() != null && join.getRightField() != null) {
@@ -164,7 +144,6 @@ public class QueryApplicationService {
                 String rightTable = getPhysicalTableName(join.getRightSource());
                 String leftField = getFieldColumnName(join.getLeftField());
                 String rightField = getFieldColumnName(join.getRightField());
-
                 if (leftTable != null && !leftTable.isBlank() && rightTable != null && !rightTable.isBlank()) {
                     String newTable = null;
                     if (includedTables.contains(leftTable.toLowerCase()) && !includedTables.contains(rightTable.toLowerCase())) {
@@ -172,11 +151,9 @@ public class QueryApplicationService {
                     } else if (includedTables.contains(rightTable.toLowerCase()) && !includedTables.contains(leftTable.toLowerCase())) {
                         newTable = leftTable;
                     }
-
                     if (newTable != null) {
                         org.jooq.Table<?> jooqNewTable = buildJooqTable(newTable);
                         org.jooq.Condition onCondition = buildJooqField(leftField).eq(buildJooqField(rightField));
-                        
                         if (QueryJoinType.INNER.equals(join.getJoinType())) {
                             jooqQuery = jooqQuery.join(jooqNewTable).on(onCondition);
                         } else if (QueryJoinType.RIGHT.equals(join.getJoinType())) {
@@ -189,19 +166,16 @@ public class QueryApplicationService {
                 }
             }
         }
-
         org.jooq.Condition finalCondition = org.jooq.impl.DSL.noCondition();
         List<QueryConditionEntity> conditions = queryConditionRepository.findByQueryId(query.getId());
         for (QueryConditionEntity condition : conditions) {
             if (condition.getField() != null && condition.getValueExpression() != null && !condition.getValueExpression().isBlank()) {
                 String col = getFieldColumnName(condition.getField());
-                
                 if (FilterOperator.EQ.equals(condition.getOperator())) {
                     finalCondition = finalCondition.and(buildJooqField(col).eq(condition.getValueExpression()));
                 }
             }
         }
-
         if (filters != null && !filters.isEmpty()) {
             for (com.dynamicdashboard.cockpit.query.application.dto.RuntimeQueryFilterDto filter : filters) {
                 if (filter.getFieldId() != null && filter.getValue() != null && !filter.getValue().isBlank() && !"GLOBAL_DATE_RANGE".equals(filter.getFieldId())) {
@@ -220,19 +194,16 @@ public class QueryApplicationService {
                 }
             }
         }
-
         org.jooq.SelectConditionStep<?> whereQuery = jooqQuery.where(finalCondition);
         org.jooq.SelectOrderByStep<?> orderStep = (query.getAggregation() != null && !AggregationType.NONE.equals(query.getAggregation()) && groupByExpr != null)
             ? (org.jooq.SelectOrderByStep<?>) whereQuery.groupBy(groupByExpr)
             : whereQuery;
-
         org.jooq.SelectLimitStep<?> limitStep = orderStep;
         Optional<QuerySortEntity> sortOpt = querySortRepository.findById(query.getId());
         if (sortOpt.isPresent() && sortOpt.get().getField() != null) {
             DataFieldEntity sortField = sortOpt.get().getField();
             boolean isDesc = SortDirection.DESC.equals(sortOpt.get().getDirection());
             org.jooq.Field<?> sortColExpr;
-            // If the sort field is the same as the aggregation field, sort by the aggregated "value" alias
             boolean sortOnAggValue = query.getAggregationField() != null
                 && sortField.getId().equals(query.getAggregationField().getId())
                 && query.getAggregation() != null && !AggregationType.NONE.equals(query.getAggregation());
@@ -246,39 +217,30 @@ public class QueryApplicationService {
             }
             limitStep = (org.jooq.SelectLimitStep<?>) orderStep.orderBy(isDesc ? sortColExpr.desc() : sortColExpr.asc());
         }
-
         org.jooq.Select<?> finalQuery = limitStep;
         Integer limit = query.getRowLimit();
         if (limit != null && limit > 0) {
             finalQuery = limitStep.limit(limit);
         }
-
         try {
             String sql = finalQuery.getSQL(org.jooq.conf.ParamType.INLINED);
             if (conn == null) {
                 return java.util.Collections.emptyList();
             }
-
             sql = adjustSqlForDialect(sql, conn.getDbType(), limit);
-
             String password = vaultSecretService.retrievePassword(conn.getVaultSecretKey());
             if (password == null) password = "";
-
             String host = conn.getDbHost();
             int port = conn.getDbPort();
             String dbName = conn.getDbName();
             String username = conn.getDbUsername();
-
             org.slf4j.LoggerFactory.getLogger(QueryApplicationService.class).info("Executing generated SQL for queryId {}: {}", queryId, sql);
-
             try (java.sql.Connection jdbcConn = createResilientConnection(conn != null ? conn.getId() : null, strategy, host, port, dbName, username, password);
                  java.sql.Statement stmt = jdbcConn.createStatement();
                  java.sql.ResultSet rs = stmt.executeQuery(sql)) {
-
                 java.sql.ResultSetMetaData meta = rs.getMetaData();
                 int colCount = meta.getColumnCount();
                 List<Map<String, Object>> resultRows = new java.util.ArrayList<>();
-
                 while (rs.next()) {
                     Map<String, Object> row = new java.util.LinkedHashMap<>();
                     for (int i = 1; i <= colCount; i++) {
@@ -295,7 +257,7 @@ public class QueryApplicationService {
                     resultRows.add(row);
                 }
                 org.slf4j.LoggerFactory.getLogger(QueryApplicationService.class).info("Successfully retrieved {} rows for queryId {}", resultRows.size(), queryId);
-                QUERY_RESULT_CACHE.put(queryCacheKey, new CachedQueryResult(now, resultRows));
+                FAST_QUERY_CACHE.put(queryCacheKey, new CachedQueryResult(now, resultRows));
                 return resultRows;
             }
         } catch (Exception e) {
@@ -303,28 +265,21 @@ public class QueryApplicationService {
             return java.util.Collections.emptyList();
         }
     }
-
     @Transactional(readOnly = true)
     public List<Map<String, Object>> previewDraftQuery(QueryRequestDto dto) {
         if (dto == null || dto.getSourceIds() == null || dto.getSourceIds().isEmpty()) {
             return java.util.Collections.emptyList();
         }
-
         com.dynamicdashboard.cockpit.catalog.domain.DataSourceEntity primaryDs = resolveDataSource(dto.getSourceIds().get(0)).orElse(null);
         if (primaryDs == null) return java.util.Collections.emptyList();
-
         String primaryTable = getPhysicalTableName(primaryDs);
         if (primaryTable == null || primaryTable.isBlank()) return java.util.Collections.emptyList();
-
         com.dynamicdashboard.cockpit.datasource.domain.DbConnectionEntity conn = primaryDs.getDbConnection();
         com.dynamicdashboard.cockpit.shared.utils.DatabaseDriverStrategy strategy = com.dynamicdashboard.cockpit.shared.utils.DatabaseDriverStrategy.from(conn != null ? conn.getDbType() : null);
-
         org.jooq.DSLContext dsl = org.jooq.impl.DSL.using(strategy.getDialect());
-
         AggregationType aggregation = ParsingUtils.parseEnum(AggregationType.class, dto.getAggregation(), AggregationType.NONE);
         org.jooq.SelectJoinStep<?> jooqQuery;
         org.jooq.Field<?> draftGroupByExpr = null;
-
         if (aggregation != AggregationType.NONE) {
             org.jooq.Field<?> groupByColumn = org.jooq.impl.DSL.val("Tous").as("label");
             if (dto.getGroupByFieldIds() != null && !dto.getGroupByFieldIds().isEmpty()) {
@@ -335,7 +290,6 @@ public class QueryApplicationService {
                     groupByColumn = draftGroupByExpr.as("label");
                 }
             }
-
             String aggColumnName = "*";
             DataFieldEntity aggFieldEntity = null;
             if (dto.getAggregationFieldId() != null && !dto.getAggregationFieldId().isBlank()) {
@@ -344,12 +298,10 @@ public class QueryApplicationService {
                     aggColumnName = getFieldColumnName(aggFieldEntity);
                 }
             }
-
             boolean isNumericField = aggFieldEntity != null && 
                 (com.dynamicdashboard.cockpit.shared.domain.DomainEnums.FieldType.AMOUNT.equals(aggFieldEntity.getFieldType()) || 
                  com.dynamicdashboard.cockpit.shared.domain.DomainEnums.FieldType.NUMBER.equals(aggFieldEntity.getFieldType()) ||
                  com.dynamicdashboard.cockpit.shared.domain.DomainEnums.FieldType.PERCENT.equals(aggFieldEntity.getFieldType()));
-
             org.jooq.Field<?> aggColumn;
             if (AggregationType.SUM.equals(aggregation)) {
                 aggColumn = isNumericField ? org.jooq.impl.DSL.sum(buildJooqField(aggColumnName, java.math.BigDecimal.class)).as("value") : org.jooq.impl.DSL.count(buildJooqField(aggColumnName)).as("value");
@@ -364,28 +316,23 @@ public class QueryApplicationService {
             } else {
                 aggColumn = buildJooqField(aggColumnName).as("value");
             }
-
             jooqQuery = dsl.select(groupByColumn, aggColumn).from(buildJooqTable(primaryTable));
         } else {
             jooqQuery = dsl.select(org.jooq.impl.DSL.asterisk()).from(buildJooqTable(primaryTable));
         }
-
         java.util.Set<String> includedTables = new java.util.HashSet<>();
         includedTables.add(primaryTable.toLowerCase());
-
         if (dto.getJoins() != null) {
             for (com.dynamicdashboard.cockpit.query.application.dto.QueryJoinDto joinDto : dto.getJoins()) {
                 com.dynamicdashboard.cockpit.catalog.domain.DataSourceEntity leftDs = resolveDataSource(joinDto.getLeftSourceId()).orElse(null);
                 com.dynamicdashboard.cockpit.catalog.domain.DataSourceEntity rightDs = resolveDataSource(joinDto.getRightSourceId()).orElse(null);
                 DataFieldEntity leftDf = resolveField(joinDto.getLeftFieldId()).orElse(null);
                 DataFieldEntity rightDf = resolveField(joinDto.getRightFieldId()).orElse(null);
-
                 if (leftDs != null && rightDs != null && leftDf != null && rightDf != null) {
                     String leftTable = getPhysicalTableName(leftDs);
                     String rightTable = getPhysicalTableName(rightDs);
                     String leftField = getFieldColumnName(leftDf);
                     String rightField = getFieldColumnName(rightDf);
-
                     if (leftTable != null && !leftTable.isBlank() && rightTable != null && !rightTable.isBlank()) {
                         String newTable = null;
                         if (includedTables.contains(leftTable.toLowerCase()) && !includedTables.contains(rightTable.toLowerCase())) {
@@ -393,12 +340,10 @@ public class QueryApplicationService {
                         } else if (includedTables.contains(rightTable.toLowerCase()) && !includedTables.contains(leftTable.toLowerCase())) {
                             newTable = leftTable;
                         }
-
                         if (newTable != null) {
                             org.jooq.Table<?> jooqNewTable = buildJooqTable(newTable);
                             org.jooq.Condition onCondition = buildJooqField(leftField).eq(buildJooqField(rightField));
                             QueryJoinType jType = ParsingUtils.parseEnum(QueryJoinType.class, joinDto.getType(), QueryJoinType.INNER);
-
                             if (QueryJoinType.INNER.equals(jType)) {
                                 jooqQuery = jooqQuery.join(jooqNewTable).on(onCondition);
                             } else if (QueryJoinType.RIGHT.equals(jType)) {
@@ -412,7 +357,6 @@ public class QueryApplicationService {
                 }
             }
         }
-
         org.jooq.Condition finalCondition = org.jooq.impl.DSL.noCondition();
         if (dto.getConditions() != null) {
             for (com.dynamicdashboard.cockpit.query.application.dto.QueryConditionDto cDto : dto.getConditions()) {
@@ -451,19 +395,15 @@ public class QueryApplicationService {
                 }
             }
         }
-
         org.jooq.SelectConditionStep<?> whereQuery = jooqQuery.where(finalCondition);
         org.jooq.SelectOrderByStep<?> orderStep = whereQuery;
-
         if (aggregation != AggregationType.NONE && draftGroupByExpr != null) {
             orderStep = (org.jooq.SelectOrderByStep<?>) whereQuery.groupBy(draftGroupByExpr);
         }
-
         org.jooq.SelectLimitStep<?> limitStep = orderStep;
         if (dto.getSort() != null && dto.getSort().getFieldId() != null) {
             boolean isAggValueSort = "__agg_value__".equals(dto.getSort().getFieldId());
             if (isAggValueSort && aggregation != AggregationType.NONE) {
-                // Sort by the aggregated value alias
                 org.jooq.Field<?> aggValField = org.jooq.impl.DSL.field("value");
                 boolean isDesc = "desc".equalsIgnoreCase(dto.getSort().getDirection());
                 limitStep = (org.jooq.SelectLimitStep<?>) orderStep.orderBy(isDesc ? aggValField.desc() : aggValField.asc());
@@ -482,33 +422,25 @@ public class QueryApplicationService {
                 }
             }
         }
-
         Integer limit = dto.getRowLimit() != null && dto.getRowLimit() > 0 ? dto.getRowLimit() : 100;
         org.jooq.Select<?> finalQuery = limitStep.limit(limit);
-
         try {
             String sql = finalQuery.getSQL(org.jooq.conf.ParamType.INLINED);
             if (conn == null) return java.util.Collections.emptyList();
-
             sql = adjustSqlForDialect(sql, conn.getDbType(), limit);
             String password = vaultSecretService.retrievePassword(conn.getVaultSecretKey());
             if (password == null) password = "";
-
             String host = conn.getDbHost();
             int port = conn.getDbPort();
             String dbName = conn.getDbName();
             String username = conn.getDbUsername();
-
             org.slf4j.LoggerFactory.getLogger(QueryApplicationService.class).info("Executing DRAFT PREVIEW SQL: {}", sql);
-
             try (java.sql.Connection jdbcConn = createResilientConnection(conn.getId(), strategy, host, port, dbName, username, password);
                  java.sql.Statement stmt = jdbcConn.createStatement();
                  java.sql.ResultSet rs = stmt.executeQuery(sql)) {
-
                 java.sql.ResultSetMetaData meta = rs.getMetaData();
                 int colCount = meta.getColumnCount();
                 List<Map<String, Object>> resultRows = new java.util.ArrayList<>();
-
                 while (rs.next()) {
                     Map<String, Object> row = new java.util.LinkedHashMap<>();
                     for (int i = 1; i <= colCount; i++) {
@@ -529,7 +461,6 @@ public class QueryApplicationService {
             return java.util.Collections.emptyList();
         }
     }
-
     private WorkingCredentials resolveWorkingCredentials(com.dynamicdashboard.cockpit.shared.utils.DatabaseDriverStrategy strategy, String host, int port, String dbName, String username, String password) {
         if (host != null && !host.isBlank()) {
             String primaryUrl = strategy.buildUrl(host, port, dbName);
@@ -539,7 +470,6 @@ public class QueryApplicationService {
                 } catch (Exception ignored) {}
             }
         }
-
         List<String> hostsToTry = new java.util.ArrayList<>();
         if (host != null && !host.isBlank() && !"127.0.0.1".equals(host) && !"localhost".equals(host)) {
             hostsToTry.add(host);
@@ -547,7 +477,6 @@ public class QueryApplicationService {
         hostsToTry.add("172.17.0.1");
         hostsToTry.add("host.docker.internal");
         hostsToTry.addAll(strategy.getContainerCandidates());
-
         List<String> passwordsToTry = new java.util.ArrayList<>();
         if (password != null && !password.isBlank()) {
             passwordsToTry.add(password);
@@ -560,7 +489,6 @@ public class QueryApplicationService {
         if (!passwordsToTry.contains("moezkr")) passwordsToTry.add("moezkr");
         if (!passwordsToTry.contains("cockpit")) passwordsToTry.add("cockpit");
         if (!passwordsToTry.contains("")) passwordsToTry.add("");
-
         for (String pwd : passwordsToTry) {
             for (String targetHost : hostsToTry) {
                 String url = strategy.buildUrl(targetHost, port, dbName);
@@ -571,12 +499,9 @@ public class QueryApplicationService {
         }
         return null;
     }
-
     private java.sql.Connection createResilientConnection(UUID connectionId, com.dynamicdashboard.cockpit.shared.utils.DatabaseDriverStrategy strategy, String host, int port, String dbName, String username, String password) throws Exception {
         String cacheKey = (connectionId != null ? connectionId.toString() : (dbName + "_" + username)) + "_" + strategy.name();
-
         Class.forName(strategy.getDriverClassName());
-
         com.zaxxer.hikari.HikariDataSource ds = HIKARI_DATA_SOURCES.get(cacheKey);
         if (ds != null && !ds.isClosed()) {
             try {
@@ -586,75 +511,88 @@ public class QueryApplicationService {
                 try { ds.close(); } catch (Exception ignored2) {}
             }
         }
-
         WorkingCredentials creds = resolveWorkingCredentials(strategy, host, port, dbName, username, password);
         if (creds == null) {
             throw new RuntimeException("Could not connect to database on any host candidate for " + dbName);
         }
-
         com.zaxxer.hikari.HikariConfig config = new com.zaxxer.hikari.HikariConfig();
         config.setDriverClassName(strategy.getDriverClassName());
         config.setJdbcUrl(strategy.buildUrl(creds.host(), port, dbName));
         config.setUsername(username);
         config.setPassword(creds.password());
-        config.setMaximumPoolSize(10);
-        config.setMinimumIdle(2);
-        config.setIdleTimeout(60000);
-        config.setConnectionTimeout(3000);
+        config.setMaximumPoolSize(20);
+        config.setMinimumIdle(5);
+        config.setIdleTimeout(300000);
+        config.setKeepaliveTime(30000);
+        config.setConnectionTimeout(2000);
         config.setPoolName("CockpitPool-" + Math.abs(cacheKey.hashCode() % 10000));
-
         com.zaxxer.hikari.HikariDataSource newDs = new com.zaxxer.hikari.HikariDataSource(config);
         HIKARI_DATA_SOURCES.put(cacheKey, newDs);
-
         org.slf4j.LoggerFactory.getLogger(QueryApplicationService.class).info("Created HikariCP connection pool for db [{}] on host [{}]", dbName, creds.host());
         return newDs.getConnection();
     }
-
-
+    public java.util.Map<String, List<Map<String, Object>>> executeBatchQueriesInParallel(java.util.Map<String, List<com.dynamicdashboard.cockpit.query.application.dto.RuntimeQueryFilterDto>> queryFilterMap) {
+        if (queryFilterMap == null || queryFilterMap.isEmpty()) {
+            return java.util.Collections.emptyMap();
+        }
+        java.util.Map<String, List<Map<String, Object>>> results = new java.util.concurrent.ConcurrentHashMap<>();
+        List<java.util.concurrent.CompletableFuture<Void>> futures = new java.util.ArrayList<>();
+        for (java.util.Map.Entry<String, List<com.dynamicdashboard.cockpit.query.application.dto.RuntimeQueryFilterDto>> entry : queryFilterMap.entrySet()) {
+            String queryIdStr = entry.getKey();
+            UUID queryId = ParsingUtils.parseUuid(queryIdStr);
+            if (queryId != null) {
+                futures.add(java.util.concurrent.CompletableFuture.runAsync(() -> {
+                    try {
+                        List<Map<String, Object>> data = self.executeQueryData(queryId, entry.getValue());
+                        results.put(queryIdStr, data != null ? data : java.util.Collections.emptyList());
+                    } catch (Exception e) {
+                        org.slf4j.LoggerFactory.getLogger(QueryApplicationService.class).error("Async query execution failed for queryId {}: {}", queryIdStr, e.getMessage());
+                        results.put(queryIdStr, java.util.Collections.emptyList());
+                    }
+                }));
+            }
+        }
+        try {
+            java.util.concurrent.CompletableFuture.allOf(futures.toArray(new java.util.concurrent.CompletableFuture[0])).join();
+        } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger(QueryApplicationService.class).error("Batch query execution join error: {}", e.getMessage());
+        }
+        return results;
+    }
     @Transactional(readOnly = true)
     public List<QueryResponseDto> getAllQueries() {
         return dataQueryRepository.findAll().stream()
                 .map(queryMapper::toDto)
                 .collect(Collectors.toList());
     }
-
     @Transactional(readOnly = true)
     public Optional<QueryResponseDto> getQueryById(UUID id) {
         return dataQueryRepository.findById(id).map(queryMapper::toDto);
     }
-
     @Transactional
     public QueryResponseDto createQuery(QueryRequestDto dto) {
         UserAccountEntity owner = currentUserService.getCurrentUser();
-
         DataQueryEntity query = new DataQueryEntity();
         query.setOwner(owner);
         applyDtoToQueryEntity(dto, query);
         DataQueryEntity savedQuery = dataQueryRepository.save(query);
-
         saveChildEntities(savedQuery, dto);
-
         auditApplicationService.logEvent("Création de requête", "QUERY", savedQuery.getId(), savedQuery.getQueryName(), null);
-
         return queryMapper.toDto(savedQuery);
     }
-
     @Transactional
     public Optional<QueryResponseDto> updateQuery(UUID id, QueryRequestDto dto) {
         return dataQueryRepository.findById(id).map(query -> {
             applyDtoToQueryEntity(dto, query);
             query.setUpdatedAt(java.time.Instant.now());
             DataQueryEntity updatedQuery = dataQueryRepository.save(query);
-
             deleteChildEntities(updatedQuery.getId());
             saveChildEntities(updatedQuery, dto);
-
             auditApplicationService.logEvent("Modification de requête", "QUERY", updatedQuery.getId(), updatedQuery.getQueryName(), null);
-
+            FAST_QUERY_CACHE.clear();
             return queryMapper.toDto(updatedQuery);
         });
     }
-
     @Transactional
     public boolean deleteQuery(UUID id) {
         return dataQueryRepository.findById(id).map(query -> {
@@ -665,11 +603,11 @@ public class QueryApplicationService {
             }
             deleteChildEntities(query.getId());
             auditApplicationService.logEvent("Suppression de requête", "QUERY", query.getId(), query.getQueryName(), null);
+            FAST_QUERY_CACHE.clear();
             dataQueryRepository.delete(query);
             return true;
         }).orElse(false);
     }
-
     @Transactional
     public Optional<QueryResponseDto> duplicateQuery(UUID id) {
         return dataQueryRepository.findById(id).map(source -> {
@@ -689,7 +627,6 @@ public class QueryApplicationService {
                     .sort(sourceDto.getSort())
                     .rowLimit(sourceDto.getRowLimit())
                     .build();
-
             if (copyDto.getJoins() != null) {
                 copyDto.getJoins().forEach(j -> j.setId(null));
             }
@@ -699,13 +636,11 @@ public class QueryApplicationService {
             if (copyDto.getTransformations() != null) {
                 copyDto.getTransformations().forEach(t -> t.setId(null));
             }
-
             QueryResponseDto created = createQuery(copyDto);
             auditApplicationService.logEvent("Duplication de requête", "QUERY", created.getId(), created.getName(), null);
             return created;
         });
     }
-
     private void applyDtoToQueryEntity(QueryRequestDto dto, DataQueryEntity query) {
         query.setQueryName(dto.getName() != null ? dto.getName() : "Nouvelle requête");
         query.setQueryDescription(dto.getDescription());
@@ -718,7 +653,6 @@ public class QueryApplicationService {
         }
         query.setRowLimit(dto.getRowLimit() > 0 ? dto.getRowLimit() : 100);
     }
-
     private void saveChildEntities(DataQueryEntity query, QueryRequestDto dto) {
         if (dto.getSourceIds() != null) {
             List<String> distinctSources = dto.getSourceIds().stream().distinct().toList();
@@ -734,7 +668,6 @@ public class QueryApplicationService {
                 });
             }
         }
-
         if (dto.getSelectedFieldIds() != null) {
             for (int i = 0; i < dto.getSelectedFieldIds().size(); i++) {
                 String fieldIdStr = dto.getSelectedFieldIds().get(i);
@@ -752,7 +685,6 @@ public class QueryApplicationService {
                 });
             }
         }
-
         if (dto.getGroupByFieldIds() != null) {
             for (int i = 0; i < dto.getGroupByFieldIds().size(); i++) {
                 String fieldIdStr = dto.getGroupByFieldIds().get(i);
@@ -770,7 +702,6 @@ public class QueryApplicationService {
                 });
             }
         }
-
         if (dto.getJoins() != null) {
             for (QueryJoinDto joinDto : dto.getJoins()) {
                 QueryJoinEntity join = new QueryJoinEntity();
@@ -783,7 +714,6 @@ public class QueryApplicationService {
                 queryJoinRepository.save(join);
             }
         }
-
         if (dto.getConditions() != null) {
             for (QueryConditionDto condDto : dto.getConditions()) {
                 if (condDto.getFieldId() != null) {
@@ -800,7 +730,6 @@ public class QueryApplicationService {
                 }
             }
         }
-
         if (dto.getTransformations() != null) {
             for (QueryTransformationDto trDto : dto.getTransformations()) {
                 QueryTransformationEntity tr = new QueryTransformationEntity();
@@ -818,11 +747,8 @@ public class QueryApplicationService {
                 queryTransformationRepository.save(tr);
             }
         }
-
         if (dto.getSort() != null && dto.getSort().getFieldId() != null) {
             String sortFieldId = dto.getSort().getFieldId();
-            // When user sorts by aggregated value, store the aggregation field as the sort field
-            // so we can detect it at runtime (sortField == aggregationField && aggregation active)
             String resolveId = "__agg_value__".equals(sortFieldId)
                 ? dto.getAggregationFieldId()
                 : sortFieldId;
@@ -840,7 +766,6 @@ public class QueryApplicationService {
             }
         }
     }
-
     private Optional<DataFieldEntity> resolveField(String fieldIdStr) {
         if (fieldIdStr == null || fieldIdStr.isBlank()) return Optional.empty();
         UUID uuid = ParsingUtils.parseUuid(fieldIdStr);
@@ -850,16 +775,13 @@ public class QueryApplicationService {
         }
         Optional<DataFieldEntity> byKey = dataFieldRepository.findFirstByFieldKey(fieldIdStr);
         if (byKey.isPresent()) return byKey;
-
         if (fieldIdStr.contains(".")) {
             String shortKey = fieldIdStr.substring(fieldIdStr.lastIndexOf('.') + 1);
             Optional<DataFieldEntity> byShortKey = dataFieldRepository.findFirstByFieldKey(shortKey);
             if (byShortKey.isPresent()) return byShortKey;
         }
-
         return dataFieldRepository.findFirstByFieldLabel(fieldIdStr);
     }
-
     private Optional<com.dynamicdashboard.cockpit.catalog.domain.DataSourceEntity> resolveDataSource(String sourceIdStr) {
         if (sourceIdStr == null || sourceIdStr.isBlank()) return Optional.empty();
         UUID uuid = ParsingUtils.parseUuid(sourceIdStr);
@@ -871,7 +793,6 @@ public class QueryApplicationService {
         if (byKey.isPresent()) return byKey;
         return dataSourceRepository.findFirstBySourceLabel(sourceIdStr);
     }
-
     private void deleteChildEntities(UUID queryId) {
         querySourceBindingRepository.deleteAll(querySourceBindingRepository.findByQueryIdOrderByPositionIndexAsc(queryId));
         querySourceBindingRepository.flush();
@@ -890,7 +811,6 @@ public class QueryApplicationService {
             querySortRepository.flush();
         });
     }
-
     private String adjustSqlForDialect(String sql, com.dynamicdashboard.cockpit.datasource.domain.DbType dbType, Integer limit) {
         if (sql == null) return "";
         if (dbType == com.dynamicdashboard.cockpit.datasource.domain.DbType.SQL_SERVER) {
@@ -900,7 +820,6 @@ public class QueryApplicationService {
             result = result.replaceAll("(?i)extract\\s*\\(\\s*quarter\\s+from\\s+([^\\)]+)\\)", "DATEPART(quarter, $1)");
             result = result.replaceAll("(?i)\\s+limit\\s+\\d+", "");
             result = result.replaceAll("(?i)\\s+fetch\\s+next\\s+\\d+\\s+rows\\s+only", "");
-
             if (limit != null && limit > 0) {
                 if (result.toLowerCase().startsWith("select distinct ")) {
                     result = "select distinct TOP (" + limit + ") " + result.substring(16);
@@ -912,7 +831,6 @@ public class QueryApplicationService {
         }
         return sql;
     }
-
     private String getPhysicalTableName(com.dynamicdashboard.cockpit.catalog.domain.DataSourceEntity ds) {
         if (ds == null) return "";
         if (ds.getSourceLabel() != null && !ds.getSourceLabel().isBlank()) {
@@ -926,7 +844,6 @@ public class QueryApplicationService {
         }
         return ds.getSourceKey() != null ? ds.getSourceKey() : "";
     }
-
     private String getFieldColumnName(DataFieldEntity field) {
         if (field == null) return "";
         String table = getPhysicalTableName(field.getDataSource());
@@ -935,13 +852,11 @@ public class QueryApplicationService {
         }
         return field.getFieldKey();
     }
-
     private org.jooq.Field<?> applyDateTransformation(org.jooq.Field<?> field, DataFieldEntity df, List<QueryTransformationDto> transformations) {
         if (transformations == null || transformations.isEmpty() || df == null) return field;
         String idStr = df.getId() != null ? df.getId().toString() : "";
         String keyStr = df.getFieldKey() != null ? df.getFieldKey() : "";
         String tableKeyStr = (df.getDataSource() != null ? getPhysicalTableName(df.getDataSource()) + "." : "") + keyStr;
-
         for (QueryTransformationDto tr : transformations) {
             if (tr.getFieldId() != null && "format".equalsIgnoreCase(tr.getType()) && tr.getFormat() != null) {
                 String trFid = tr.getFieldId();
@@ -961,13 +876,11 @@ public class QueryApplicationService {
         }
         return field;
     }
-
     private org.jooq.Field<?> applyDateTransformationEntity(org.jooq.Field<?> field, DataFieldEntity df, List<QueryTransformationEntity> transformations) {
         if (transformations == null || transformations.isEmpty() || df == null) return field;
         String idStr = df.getId() != null ? df.getId().toString() : "";
         String keyStr = df.getFieldKey() != null ? df.getFieldKey() : "";
         String tableKeyStr = (df.getDataSource() != null ? getPhysicalTableName(df.getDataSource()) + "." : "") + keyStr;
-
         for (QueryTransformationEntity tr : transformations) {
             if (tr.getTargetField() != null) {
                 String targetId = tr.getTargetField().getId() != null ? tr.getTargetField().getId().toString() : "";
@@ -988,12 +901,10 @@ public class QueryApplicationService {
         }
         return field;
     }
-
     private org.jooq.Table<org.jooq.Record> buildJooqTable(String tableName) {
         if (tableName == null || tableName.isBlank()) return org.jooq.impl.DSL.table(org.jooq.impl.DSL.name(""));
         return org.jooq.impl.DSL.table(org.jooq.impl.DSL.name(tableName));
     }
-
     private org.jooq.Field<Object> buildJooqField(String colExpr) {
         if (colExpr == null || colExpr.isBlank() || "*".equals(colExpr)) {
             return org.jooq.impl.DSL.field("*");
@@ -1004,7 +915,6 @@ public class QueryApplicationService {
         }
         return org.jooq.impl.DSL.field(org.jooq.impl.DSL.name(colExpr));
     }
-
     private <T> org.jooq.Field<T> buildJooqField(String colExpr, Class<T> type) {
         if (colExpr == null || colExpr.isBlank() || "*".equals(colExpr)) {
             return org.jooq.impl.DSL.field("*", type);

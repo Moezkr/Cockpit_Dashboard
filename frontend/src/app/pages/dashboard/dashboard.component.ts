@@ -13,10 +13,8 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
 import { DashboardCardComponent } from '@pages/dashboard/components/home/dashboard-card.component';
 import { DashboardListRowComponent } from '@pages/dashboard/components/home/dashboard-list-row.component';
 import { NewDashboardModalComponent } from '@pages/dashboard/components/home/new-dashboard-modal.component';
-
 type Tab = 'mine' | 'shared' | 'recent' | 'favorites' | 'archived';
 type Sort = 'name' | 'created' | 'updated';
-
 @Component({
   selector: 'app-dashboard-home',
   standalone: true,
@@ -34,13 +32,11 @@ type Sort = 'name' | 'created' | 'updated';
 export class DashboardHomeComponent implements OnInit, OnDestroy {
   dashboards: Dashboard[] = [];
   sub!: Subscription;
-
   currentTab: Tab = 'mine';
   currentView: 'grid' | 'list' = 'grid';
   currentSort: Sort = 'updated';
   search: string = '';
   showNewModal: boolean = false;
-
   tabs: { id: Tab; label: string }[] = [
     { id: 'mine', label: 'Mes tableaux de bord' },
     { id: 'shared', label: 'Partagés avec moi' },
@@ -48,13 +44,11 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
     { id: 'favorites', label: 'Favoris' },
     { id: 'archived', label: 'Archives' }
   ];
-
   constructor(
     private dashboardService: DashboardService, private queryService: QueryService, private auditService: AuditService, private userService: UserService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
-
   ngOnInit(): void {
     this.dashboardService.loadFromBackend();
     this.queryService.loadFromBackend();
@@ -63,14 +57,11 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
       this.cdr.markForCheck();
     });
   }
-
   ngOnDestroy(): void {
     if (this.sub) this.sub.unsubscribe();
   }
-
   get filteredDashboards(): Dashboard[] {
     let list = this.dashboards;
-
     if (this.currentTab === 'archived') {
       list = list.filter((d) => d.archived);
     } else {
@@ -79,7 +70,6 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
       if (this.currentTab === 'shared') list = list.filter((d) => d.sharedWithMe);
       if (this.currentTab === 'favorites') list = list.filter((d) => d.favorite);
     }
-
     if (this.search.trim()) {
       const q = this.search.toLowerCase();
       list = list.filter(
@@ -88,16 +78,13 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
           d.tags.some((t) => t.toLowerCase().includes(q))
       );
     }
-
     const sorted = [...list].sort((a, b) => {
       if (this.currentSort === 'name') return a.name.localeCompare(b.name);
       if (this.currentSort === 'created') return b.createdAt.localeCompare(a.createdAt);
       return b.updatedAt.localeCompare(a.updatedAt);
     });
-
     return this.currentTab === 'recent' ? sorted.slice(0, 6) : sorted;
   }
-
   openDashboard(d: Dashboard) {
     this.router.navigate(['/tableau', d.id]);
   }

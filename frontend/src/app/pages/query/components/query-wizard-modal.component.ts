@@ -8,7 +8,6 @@ import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component
 import { ButtonComponent } from '@shared/components/ui/button.component';
 import { QueryService } from '@pages/query/services/query.service';
 import { LIVE_QUERY_DATA } from '@pages/query/services/query-execution.service';
-
 const STEPS = [
   'Nom & description',
   'Connexions',
@@ -21,7 +20,6 @@ const STEPS = [
   'Tri',
   'Valider'
 ];
-
 const OPERATORS: { value: FilterOperator; label: string }[] = [
   { value: 'eq', label: 'égal à' },
   { value: 'neq', label: 'différent de' },
@@ -31,14 +29,12 @@ const OPERATORS: { value: FilterOperator; label: string }[] = [
   { value: 'in', label: 'dans la liste' },
   { value: 'between', label: 'entre' }
 ];
-
 const JOIN_TYPES: { value: QueryJoinType; label: string }[] = [
   { value: 'inner', label: 'Interne' },
   { value: 'left', label: 'Gauche' },
   { value: 'right', label: 'Droite' },
   { value: 'full', label: 'Complète' }
 ];
-
 const TRANSFORM_TYPES: { value: QueryTransformationType; label: string }[] = [
   { value: 'rename', label: 'Renommer un champ' },
   { value: 'calculated', label: 'Champ calculé' },
@@ -46,7 +42,6 @@ const TRANSFORM_TYPES: { value: QueryTransformationType; label: string }[] = [
   { value: 'replaceEmpty', label: 'Remplacer les valeurs vides' },
   { value: 'filterRows', label: 'Filtrer les lignes' }
 ];
-
 @Component({
   selector: 'app-query-wizard-modal',
   standalone: true,
@@ -60,42 +55,32 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
   @Input() sources: any[] = [];
   @Output() onClose = new EventEmitter<void>();
   @Output() onSave = new EventEmitter<DataQuery>();
-
   step: number = 0;
   slideDirection: 'left' | 'right' = 'right';
-
   steps = STEPS;
   operators = OPERATORS;
   joinTypes = JOIN_TYPES;
   transformTypes = TRANSFORM_TYPES;
-
   relationError: string = '';
   query: DataQuery = this.createEmptyQuery();
-
   selectedConnections: string[] = [];
-
   get availableConnections(): string[] {
     const apps = this.sources.map(s => s.app);
     return [...new Set(apps)].filter(Boolean) as string[];
   }
-
   get filteredSources(): any[] {
     if (this.selectedConnections.length === 0) return this.sources;
     return this.sources.filter(s => this.selectedConnections.includes(s.app));
   }
-
   getTableCountForConnection(conn: string): number {
     if (!this.sources || !Array.isArray(this.sources)) return 0;
     return this.sources.filter(s => s.app === conn).length;
   }
-
   toggleConnection(conn: string) {
     const isSelected = this.selectedConnections.includes(conn);
     this.selectedConnections = isSelected 
       ? this.selectedConnections.filter(c => c !== conn)
       : [...this.selectedConnections, conn];
-      
-    // When removing a connection, remove all its tables from the query
     const tablesToRemove = isSelected ? this.sources.filter(s => s.app === conn) : [];
     tablesToRemove.forEach(t => {
       const targetId = t.id || t.key;
@@ -104,11 +89,8 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       }
     });
   }
-
   private sourcesSub?: Subscription;
-
   constructor(private queryService: QueryService, private cdr: ChangeDetectorRef) {}
-
   ngOnInit(): void {
     this.queryService.loadCatalog();
     this.sourcesSub = this.queryService.catalogSources$.subscribe((srcs) => {
@@ -116,22 +98,24 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
         this.sources = srcs;
         if (this.open && this.queryToEdit) {
           this.query = this.normalizeQueryForWizard(this.queryToEdit);
-          const selectedApps = this.sources.filter(s => this.query.sourceIds.includes(s.id || s.key)).map(s => s.app);
-          this.selectedConnections = [...new Set(selectedApps)].filter(Boolean) as string[];
-        } else {
-          this.selectedConnections = [];
+          this.updateSelectedConnectionsFromQuery();
         }
         this.cdr.markForCheck();
       }
     });
   }
-
   ngOnDestroy(): void {
     if (this.sourcesSub) {
       this.sourcesSub.unsubscribe();
     }
   }
-
+  private updateSelectedConnectionsFromQuery(): void {
+    if (!this.query || !this.query.sourceIds || !this.sources || this.sources.length === 0) return;
+    const selectedApps = this.sources
+      .filter(s => this.query.sourceIds.includes(s.id) || this.query.sourceIds.includes(s.key) || this.query.sourceIds.includes(s.sourceKey))
+      .map(s => s.app);
+    this.selectedConnections = [...new Set(selectedApps)].filter(Boolean) as string[];
+  }
   ngOnChanges(): void {
     if (this.open) {
       if (this.queryService.catalogSources && this.queryService.catalogSources.length > 0) {
@@ -139,9 +123,11 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       }
       if (this.queryToEdit) {
         this.query = this.normalizeQueryForWizard(this.queryToEdit);
+        this.updateSelectedConnectionsFromQuery();
         this.step = 0;
       } else {
         this.query = this.createEmptyQuery();
+        this.selectedConnections = [];
         this.step = 0;
       }
       this.relationError = '';
@@ -149,23 +135,19 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       this.fetchDraftPreview();
     }
   }
-
   private normalizeQueryForWizard(rawQuery: DataQuery): DataQuery {
     if (!rawQuery) return this.createEmptyQuery();
     const q: DataQuery = JSON.parse(JSON.stringify(rawQuery));
     const allFieldsMap = new Map<string, string>();
     const allSourcesMap = new Map<string, string>();
-
     const activeSources = (this.sources && this.sources.length > 0)
       ? this.sources
       : (this.queryService.catalogSources || []);
-
     activeSources.forEach((src: any) => {
       const canonicalSourceId = src.id;
       if (src.id) allSourcesMap.set(src.id, canonicalSourceId);
       if (src.key) allSourcesMap.set(src.key, canonicalSourceId);
       if (src.sourceKey) allSourcesMap.set(src.sourceKey, canonicalSourceId);
-
       (src.fields || []).forEach((f: any) => {
         const canonicalFieldId = f.id;
         if (f.id) allFieldsMap.set(f.id, canonicalFieldId);
@@ -173,22 +155,15 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
         if (f.fieldKey) allFieldsMap.set(f.fieldKey, canonicalFieldId);
       });
     });
-
     const resolveSourceId = (rawId: string | undefined): string => {
       if (!rawId) return '';
       return allSourcesMap.get(rawId) || rawId;
     };
-
-    // Resolve field keys/ids within the query's active sources first so that
-    // duplicate fieldKeys across tables (e.g. "mois", "statut") map to the
-    // correct UUID instead of whatever last wrote into allFieldsMap.
     const resolveFieldId = (rawId: string | undefined, contextSourceId?: string | string[]): string => {
       if (!rawId) return '';
-
       const contextIds = contextSourceId
         ? (Array.isArray(contextSourceId) ? contextSourceId : [contextSourceId])
         : [];
-
       for (const srcId of contextIds) {
         if (!srcId) continue;
         const canonicalSrcId = resolveSourceId(srcId);
@@ -202,24 +177,19 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
           if (match?.id) return match.id;
         }
       }
-
       return allFieldsMap.get(rawId) || rawId;
     };
-
     if (q.sourceIds) {
       q.sourceIds = q.sourceIds.map((id: string) => resolveSourceId(id));
     }
-
     if (q.joins) {
       q.joins = q.joins.map((j: any) => {
         const lSrc = resolveSourceId(j.leftSourceId) || (q.sourceIds.length > 0 ? q.sourceIds[0] : '');
         const rSrc = resolveSourceId(j.rightSourceId) || (q.sourceIds.length > 1 ? q.sourceIds[1] : (q.sourceIds.length > 0 ? q.sourceIds[0] : ''));
         let lFld = resolveFieldId(j.leftFieldId, lSrc);
         let rFld = resolveFieldId(j.rightFieldId, rSrc);
-
         if (!lFld && lSrc) lFld = this.getSourceFirstField(lSrc);
         if (!rFld && rSrc) rFld = this.getSourceFirstField(rSrc);
-
         return {
           ...j,
           leftSourceId: lSrc,
@@ -229,7 +199,6 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
         };
       });
     }
-
     if (q.conditions) {
       q.conditions = q.conditions.map((c: any) => {
         let fld = resolveFieldId(c.fieldId, q.sourceIds);
@@ -242,7 +211,6 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
         };
       });
     }
-
     if (q.transformations) {
       q.transformations = q.transformations.map((t: any) => {
         let fld = resolveFieldId(t.fieldId, q.sourceIds);
@@ -252,26 +220,20 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
         };
       });
     }
-
     if (q.selectedFieldIds) {
       q.selectedFieldIds = q.selectedFieldIds.map((id: string) => resolveFieldId(id, q.sourceIds));
     }
-
     if (q.groupByFieldIds) {
       q.groupByFieldIds = q.groupByFieldIds.map((id: string) => resolveFieldId(id, q.sourceIds));
     }
-
     if (q.aggregationFieldId) {
       q.aggregationFieldId = resolveFieldId(q.aggregationFieldId, q.sourceIds);
     }
-
     if (q.sort && q.sort.fieldId) {
       q.sort.fieldId = resolveFieldId(q.sort.fieldId, q.sourceIds);
     }
-
     return q;
   }
-
   setStep(nextStep: number) {
     if (nextStep === this.step) return;
     this.slideDirection = nextStep > this.step ? 'right' : 'left';
@@ -280,7 +242,6 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       this.fetchDraftPreview();
     }
   }
-
   fetchDraftPreview() {
     if (!this.query || !this.query.sourceIds || this.query.sourceIds.length === 0) return;
     this.queryService.previewQuery(this.query).subscribe({
@@ -294,7 +255,6 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       error: (err) => console.warn('Draft query preview failed:', err)
     });
   }
-
   getSourceFields(sourceId: string): any[] {
     const src = this.getSource(sourceId);
     if (!src || !src.fields) return [];
@@ -304,13 +264,11 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       label: f.label || f.fieldLabel || f.key
     }));
   }
-
   getSourceFirstField(sourceId: string): string {
     const fields = this.getSourceFields(sourceId);
     if (!fields || fields.length === 0) return '';
     return fields[0].id;
   }
-
   createEmptyQuery(): DataQuery {
     return {
       id: uid('q'),
@@ -329,7 +287,6 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       updatedAt: new Date().toISOString()
     };
   }
-
   get selectedSources(): any[] {
     return this.sources.filter((source) => {
       const sid = source.id || source.key || source.sourceKey;
@@ -337,7 +294,6 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       return this.query.sourceIds.includes(sid) || this.query.sourceIds.includes(skey);
     });
   }
-
   get catalogFields() {
     return this.selectedSources.flatMap((source) =>
       (source.fields || []).map((field: any) => ({
@@ -349,26 +305,20 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       }))
     );
   }
-
   isSourceSelected(idOrKey: string): boolean {
     const src = this.getSource(idOrKey);
     const sid = src ? (src.id || src.key) : idOrKey;
     const skey = src ? (src.key || src.id) : idOrKey;
     return this.query.sourceIds.includes(sid) || this.query.sourceIds.includes(skey);
   }
-
   getSource(idOrKey: string): any | undefined {
     return this.sources.find((s) => s.id === idOrKey || s.key === idOrKey || s.sourceKey === idOrKey);
   }
-
-
-
   getDisplayFieldLabel(fieldId: string): string {
     const field = this.catalogFields.find((f) => f.id === fieldId);
     if (field) return `${field.sourceLabel} · ${field.label}`;
     return fieldId;
   }
-
   getLivePreviewColumns(): { id: string; label: string; key: string }[] {
     if (this.query.aggregation && this.query.aggregation !== 'none') {
       return [
@@ -376,24 +326,18 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
         { id: 'value', key: 'value', label: 'VALEUR AGRÉGÉE' }
       ];
     }
-
     if (this.query.selectedFieldIds && this.query.selectedFieldIds.length > 0) {
-      // For transformations like rename, we should ideally use the outputLabel if it exists.
-      // But for simplicity, we just check if it's renamed.
       const columns = this.query.selectedFieldIds.map((id) => {
         const f = this.catalogFields.find((field) => field.id === id);
         let colLabel = f ? `${(f.sourceLabel || '').toUpperCase()} · ${(f.label || '').toUpperCase()}` : id.toUpperCase();
         let colKey = f ? (f.key || f.fieldKey || id) : id;
-        
-        // Handle Rename Transformation for preview columns
         if (this.query.transformations && this.query.transformations.length > 0) {
           const rename = this.query.transformations.find(t => t.type === 'rename' && t.fieldId === id);
           if (rename && rename.outputLabel) {
             colLabel = rename.outputLabel.toUpperCase();
-            colKey = rename.outputLabel; // For the getCellValue lookup if we transformed the row
+            colKey = rename.outputLabel; 
           }
         }
-        
         return {
           id,
           key: colKey,
@@ -412,12 +356,10 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
     }
     return [];
   }
-
   getCellValue(row: Record<string, any>, colIndex: number, colObj: { id: string; label: string; key: string }): any {
     if (!row) return '—';
     if (row[colObj.key] !== undefined && row[colObj.key] !== null) return row[colObj.key];
     if (row[colObj.id] !== undefined && row[colObj.id] !== null) return row[colObj.id];
-
     const keyLower = (colObj.key || '').toLowerCase();
     const foundKey = Object.keys(row).find((k) => {
       const rowKeyLower = k.toLowerCase();
@@ -429,10 +371,8 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
     if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) {
       return row[foundKey];
     }
-
     return '—';
   }
-
   private getExactRowKey(row: Record<string, any>, colKey: string, fieldId?: string): string | undefined {
     let exactKey = Object.keys(row).find(k => k.toLowerCase() === colKey.toLowerCase() || k.endsWith('.' + colKey.toLowerCase()) || k.endsWith(colKey));
     if (!exactKey && row['label'] !== undefined && fieldId && this.query.groupByFieldIds?.includes(fieldId)) {
@@ -440,7 +380,6 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
     }
     return exactKey;
   }
-
   private applyRenameTransform(rows: Record<string, any>[], colKey: string, outLabel: string, fieldId: string): Record<string, any>[] {
     return rows.map(r => {
       const exactKey = this.getExactRowKey(r, colKey, fieldId);
@@ -450,7 +389,6 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       return r;
     });
   }
-
   private applyFormatTransform(rows: Record<string, any>[], colKey: string, formatStr: string, fieldId: string): Record<string, any>[] {
     return rows.map(r => {
       const exactKey = this.getExactRowKey(r, colKey, fieldId);
@@ -467,12 +405,10 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       return r;
     });
   }
-
   private applyFilterTransform(rows: Record<string, any>[], colKey: string, op: string, filterVal: string, fieldId: string): Record<string, any>[] {
     return rows.filter(r => {
       const exactKey = this.getExactRowKey(r, colKey, fieldId);
       if (!exactKey || r[exactKey] === undefined) return true;
-      
       const cellVal = r[exactKey];
       switch (op) {
         case 'eq': return String(cellVal) === String(filterVal);
@@ -484,26 +420,20 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       }
     });
   }
-
   getLivePreviewRows(): Record<string, any>[] {
     const realRows = LIVE_QUERY_DATA[this.query.id];
     let rows: Record<string, any>[] = [];
     if (realRows && Array.isArray(realRows) && realRows.length > 0) {
       rows = realRows.map(r => ({ ...r }));
     }
-
     if (!this.query.transformations?.length || (this.query.aggregation && this.query.aggregation !== 'none')) {
       return rows;
     }
-
     for (const tr of this.query.transformations) {
       if (!tr.fieldId) continue;
-      
       const f = this.catalogFields.find(cf => cf.id === tr.fieldId);
       if (!f) continue;
-      
       const colKey = f.key || f.fieldKey || f.id;
-
       switch (tr.type) {
         case 'rename':
           if (tr.outputLabel) rows = this.applyRenameTransform(rows, colKey, tr.outputLabel, tr.fieldId);
@@ -518,27 +448,21 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
     }
     return rows;
   }
-
   toggleSource(idOrKey: any) {
     const targetKey = typeof idOrKey === 'string' ? idOrKey : (idOrKey?.id || idOrKey?.key);
     const src = this.getSource(targetKey);
     const sid = src?.id || targetKey;
     const skey = src?.key || targetKey;
-
     const isSelected = this.query.sourceIds.includes(sid) || this.query.sourceIds.includes(skey);
-    
     this.query.sourceIds = isSelected 
       ? this.query.sourceIds.filter(s => s !== sid && s !== skey)
       : [...this.query.sourceIds, sid];
-      
     const removedFieldIds = isSelected ? (src?.fields?.map((f: any) => f.id || f.key || f.fieldKey) || []) : [];
-    
     this.query.selectedFieldIds = (this.query.selectedFieldIds || []).filter(id => !removedFieldIds.includes(id));
     this.query.groupByFieldIds = (this.query.groupByFieldIds || []).filter(id => !removedFieldIds.includes(id));
     this.query.aggregationFieldId = removedFieldIds.includes(this.query.aggregationFieldId!) ? '' : this.query.aggregationFieldId;
     this.query.joins = (this.query.joins || []).filter(j => !isSelected || (j.leftSourceId !== sid && j.rightSourceId !== sid && j.leftSourceId !== skey && j.rightSourceId !== skey));
   }
-
   toggleField(fieldId: string) {
     if (this.query.selectedFieldIds.includes(fieldId)) {
       this.query.selectedFieldIds = this.query.selectedFieldIds.filter((id) => id !== fieldId);
@@ -546,9 +470,7 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       this.query.selectedFieldIds = [...this.query.selectedFieldIds, fieldId];
     }
   }
-
   draggedIndex: number | null = null;
-
   onDragStart(event: DragEvent, index: number) {
     this.draggedIndex = index;
     if (event.dataTransfer) {
@@ -556,14 +478,12 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       event.dataTransfer.setData('text/plain', index.toString());
     }
   }
-
   onDragOver(event: DragEvent, index: number) {
     event.preventDefault();
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'move';
     }
   }
-
   onDrop(event: DragEvent, targetIndex: number) {
     event.preventDefault();
     if (this.draggedIndex === null || this.draggedIndex === targetIndex) return;
@@ -573,11 +493,9 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
     this.query.selectedFieldIds = copy;
     this.draggedIndex = null;
   }
-
   onDragEnd() {
     this.draggedIndex = null;
   }
-
   moveField(index: number, direction: -1 | 1) {
     const targetIndex = index + direction;
     if (targetIndex < 0 || targetIndex >= this.query.selectedFieldIds.length) return;
@@ -586,7 +504,6 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
     copy.splice(targetIndex, 0, removed);
     this.query.selectedFieldIds = copy;
   }
-
   addJoin() {
     if (this.query.sourceIds.length < 2) return;
     const s1 = this.query.sourceIds[0];
@@ -600,16 +517,13 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       rightFieldId: this.getSourceFirstField(s2)
     });
   }
-
   suggestRelation() {
     if (this.query.sourceIds.length < 2) return;
     const s1 = this.getSource(this.query.sourceIds[0]);
     const s2 = this.getSource(this.query.sourceIds[1]);
     if (!s1 || !s2) return;
-
     const f1 = (s1.fields || []).find((f: any) => (f.key || f.fieldKey) === 'id_client' || (f.key || f.fieldKey) === 'id_facture') || (s1.fields ? s1.fields[0] : null);
     const f2 = (s2.fields || []).find((f: any) => (f.key || f.fieldKey) === 'id_client' || (f.key || f.fieldKey) === 'id_facture') || (s2.fields ? s2.fields[0] : null);
-
     this.query.joins = [
       {
         id: uid('join'),
@@ -621,15 +535,12 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       }
     ];
   }
-
   updateJoin(id: string, change: Partial<QueryJoin>) {
     this.query.joins = this.query.joins.map((j) => (j.id === id ? { ...j, ...change } : j));
   }
-
   deleteJoin(id: string) {
     this.query.joins = this.query.joins.filter((j) => j.id !== id);
   }
-
   addCondition() {
     if (!this.catalogFields.length) return;
     this.query.conditions.push({
@@ -641,11 +552,9 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       parametrable: false
     });
   }
-
   deleteCondition(id: string) {
     this.query.conditions = this.query.conditions.filter((c) => c.id !== id);
   }
-
   addTransformation() {
     this.query.transformations.push({
       id: uid('transform'),
@@ -655,12 +564,10 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
     });
     this.fetchDraftPreview();
   }
-
   deleteTransformation(id: string) {
     this.query.transformations = this.query.transformations.filter((t) => t.id !== id);
     this.fetchDraftPreview();
   }
-
   toggleGroupBy(fieldId: string) {
     if (this.query.groupByFieldIds.includes(fieldId)) {
       this.query.groupByFieldIds = this.query.groupByFieldIds.filter((id) => id !== fieldId);
@@ -669,7 +576,6 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
     }
     this.fetchDraftPreview();
   }
-
   setSortField(fieldId: string) {
     if (!fieldId) {
       this.query.sort = undefined;
@@ -680,13 +586,11 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
       };
     }
   }
-
   setSortDirection(direction: 'asc' | 'desc') {
     if (this.query.sort) {
       this.query.sort.direction = direction;
     }
   }
-
   get canProceed(): boolean {
     if (this.step === 0) return this.query.name.trim().length > 0;
     if (this.step === 1) return this.selectedConnections.length > 0;
@@ -694,14 +598,11 @@ export class QueryWizardModalComponent implements OnInit, OnDestroy, OnChanges {
     if (this.step === 4) return this.query.selectedFieldIds.length > 0;
     return true;
   }
-
   isSubmitting: boolean = false;
-
   handleClose() {
     if (this.isSubmitting) return;
     this.onClose.emit();
   }
-
   submit() {
     if (this.isSubmitting) return;
     this.isSubmitting = true;

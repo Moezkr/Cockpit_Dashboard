@@ -20,8 +20,6 @@
       </app-button>
     </div>
   </div>
-
-  <!-- SECTION 1: CONNEXIONS CONFIGURÉES (ALWAYS DISPLAYED STABLE PROMPT) -->
   <section class="mb-6">
     <div class="mb-3 flex items-center justify-between">
       <div>
@@ -30,7 +28,6 @@
       </div>
       <app-badge tone="brand">{{ databases.length }} connexion{{ databases.length > 1 ? 's' : '' }}</app-badge>
     </div>
-    
     <div class="flex flex-col items-center justify-center rounded-lg border border-dashed border-line-strong bg-surface-muted p-10 text-center">
         <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-surface-sunken text-ink-soft shadow-sm border border-line">
           <app-svg-icon name="Database" class="h-6 w-6"></app-svg-icon>
@@ -43,8 +40,6 @@
         </app-button>
     </div>
   </section>
-
-  <!-- SECTION 2: SOURCES APPLICATIVES DISPONIBLES (DYNAMIC ADDED DATABASE CARDS) -->
   <section class="mb-6">
     <div class="mb-3 flex items-center justify-between">
       <div>
@@ -53,12 +48,10 @@
       </div>
       <app-badge tone="brand">{{ databases.length }} source{{ databases.length > 1 ? 's' : '' }}</app-badge>
     </div>
-
     <div *ngIf="databases.length === 0" class="flex flex-col items-center justify-center rounded-lg border border-dashed border-line-strong bg-surface-muted p-8 text-center">
       <app-svg-icon name="Database" class="mb-2 h-6 w-6 text-ink-soft"></app-svg-icon>
       <p class="text-xs text-ink-faint">Aucune source connectée disponible pour le moment. Cliquez sur "Ajouter une source" ci-dessus pour connecter votre base de données.</p>
     </div>
-
     <div *ngIf="databases.length > 0" class="grid grid-cols-1 gap-3 md:grid-cols-2">
       <article *ngFor="let db of databases" class="rounded-lg border border-line bg-white p-4 shadow-card flex items-center justify-between hover:border-brand/30 transition-colors">
         <div class="flex items-start gap-3 min-w-0 flex-1">
@@ -102,9 +95,7 @@
       </article>
     </div>
   </section>
-
   <app-data-source-modal [open]="showEditor" [source]="selectedSource" (onClose)="onModalClose()"></app-data-source-modal>
-
   <app-confirm-modal
     [open]="showDeleteModal"
     title="Supprimer la source de données"

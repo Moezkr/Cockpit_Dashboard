@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
 @Component({
   selector: 'app-badge',
   standalone: true,
@@ -13,7 +12,6 @@ import { CommonModule } from '@angular/common';
 })
 export class BadgeComponent {
   @Input() tone: 'neutral' | 'brand' | 'positive' | 'caution' | 'negative' = 'neutral';
-
   getClasses(): string {
     const base =
       'inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-semibold';

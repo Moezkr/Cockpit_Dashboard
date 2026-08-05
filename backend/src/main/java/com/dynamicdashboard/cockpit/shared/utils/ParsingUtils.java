@@ -1,9 +1,6 @@
 package com.dynamicdashboard.cockpit.shared.utils;
-
 import java.util.UUID;
-
 public class ParsingUtils {
-
     public static UUID parseUuid(String val) {
         if (val == null || val.isBlank()) return null;
         try {
@@ -12,7 +9,6 @@ public class ParsingUtils {
             return null;
         }
     }
-
     public static <E extends Enum<E>> E parseEnum(Class<E> enumClass, String value, E defaultValue) {
         if (value == null || value.isBlank()) {
             return defaultValue;
@@ -26,7 +22,6 @@ public class ParsingUtils {
         if (formatted.equals("15MIN")) formatted = "M15";
         if (formatted.equals("30MIN")) formatted = "M30";
         if (formatted.equals("1H")) formatted = "H1";
-
         try {
             return Enum.valueOf(enumClass, formatted);
         } catch (IllegalArgumentException ex) {

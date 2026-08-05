@@ -28,7 +28,6 @@ import { DashboardSettingsModalComponent } from '@pages/dashboard/components/edi
 import { FilterBarComponent } from '@pages/dashboard/components/viewer/filter-bar.component';
 import { ConfirmModalComponent } from '@shared/components/ui/confirm-modal.component';
 import { resolveDashboardRuntimeFilters, RuntimeQueryFilter } from '@pages/dashboard/services/dashboard-filters.service';
-
 @Component({
   selector: 'app-dashboard-editor',
   standalone: true,
@@ -51,7 +50,6 @@ import { resolveDashboardRuntimeFilters, RuntimeQueryFilter } from '@pages/dashb
       <div class="h-4 w-4 animate-spin rounded-full border-2 border-brand border-t-transparent"></div>
       Chargement de l'éditeur...
     </div>
-
     <div *ngIf="!loading && draft; else notFound" class="flex h-full w-full flex-col bg-surface-muted">
       <header class="flex h-12 flex-shrink-0 items-center justify-between gap-2 border-b border-line bg-white px-3">
         <div class="flex items-center gap-2 min-w-0">
@@ -59,42 +57,34 @@ import { resolveDashboardRuntimeFilters, RuntimeQueryFilter } from '@pages/dashb
             <app-svg-icon name="ArrowLeft" class="h-4 w-4 sm:mr-1"></app-svg-icon>
             <span class="hidden sm:inline">Retour</span>
           </app-button>
-
           <span class="h-4 w-1 flex-shrink-0 rounded" [style.backgroundColor]="draft.color"></span>
-
           <input
             [(ngModel)]="draft.name"
             class="max-w-[140px] sm:max-w-[240px] truncate rounded px-1 text-xs sm:text-sm font-semibold text-ink outline-none hover:bg-surface-muted focus:bg-surface-muted focus:ring-1 focus:ring-brand"
           />
-
           <app-badge [tone]="draft.status === 'published' ? 'positive' : 'caution'" class="hidden md:inline-flex">
             {{ draft.status === 'published' ? 'Publié' : 'Brouillon' }}
           </app-badge>
         </div>
-
         <div class="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
           <app-button variant="ghost" size="sm" (onClick)="showSettings = true">
             <app-svg-icon name="Settings" class="h-3.5 w-3.5 sm:mr-1"></app-svg-icon>
             <span class="hidden sm:inline">Paramètres</span>
           </app-button>
-
           <app-button variant="secondary" size="sm" (onClick)="preview()">
             <app-svg-icon name="Eye" class="h-3.5 w-3.5 sm:mr-1"></app-svg-icon>
             <span class="hidden sm:inline">Aperçu</span>
           </app-button>
-
           <app-button variant="secondary" size="sm" (onClick)="save()">
             <app-svg-icon [name]="saved ? 'Check' : 'Save'" class="h-3.5 w-3.5 sm:mr-1"></app-svg-icon>
             <span class="hidden sm:inline">{{ saved ? 'Enregistré' : 'Enregistrer' }}</span>
           </app-button>
-
           <app-button variant="primary" size="sm" (onClick)="save(true)">
             <app-svg-icon name="UploadCloud" class="h-3.5 w-3.5 sm:mr-1"></app-svg-icon>
             <span class="hidden sm:inline">Publier</span>
           </app-button>
         </div>
       </header>
-
       <div class="flex border-b border-line bg-white lg:hidden">
         <button
           (click)="mobileTab = 'catalog'"
@@ -118,12 +108,10 @@ import { resolveDashboardRuntimeFilters, RuntimeQueryFilter } from '@pages/dashb
           Inspecteur
         </button>
       </div>
-
       <div class="flex min-h-0 flex-1 bg-white relative overflow-hidden">
         <div [ngClass]="['h-full bg-white flex-shrink-0', isMobile ? (mobileTab === 'catalog' ? 'w-full block' : 'hidden') : 'block']">
           <app-widget-catalog-panel (onAdd)="addWidget($event)"></app-widget-catalog-panel>
         </div>
-
         <main
           [ngClass]="['flex flex-col min-w-0 flex-1 overflow-hidden bg-surface-muted h-full', isMobile ? (mobileTab === 'canvas' ? 'block' : 'hidden') : 'block']"
         >
@@ -134,7 +122,6 @@ import { resolveDashboardRuntimeFilters, RuntimeQueryFilter } from '@pages/dashb
             (onChange)="updateFilter($event.id, $event.value)"
             (onReset)="resetFilters()"
           ></app-filter-bar>
-
           <div class="flex-1 overflow-auto p-2 sm:p-4">
             <section class="mx-auto max-w-[1500px]">
               <div class="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line bg-white px-3 py-2 shadow-card">
@@ -153,13 +140,11 @@ import { resolveDashboardRuntimeFilters, RuntimeQueryFilter } from '@pages/dashb
                 {{ draft.columns }} colonnes · {{ draft.widgets.length }} widget{{ draft.widgets.length > 1 ? 's' : '' }}
               </div>
             </div>
-
             <div *ngIf="draft.widgets.length === 0" class="flex flex-col items-center justify-center py-16 text-center text-ink-faint">
               <app-svg-icon name="LayoutGrid" class="h-8 w-8 mb-2"></app-svg-icon>
               <span class="text-xs font-semibold">Grille vide</span>
               <span class="text-2xs">Ajoutez un widget depuis le catalogue à gauche.</span>
             </div>
-
             <app-dashboard-grid
               *ngIf="draft.widgets.length > 0"
               [columns]="draft.columns"
@@ -170,14 +155,12 @@ import { resolveDashboardRuntimeFilters, RuntimeQueryFilter } from '@pages/dashb
               (onLayoutsChange)="updateLayouts($event)"
               [widgetTemplate]="widgetTmpl"
             ></app-dashboard-grid>
-
             <ng-template #widgetTmpl let-widget>
               <app-widget-card [widget]="widget" [dashboard]="draft" [compact]="true" [runtimeFilters]="runtimeFilters"></app-widget-card>
             </ng-template>
             </section>
           </div>
         </main>
-
         <div [ngClass]="['h-full bg-white flex-shrink-0', isMobile ? (mobileTab === 'inspector' ? 'w-full block' : 'hidden') : 'block']">
           <app-widget-config-panel
             [widget]="selectedWidget"
@@ -188,14 +171,12 @@ import { resolveDashboardRuntimeFilters, RuntimeQueryFilter } from '@pages/dashb
           ></app-widget-config-panel>
         </div>
       </div>
-
       <app-dashboard-settings-modal
         [dashboard]="draft"
         [open]="showSettings"
         (onClose)="showSettings = false"
         (onSave)="applySettings($event)"
       ></app-dashboard-settings-modal>
-
       <app-confirm-modal
         [open]="showResetConfirm"
         title="Réinitialiser les filtres"
@@ -203,7 +184,6 @@ import { resolveDashboardRuntimeFilters, RuntimeQueryFilter } from '@pages/dashb
         (onClose)="showResetConfirm = false"
         (onConfirm)="confirmResetFilters()"
       ></app-confirm-modal>
-
       <app-confirm-modal
         [open]="!!widgetToDeleteId"
         title="Supprimer le widget"
@@ -212,7 +192,6 @@ import { resolveDashboardRuntimeFilters, RuntimeQueryFilter } from '@pages/dashb
         (onConfirm)="confirmDeleteWidget()"
       ></app-confirm-modal>
     </div>
-
     <ng-template #notFound>
       <div class="flex h-full items-center justify-center text-sm text-ink-faint">
         Tableau de bord introuvable.
@@ -232,7 +211,6 @@ export class DashboardEditorComponent implements OnInit, OnDestroy {
   mobileTab: 'catalog' | 'canvas' | 'inspector' = 'canvas';
   isMobile: boolean = false;
   filterValues: Record<string, string> = {};
-
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -240,21 +218,17 @@ export class DashboardEditorComponent implements OnInit, OnDestroy {
   ) {
     this.checkMobile();
   }
-
   @HostListener('window:resize')
   onResize() {
     this.checkMobile();
   }
-
   checkMobile() {
     this.isMobile = window.innerWidth < 1024;
   }
-
   ngOnInit(): void {
     this.loading = true;
     this.dashboardService.loadFromBackend();
     this.queryService.loadFromBackend();
-
     this.sub = this.route.params.subscribe((params) => {
       const id = params['id'];
       this.dashboardsSub?.unsubscribe();
@@ -273,27 +247,22 @@ export class DashboardEditorComponent implements OnInit, OnDestroy {
       });
     });
   }
-
   ngOnDestroy(): void {
     if (this.sub) this.sub.unsubscribe();
     if (this.dashboardsSub) this.dashboardsSub.unsubscribe();
   }
-
   get runtimeFilters(): RuntimeQueryFilter[] {
     return this.draft
       ? resolveDashboardRuntimeFilters(this.draft.globalFilters, this.filterValues)
       : [];
   }
-
   updateFilter(id: string, val: string) {
     this.filterValues = { ...this.filterValues, [id]: val };
   }
-
   resetFilters() {
     if (!this.draft) return;
     this.showResetConfirm = true;
   }
-
   confirmResetFilters() {
     if (!this.draft) return;
     this.draft.globalFilters = [];
@@ -301,22 +270,18 @@ export class DashboardEditorComponent implements OnInit, OnDestroy {
     this.showResetConfirm = false;
     this.save(false);
   }
-
   showResetConfirm: boolean = false;
   widgetToDeleteId: string | null = null;
-
   get selectedWidget(): Widget | null {
     if (!this.draft || !this.selectedId) return null;
     return this.draft.widgets.find((w) => w.id === this.selectedId) ?? null;
   }
-
   onSelectWidget(id?: string) {
     this.selectedId = id;
     if (this.isMobile && id) {
       this.mobileTab = 'inspector';
     }
   }
-
   navigateBack() {
     if (this.draft) {
       this.router.navigate(['/tableau', this.draft.id]);
@@ -324,14 +289,12 @@ export class DashboardEditorComponent implements OnInit, OnDestroy {
       this.router.navigate(['/']);
     }
   }
-
   preview() {
     this.save();
     if (this.draft) {
       this.router.navigate(['/tableau', this.draft.id]);
     }
   }
-
   save(publish?: boolean) {
     if (!this.draft) return;
     const next: Dashboard = publish
@@ -342,7 +305,6 @@ export class DashboardEditorComponent implements OnInit, OnDestroy {
     this.saved = true;
     setTimeout(() => (this.saved = false), 1500);
   }
-
   addWidget(type: WidgetType) {
     if (!this.draft) return;
     const meta = widgetMeta(type);
@@ -376,19 +338,16 @@ export class DashboardEditorComponent implements OnInit, OnDestroy {
       this.mobileTab = 'canvas';
     }
   }
-
   updateWidget(widget: Widget) {
     if (!this.draft) return;
     this.draft.widgets = this.draft.widgets.map((item) =>
       item.id === widget.id ? widget : item
     );
   }
-
   updateLayouts(layouts: WidgetLayouts) {
     if (!this.draft) return;
     this.draft.widgets = applyWidgetLayouts(this.draft.widgets, layouts);
   }
-
   updateLayout(widgetId: string, layout: WidgetLayout) {
     if (!this.draft) return;
     const resolved = resolveWidgetLayouts(
@@ -399,25 +358,21 @@ export class DashboardEditorComponent implements OnInit, OnDestroy {
     );
     this.updateLayouts(resolved);
   }
-
   deleteWidget(widgetId: string) {
     if (!this.draft) return;
     this.widgetToDeleteId = widgetId;
   }
-
   confirmDeleteWidget() {
     if (!this.draft || !this.widgetToDeleteId) return;
     this.draft.widgets = this.draft.widgets.filter((w) => w.id !== this.widgetToDeleteId);
     if (this.selectedId === this.widgetToDeleteId) this.selectedId = undefined;
     this.widgetToDeleteId = null;
   }
-
   applySettings(dashboard: Dashboard) {
     this.draft = {
       ...dashboard,
       widgets: normalizeWidgetLayouts(dashboard.widgets, dashboard.columns)
     };
-
     this.dashboardService.upsertDashboard(this.draft);
   }
 }

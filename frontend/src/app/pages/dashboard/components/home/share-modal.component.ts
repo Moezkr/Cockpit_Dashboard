@@ -7,14 +7,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Dashboard } from '@core/models/types';
 import { SvgIconComponent } from '@shared/components/svg-icon/svg-icon.component';
-
 interface AccessPerson {
   id: string;
   initials: string;
   name: string;
   role: 'READ' | 'EDIT' | 'OWNER';
 }
-
 @Component({
   selector: 'app-share-modal',
   standalone: true,
@@ -35,7 +33,6 @@ interface AccessPerson {
             <app-svg-icon name="X" class="h-4 w-4"></app-svg-icon>
           </button>
         </div>
-
         <!-- Content Body -->
         <div class="p-5 space-y-5 text-xs">
           <!-- NIVEAU DE PARTAGE -->
@@ -43,7 +40,6 @@ interface AccessPerson {
             <div class="mb-2 text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
               NIVEAU DE PARTAGE
             </div>
-
             <div class="space-y-2">
               <!-- Privé -->
               <div
@@ -69,7 +65,6 @@ interface AccessPerson {
                   </div>
                 </div>
               </div>
-
               <!-- Utilisateurs désignés -->
               <div
                 (click)="setShareLevel('users')"
@@ -94,7 +89,6 @@ interface AccessPerson {
                   </div>
                 </div>
               </div>
-
               <!-- Groupe / équipe -->
               <div
                 (click)="setShareLevel('group')"
@@ -119,7 +113,6 @@ interface AccessPerson {
                   </div>
                 </div>
               </div>
-
               <!-- Organisation -->
               <div
                 (click)="setShareLevel('organization')"
@@ -146,13 +139,11 @@ interface AccessPerson {
               </div>
             </div>
           </div>
-
           <!-- PERSONNES AYANT ACCÈS -->
           <div *ngIf="selectedLevel !== 'private'">
             <div class="mb-2 text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
               PERSONNES AYANT ACCÈS
             </div>
-
             <div class="overflow-hidden rounded-xl border border-line bg-white divide-y divide-line">
               <div
                 *ngFor="let p of accessList"
@@ -164,7 +155,6 @@ interface AccessPerson {
                   </div>
                   <span class="font-semibold text-ink text-xs">{{ p.name }}</span>
                 </div>
-
                 <div class="flex items-center gap-2">
                   <select
                     [(ngModel)]="p.role"
@@ -174,7 +164,6 @@ interface AccessPerson {
                     <option value="EDIT">Édition</option>
                     <option value="OWNER">Propriétaire</option>
                   </select>
-
                   <button
                     type="button"
                     (click)="removePerson(p.id)"
@@ -185,13 +174,11 @@ interface AccessPerson {
                 </div>
               </div>
             </div>
-
             <p class="mt-2 text-[11px] text-ink-faint">
               Les bénéficiaires reçoivent une notification avec un lien direct vers le tableau de bord.
             </p>
           </div>
         </div>
-
         <!-- Footer Actions -->
         <div class="flex items-center justify-end gap-2 border-t border-line bg-surface-muted/30 px-5 py-3.5">
           <button
@@ -201,7 +188,6 @@ interface AccessPerson {
           >
             Annuler
           </button>
-
           <button
             type="button"
             (click)="save()"
@@ -218,31 +204,24 @@ export class ShareModalComponent implements OnChanges {
   @Input() dashboard: Dashboard | null = null;
   @Input() open: boolean = false;
   @Output() onClose = new EventEmitter<void>();
-
   selectedLevel: 'private' | 'users' | 'group' | 'organization' = 'organization';
-
   accessList: AccessPerson[] = [
     { id: '1', initials: 'SB', name: 'Sonia Ben Youssef', role: 'EDIT' },
     { id: '2', initials: 'KJ', name: 'Karim Jelassi', role: 'READ' },
     { id: '3', initials: 'ÉF', name: 'Équipe Finance', role: 'READ' }
   ];
-
   constructor(private dashboardService: DashboardService, private queryService: QueryService, private auditService: AuditService, private userService: UserService) {}
-
   ngOnChanges(): void {
     if (this.dashboard && this.dashboard.shareLevel) {
       this.selectedLevel = this.dashboard.shareLevel as any;
     }
   }
-
   setShareLevel(level: 'private' | 'users' | 'group' | 'organization'): void {
     this.selectedLevel = level;
   }
-
   removePerson(id: string): void {
     this.accessList = this.accessList.filter((p) => p.id !== id);
   }
-
   save(): void {
     if (this.dashboard) {
       this.dashboard.shareLevel = this.selectedLevel as any;

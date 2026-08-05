@@ -1,6 +1,5 @@
 import { AuditEventDto, CreateAuditEventRequestDto } from '../dtos/audit.dto';
 import { AuditLogEntry } from '@pages/settings/services/audit.service';
-
 export class AuditMapper {
   static toDomain(dto: AuditEventDto): AuditLogEntry {
     return {
@@ -11,7 +10,6 @@ export class AuditMapper {
       date: dto.occurredAt ? new Date(dto.occurredAt).toLocaleString('fr-TN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Récemment'
     };
   }
-
   static toCreateDto(eventType: string, detailsJson: string, targetType: string = 'DASHBOARD', targetId?: string): CreateAuditEventRequestDto {
     return {
       eventType,

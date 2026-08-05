@@ -24,7 +24,6 @@ import { RawDataModalComponent } from '@pages/dashboard/components/widgets/raw-d
 import { FilterBarComponent } from '@pages/dashboard/components/viewer/filter-bar.component';
 import { RefreshControlComponent } from '@pages/dashboard/components/viewer/refresh-control.component';
 import { ShareModalComponent } from '@pages/dashboard/components/home/share-modal.component';
-
 @Component({
   selector: 'app-dashboard-viewer',
   standalone: true,
@@ -46,23 +45,22 @@ import { ShareModalComponent } from '@pages/dashboard/components/home/share-moda
       <div class="h-4 w-4 animate-spin rounded-full border-2 border-brand border-t-transparent"></div>
       Chargement du tableau de bord...
     </div>
-
     <div *ngIf="!loading && dashboard; else notFound" class="flex h-full w-full flex-col bg-surface-muted">
-      <header *ngIf="!kiosk" class="flex h-12 flex-shrink-0 items-center gap-2 border-b border-line bg-white px-4">
-        <app-button variant="ghost" size="sm" (onClick)="navigateHome()">
-          <app-svg-icon name="ArrowLeft" class="h-4 w-4 mr-1"></app-svg-icon>
-          Retour
-        </app-button>
-
-        <span class="h-4 w-1 rounded" [style.backgroundColor]="dashboard.color"></span>
-
-        <h1 class="text-sm font-semibold text-ink">{{ dashboard.name }}</h1>
-
-        <app-badge *ngIf="dashboard.status === 'draft'" tone="caution">
-          Brouillon
-        </app-badge>
-
-        <div class="ml-auto flex items-center gap-1.5">
+      <header *ngIf="!kiosk" class="flex min-h-12 flex-shrink-0 flex-wrap sm:flex-nowrap items-center justify-between gap-2 border-b border-line bg-white px-3 py-2 sm:px-4 sm:py-0">
+        <div class="flex items-center gap-2 min-w-0 flex-1 sm:flex-initial">
+          <app-button variant="ghost" size="sm" (onClick)="navigateHome()" class="flex-shrink-0">
+            <app-svg-icon name="ArrowLeft" class="h-4 w-4 mr-1"></app-svg-icon>
+            <span class="hidden sm:inline">Retour</span>
+          </app-button>
+          <span class="h-4 w-1 flex-shrink-0 rounded" [style.backgroundColor]="dashboard.color"></span>
+          <h1 class="text-xs sm:text-sm font-semibold text-ink truncate max-w-[150px] xs:max-w-[220px] sm:max-w-none">
+            {{ dashboard.name }}
+          </h1>
+          <app-badge *ngIf="dashboard.status === 'draft'" tone="caution" class="flex-shrink-0">
+            Brouillon
+          </app-badge>
+        </div>
+        <div class="ml-auto flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
           <app-refresh-control
             [interval]="dashboard.refreshInterval"
             [countdown]="countdown"
@@ -70,20 +68,18 @@ import { ShareModalComponent } from '@pages/dashboard/components/home/share-moda
             (onTogglePause)="paused = !paused"
             (onRefresh)="refreshNow()"
           ></app-refresh-control>
-
-          <app-button variant="secondary" size="sm" (onClick)="kiosk = true">
+          <app-button variant="secondary" size="sm" (onClick)="kiosk = true" class="hidden sm:inline-flex">
             Kiosque
           </app-button>
           <app-button variant="secondary" size="sm" (onClick)="showShare = true">
             Partager
           </app-button>
           <app-button variant="primary" size="sm" (onClick)="editDashboard()">
-            <app-svg-icon name="Settings" class="h-3.5 w-3.5 mr-1"></app-svg-icon>
-            Modifier
+            <app-svg-icon name="Settings" class="h-3.5 w-3.5 sm:mr-1"></app-svg-icon>
+            <span class="hidden sm:inline">Modifier</span>
           </app-button>
         </div>
       </header>
-
       <button
         *ngIf="kiosk"
         (click)="kiosk = false"
@@ -91,7 +87,6 @@ import { ShareModalComponent } from '@pages/dashboard/components/home/share-moda
       >
         Quitter le mode kiosque
       </button>
-
       <app-filter-bar
         *ngIf="!kiosk"
         [filters]="dashboard.globalFilters"
@@ -99,7 +94,6 @@ import { ShareModalComponent } from '@pages/dashboard/components/home/share-moda
         (onChange)="updateFilter($event.id, $event.value)"
         (onReset)="resetFilters()"
       ></app-filter-bar>
-
       <div class="min-h-0 flex-1 overflow-auto p-3">
         <div class="mx-auto max-w-[1500px]">
           <app-dashboard-grid
@@ -108,7 +102,6 @@ import { ShareModalComponent } from '@pages/dashboard/components/home/share-moda
             [editable]="false"
             [widgetTemplate]="widgetTmpl"
           ></app-dashboard-grid>
-
           <ng-template #widgetTmpl let-widget>
             <app-widget-card
               [widget]="widget"
@@ -121,7 +114,6 @@ import { ShareModalComponent } from '@pages/dashboard/components/home/share-moda
           </ng-template>
         </div>
       </div>
-
       <app-raw-data-modal
         [widget]="rawWidget"
         [dashboard]="dashboard"
@@ -130,7 +122,6 @@ import { ShareModalComponent } from '@pages/dashboard/components/home/share-moda
         [runtimeFilters]="runtimeFilters"
         [activeFilters]="activeFilters"
       ></app-raw-data-modal>
-
       <app-modal
         [open]="!!maxWidget"
         (onClose)="maxWidget = null"
@@ -147,14 +138,12 @@ import { ShareModalComponent } from '@pages/dashboard/components/home/share-moda
           ></app-widget-card>
         </div>
       </app-modal>
-
       <app-share-modal
         [dashboard]="dashboard"
         [open]="showShare"
         (onClose)="showShare = false"
       ></app-share-modal>
     </div>
-
     <ng-template #notFound>
       <div *ngIf="!loading" class="flex h-full items-center justify-center text-sm text-ink-faint">
         Tableau de bord introuvable.
@@ -171,22 +160,18 @@ export class DashboardViewerComponent implements OnInit, OnDestroy {
   maxWidget: Widget | null = null;
   showShare: boolean = false;
   kiosk: boolean = false;
-
   tick: number = 0;
   countdown: number = 0;
   paused: boolean = false;
   private timer: any;
-
   sub!: Subscription;
   private dashboardsSub!: Subscription;
-
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private dashboardService: DashboardService, private queryService: QueryService, private auditService: AuditService, private userService: UserService,
     private cdr: ChangeDetectorRef
   ) {}
-
   ngOnInit(): void {
     this.loading = true;
     this.sub = this.route.params.subscribe((params) => {
@@ -213,46 +198,38 @@ export class DashboardViewerComponent implements OnInit, OnDestroy {
       });
     });
   }
-
   ngOnDestroy(): void {
     if (this.sub) this.sub.unsubscribe();
     if (this.dashboardsSub) this.dashboardsSub.unsubscribe();
     if (this.timer) clearInterval(this.timer);
   }
-
   get runtimeFilters(): RuntimeQueryFilter[] {
     return this.dashboard
       ? resolveDashboardRuntimeFilters(this.dashboard.globalFilters, this.filterValues)
       : [];
   }
-
   get activeFilters(): ActiveDashboardFilter[] {
     return this.dashboard
       ? activeDashboardFilters(this.dashboard.globalFilters, this.filterValues)
       : [];
   }
-
   updateFilter(id: string, val: string) {
     this.filterValues = { ...this.filterValues, [id]: val };
   }
-
   resetFilters() {
     if (!this.dashboard) return;
     this.filterValues = Object.fromEntries(
       this.dashboard.globalFilters.map((f) => [f.id, 'TOUS'])
     );
   }
-
   navigateHome() {
     this.router.navigate(['/']);
   }
-
   editDashboard() {
     if (this.dashboard) {
       this.router.navigate(['/editeur', this.dashboard.id]);
     }
   }
-
   setupRefreshTimer() {
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
@@ -265,12 +242,9 @@ export class DashboardViewerComponent implements OnInit, OnDestroy {
       this.countdown = 0;
       return;
     }
-
     this.countdown = Math.round(ms / 1000);
-
     this.timer = setInterval(() => {
       if (this.paused || !this.dashboard) return;
-
       if (this.countdown <= 0) {
         this.tick++;
         const currentMs = refreshToMs(this.dashboard.refreshInterval);
@@ -283,7 +257,6 @@ export class DashboardViewerComponent implements OnInit, OnDestroy {
       } catch {}
     }, 1000);
   }
-
   refreshNow() {
     this.tick++;
     if (this.dashboard && this.dashboard.refreshInterval && this.dashboard.refreshInterval !== 'off') {
@@ -295,4 +268,3 @@ export class DashboardViewerComponent implements OnInit, OnDestroy {
     } catch {}
   }
 }
-

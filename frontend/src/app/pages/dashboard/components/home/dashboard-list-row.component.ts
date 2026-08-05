@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { Dashboard } from '@core/models/types';
 import { relativeDate } from '@core/services/utils';
 import { BadgeComponent } from '@shared/components/ui/badge.component';
-
 @Component({
   selector: 'app-dashboard-list-row',
   standalone: true,
@@ -23,7 +22,6 @@ import { BadgeComponent } from '@shared/components/ui/badge.component';
           <p class="text-2xs text-ink-faint truncate mt-0.5">{{ dashboard.description || 'Aucune description' }}</p>
         </div>
       </div>
-
       <div class="flex items-center gap-3 text-2xs text-ink-faint flex-shrink-0 pl-3.5 sm:pl-0">
         <span>{{ dashboard.widgets.length }} widgets</span>
         <span>{{ getRelDate(dashboard.updatedAt) }}</span>
@@ -34,7 +32,6 @@ import { BadgeComponent } from '@shared/components/ui/badge.component';
 export class DashboardListRowComponent {
   @Input() dashboard!: Dashboard;
   @Output() onOpen = new EventEmitter<void>();
-
   getRelDate(iso: string): string {
     return relativeDate(iso);
   }

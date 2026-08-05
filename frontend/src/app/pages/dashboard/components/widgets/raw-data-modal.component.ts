@@ -10,7 +10,6 @@ import { RuntimeQueryFilter, ActiveDashboardFilter, mergeRuntimeFilters, resolve
 import { ModalComponent } from '@shared/components/ui/modal.component';
 import { ButtonComponent } from '@shared/components/ui/button.component';
 import { DataGridViewComponent } from '@pages/dashboard/components/widgets/data-grid-view.component';
-
 @Component({
   selector: 'app-raw-data-modal',
   standalone: true,
@@ -31,7 +30,6 @@ import { DataGridViewComponent } from '@pages/dashboard/components/widgets/data-
             <span class="font-semibold">{{ rows.length }}</span> enregistrements exécutés
           </div>
         </div>
-
         <div *ngIf="activeFilters.length > 0" class="flex flex-wrap items-center gap-1.5 text-2xs">
           <span class="font-medium text-ink-faint">Filtres actifs:</span>
           <span
@@ -41,11 +39,9 @@ import { DataGridViewComponent } from '@pages/dashboard/components/widgets/data-
             {{ filter.label }}: {{ filter.value }}
           </span>
         </div>
-
         <div class="h-[50vh] rounded-md border border-line bg-white">
           <app-data-grid-view [rows]="rows"></app-data-grid-view>
         </div>
-
         <div class="flex justify-end gap-2 border-t border-line pt-2">
           <app-button variant="secondary" size="sm" (onClick)="exportCsv()">
             Exporter CSV
@@ -64,28 +60,22 @@ export class RawDataModalComponent implements OnChanges {
   @Input() open: boolean = false;
   @Input() runtimeFilters: RuntimeQueryFilter[] = [];
   @Input() activeFilters: ActiveDashboardFilter[] = [];
-
   @Output() onClose = new EventEmitter<void>();
-
   rows: Array<Record<string, unknown>> = [];
   queryName: string = 'Requête inconnue';
-
   constructor(private dashboardService: DashboardService, private queryService: QueryService, private auditService: AuditService, private userService: UserService) {}
-
   ngOnChanges(): void {
     if (!this.widget || !this.widget.queryId) {
       this.rows = [];
       this.queryName = 'Aucune requête liée';
       return;
     }
-
     const query = this.queryService.queries.find((q) => q.id === this.widget?.queryId);
     if (!query) {
       this.rows = [];
       this.queryName = 'Requête non trouvée';
       return;
     }
-
     this.queryName = query.name;
     const widgetRuntimeFilters = this.widget.filters
       ? resolveWidgetRuntimeFilters(this.widget.filters)
@@ -96,7 +86,6 @@ export class RawDataModalComponent implements OnChanges {
     );
     this.rows = executeDisplayRows(query, effectiveFilters);
   }
-
   exportCsv() {
     if (!this.rows.length) return;
     const keys = Object.keys(this.rows[0]);
@@ -106,7 +95,6 @@ export class RawDataModalComponent implements OnChanges {
         keys.join(','),
         ...this.rows.map((r) => keys.map((k) => `"${r[k] ?? ''}"`).join(','))
       ].join('\n');
-
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);

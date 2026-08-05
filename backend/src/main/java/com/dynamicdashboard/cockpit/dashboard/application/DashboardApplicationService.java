@@ -1,5 +1,4 @@
 package com.dynamicdashboard.cockpit.dashboard.application;
-
 import com.dynamicdashboard.cockpit.catalog.repository.DataFieldRepository;
 import com.dynamicdashboard.cockpit.dashboard.application.dto.DashboardRequestDto;
 import com.dynamicdashboard.cockpit.dashboard.application.dto.DashboardResponseDto;
@@ -42,17 +41,14 @@ import com.dynamicdashboard.cockpit.shared.utils.ParsingUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 public class DashboardApplicationService {
-
     private final DashboardRepository dashboardRepository;
     private final WidgetRepository widgetRepository;
     private final GlobalFilterRepository globalFilterRepository;
@@ -67,52 +63,39 @@ public class DashboardApplicationService {
     private final CurrentUserService currentUserService;
     private final DashboardMapper dashboardMapper;
     private final com.dynamicdashboard.cockpit.audit.application.AuditApplicationService auditApplicationService;
-
     @Transactional(readOnly = true)
     public List<DashboardResponseDto> getAllDashboards() {
         return dashboardRepository.findAll().stream()
                 .map(dashboardMapper::toDto)
                 .collect(Collectors.toList());
     }
-
     @Transactional(readOnly = true)
     public Optional<DashboardResponseDto> getDashboardById(UUID id) {
         return dashboardRepository.findById(id).map(dashboardMapper::toDto);
     }
-
     @Transactional
     public DashboardResponseDto createDashboard(DashboardRequestDto dto) {
         UserAccountEntity owner = currentUserService.getCurrentUser();
-
         DashboardEntity dashboard = new DashboardEntity();
         dashboard.setOwner(owner);
         applyDtoToDashboardEntity(dto, dashboard);
         DashboardEntity savedDashboard = dashboardRepository.save(dashboard);
-
         saveChildEntities(savedDashboard, dto);
-
         auditApplicationService.logEvent("Création de tableau de bord", "DASHBOARD", savedDashboard.getId(), savedDashboard.getDashboardName(), null);
-
         return dashboardMapper.toDto(savedDashboard);
     }
-
     @Transactional
     public Optional<DashboardResponseDto> updateDashboard(UUID id, DashboardRequestDto dto) {
         return dashboardRepository.findById(id).map(dashboard -> {
             deleteChildEntities(dashboard.getId());
-
             applyDtoToDashboardEntity(dto, dashboard);
             dashboard.setUpdatedAt(java.time.Instant.now());
             DashboardEntity updatedDashboard = dashboardRepository.saveAndFlush(dashboard);
-
             saveChildEntities(updatedDashboard, dto);
-
             auditApplicationService.logEvent("Modification de tableau de bord", "DASHBOARD", updatedDashboard.getId(), updatedDashboard.getDashboardName(), null);
-
             return dashboardMapper.toDto(updatedDashboard);
         });
     }
-
     @Transactional
     public boolean deleteDashboard(UUID id) {
         return dashboardRepository.findById(id).map(dashboard -> {
@@ -121,7 +104,6 @@ public class DashboardApplicationService {
             return true;
         }).orElse(false);
     }
-
     @Transactional
     public Optional<DashboardResponseDto> duplicateDashboard(UUID id) {
         return dashboardRepository.findById(id).map(source -> {
@@ -142,7 +124,6 @@ public class DashboardApplicationService {
                     .favorite(false)
                     .archived(false)
                     .build();
-
             if (copyDto.getWidgets() != null) {
                 copyDto.getWidgets().forEach(w -> {
                     w.setId(null);
@@ -154,13 +135,11 @@ public class DashboardApplicationService {
             if (copyDto.getGlobalFilters() != null) {
                 copyDto.getGlobalFilters().forEach(f -> f.setId(null));
             }
-
             DashboardResponseDto created = createDashboard(copyDto);
             auditApplicationService.logEvent("Duplication de tableau de bord", "DASHBOARD", created.getId(), created.getName(), null);
             return created;
         });
     }
-
     @Transactional
     public Optional<DashboardResponseDto> toggleFavorite(UUID id) {
         return dashboardRepository.findById(id).map(dashboard -> {
@@ -170,7 +149,6 @@ public class DashboardApplicationService {
             return dashboardMapper.toDto(saved);
         });
     }
-
     @Transactional
     public Optional<DashboardResponseDto> toggleArchive(UUID id) {
         return dashboardRepository.findById(id).map(dashboard -> {
@@ -180,8 +158,6 @@ public class DashboardApplicationService {
             return dashboardMapper.toDto(saved);
         });
     }
-
-
     private void applyDtoToDashboardEntity(DashboardRequestDto dto, DashboardEntity dashboard) {
         dashboard.setDashboardName(dto.getName() != null ? dto.getName() : "Nouveau tableau de bord");
         dashboard.setDashboardDescription(dto.getDescription());
@@ -194,7 +170,6 @@ public class DashboardApplicationService {
         dashboard.setFavorite(Boolean.TRUE.equals(dto.getFavorite()));
         dashboard.setArchived(Boolean.TRUE.equals(dto.getArchived()));
     }
-
     private void saveChildEntities(DashboardEntity dashboard, DashboardRequestDto dto) {
         if (dto.getTags() != null) {
             for (String tagValue : dto.getTags()) {
@@ -207,7 +182,6 @@ public class DashboardApplicationService {
                 dashboardTagRepository.save(tag);
             }
         }
-
         if (dto.getGlobalFilters() != null) {
             for (GlobalFilterDto gfDto : dto.getGlobalFilters()) {
                 GlobalFilterEntity gf = new GlobalFilterEntity();
@@ -215,15 +189,12 @@ public class DashboardApplicationService {
                 gf.setFilterName(gfDto.getName() != null ? gfDto.getName() : "filter");
                 gf.setFilterLabel(gfDto.getLabel() != null ? gfDto.getLabel() : "Filtre");
                 gf.setInputType(ParsingUtils.parseEnum(GlobalFilterInput.class, gfDto.getInput(), GlobalFilterInput.SELECT));
-
                 if (gfDto.getFieldId() != null) {
                     dataFieldRepository.findById(gfDto.getFieldId()).ifPresent(gf::setTargetField);
                 }
-
                 gf.setDefaultValue(gfDto.getDefaultValue() != null ? gfDto.getDefaultValue() : "");
                 gf.setReaderVisible(gfDto.isReaderVisible());
                 GlobalFilterEntity savedGf = globalFilterRepository.save(gf);
-
                 if (gfDto.getOptions() != null) {
                     for (int i = 0; i < gfDto.getOptions().size(); i++) {
                         GlobalFilterOptionEntity option = new GlobalFilterOptionEntity();
@@ -236,7 +207,6 @@ public class DashboardApplicationService {
                         globalFilterOptionRepository.save(option);
                     }
                 }
-
                 if (gfDto.getValueMap() != null) {
                     gfDto.getValueMap().forEach((key, val) -> {
                         GlobalFilterValueMapEntity vm = new GlobalFilterValueMapEntity();
@@ -251,7 +221,6 @@ public class DashboardApplicationService {
                 }
             }
         }
-
         if (dto.getWidgets() != null) {
             for (WidgetDto wDto : dto.getWidgets()) {
                 WidgetEntity w = new WidgetEntity();
@@ -260,21 +229,18 @@ public class DashboardApplicationService {
                 w.setWidgetTitle(wDto.getTitle() != null ? wDto.getTitle() : "Widget");
                 w.setShowTitle(wDto.isShowTitle());
                 w.setWidgetDescription(wDto.getDescription());
-
                 if (wDto.getQueryId() != null) {
                     UUID qId = ParsingUtils.parseUuid(wDto.getQueryId());
                     if (qId != null) {
                         dataQueryRepository.findById(qId).ifPresent(w::setQuery);
                     }
                 }
-
                 if (wDto.getNavigateToDashboardId() != null) {
                     UUID navId = ParsingUtils.parseUuid(wDto.getNavigateToDashboardId());
                     if (navId != null) {
                         dashboardRepository.findById(navId).ifPresent(w::setNavigateToDashboard);
                     }
                 }
-
                 if (wDto.getLayout() != null) {
                     w.setGridX(wDto.getLayout().getX());
                     w.setGridY(wDto.getLayout().getY());
@@ -286,15 +252,12 @@ public class DashboardApplicationService {
                     w.setGridW(4);
                     w.setGridH(3);
                 }
-
                 w.setRefreshInterval(ParsingUtils.parseEnum(RefreshInterval.class, wDto.getRefreshInterval(), RefreshInterval.INHERIT));
                 if (wDto.getKpiFormat() != null) {
                     w.setKpiFormat(ParsingUtils.parseEnum(KpiFormat.class, wDto.getKpiFormat(), null));
                 }
                 w.setTextContent(wDto.getText());
-
                 WidgetEntity savedWidget = widgetRepository.save(w);
-
                 if (wDto.getFilters() != null) {
                     for (int i = 0; i < wDto.getFilters().size(); i++) {
                         WidgetFilterDto filterDto = wDto.getFilters().get(i);
@@ -310,7 +273,6 @@ public class DashboardApplicationService {
                         widgetFilterRepository.save(filter);
                     }
                 }
-
                 if (wDto.getDatagrid() != null) {
                     WidgetDatagridConfigEntity dgConfig = new WidgetDatagridConfigEntity();
                     dgConfig.setWidgetId(savedWidget.getId());
@@ -323,9 +285,7 @@ public class DashboardApplicationService {
                     dgConfig.setShowTotals(wDto.getDatagrid().getShowTotals());
                     dgConfig.setSortable(wDto.getDatagrid().getSortable());
                     dgConfig.setFilterable(wDto.getDatagrid().getFilterable());
-
                     widgetDatagridConfigRepository.save(dgConfig);
-
                     if (wDto.getDatagrid().getVisibleColumns() != null) {
                         for (int i = 0; i < wDto.getDatagrid().getVisibleColumns().size(); i++) {
                             WidgetDatagridVisibleColumnEntity col = new WidgetDatagridVisibleColumnEntity();
@@ -342,7 +302,6 @@ public class DashboardApplicationService {
             }
         }
     }
-
     private void deleteChildEntities(UUID dashboardId) {
         dashboardTagRepository.deleteAll(dashboardTagRepository.findByIdDashboardId(dashboardId));
         globalFilterRepository.deleteAll(globalFilterRepository.findByDashboardId(dashboardId));

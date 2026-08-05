@@ -13,7 +13,6 @@ export interface GlobalFilterDto {
   value?: any;
   enabled?: boolean;
 }
-
 export interface WidgetFilterDto {
   id: string;
   label?: string;
@@ -22,14 +21,12 @@ export interface WidgetFilterDto {
   operator: string;
   value: any;
 }
-
 export interface WidgetLayoutDto {
   x: number;
   y: number;
   w: number;
   h: number;
 }
-
 export interface WidgetDto {
   id: string;
   type: string;
@@ -39,7 +36,6 @@ export interface WidgetDto {
   config: any;
   filters?: WidgetFilterDto[];
 }
-
 export interface DashboardResponseDto {
   id: string;
   name: string;
@@ -60,5 +56,4 @@ export interface DashboardResponseDto {
   updatedAt: string;
   sharedWithMe?: boolean;
 }
-
 export interface DashboardRequestDto extends DashboardResponseDto {}

@@ -1,5 +1,4 @@
 import { DataGridConfig } from '@core/models/types';
-
 export const DATA_GRID_DEFAULTS: Required<DataGridConfig> = {
   visibleColumns: [],
   rowsPerPage: 10,
@@ -11,13 +10,11 @@ export const DATA_GRID_DEFAULTS: Required<DataGridConfig> = {
   sortable: true,
   filterable: true
 };
-
 export function resolveDataGridConfig(
   config?: DataGridConfig
 ): Required<DataGridConfig> {
   return { ...DATA_GRID_DEFAULTS, ...config };
 }
-
 export function dataGridAvailableColumns(
   rows: Array<Record<string, unknown>>
 ): string[] {
@@ -29,7 +26,6 @@ export function dataGridAvailableColumns(
   });
   return columns;
 }
-
 export function dataGridVisibleColumns(
   rows: Array<Record<string, unknown>>,
   config?: DataGridConfig
@@ -38,7 +34,6 @@ export function dataGridVisibleColumns(
   if (!config?.visibleColumns || config.visibleColumns.length === 0) return available;
   return config.visibleColumns.filter((column) => available.includes(column));
 }
-
 export function isNumericDataGridColumn(
   rows: Array<Record<string, unknown>>,
   column: string
@@ -46,7 +41,6 @@ export function isNumericDataGridColumn(
   const values = rows.map((row) => row[column]).filter((value) => value !== '');
   return values.length > 0 && values.every((value) => typeof value === 'number');
 }
-
 export function isDateDataGridColumn(
   rows: Array<Record<string, unknown>>,
   column: string
@@ -62,7 +56,6 @@ export function isDateDataGridColumn(
     )
   );
 }
-
 export function formatDataGridValue(value: unknown, column: string): string {
   if (value === null || value === undefined || value === '') return '—';
   if (typeof value === 'number') {
@@ -87,7 +80,6 @@ export function formatDataGridValue(value: unknown, column: string): string {
   }
   return String(value);
 }
-
 export function compareDataGridValues(left: unknown, right: unknown): number {
   if (typeof left === 'number' && typeof right === 'number') return left - right;
   const leftDate =

@@ -1,19 +1,16 @@
 import { FilterOperator, GlobalFilter, WidgetFilter } from '@core/models/types';
-
 export interface RuntimeQueryFilter {
   fieldId?: string;
   field?: string;
   operator: FilterOperator;
   value: any;
 }
-
 export interface ActiveDashboardFilter {
   id: string;
   fieldId: string;
   label: string;
   value: string;
 }
-
 export function resolveDashboardRuntimeFilters(
   filters: GlobalFilter[],
   values: Record<string, string>
@@ -21,7 +18,6 @@ export function resolveDashboardRuntimeFilters(
   return filters.flatMap((filter): RuntimeQueryFilter[] => {
     const selection = (values[filter.id] ?? filter.defaultValue).trim();
     if (!selection || isUniversalSelection(selection)) return [];
-
     const mappedValue = filter.valueMap?.[selection] ?? selection;
     if (filter.input === 'daterange') {
       const [start = '', end = ''] = Array.isArray(mappedValue)
@@ -29,7 +25,6 @@ export function resolveDashboardRuntimeFilters(
         : typeof mappedValue === 'string'
           ? mappedValue.split(',').map((value) => value.trim())
           : ['', ''];
-
       return start || end
         ? [
             {
@@ -40,15 +35,12 @@ export function resolveDashboardRuntimeFilters(
           ]
         : [];
     }
-
     if (!filter.fieldId) return [];
-
     if (filter.input === 'date') {
       return [
         { fieldId: filter.fieldId, field: filter.fieldId, operator: 'eq', value: String(mappedValue) }
       ];
     }
-
     if (filter.input === 'multiselect') {
       const selected = (
         Array.isArray(mappedValue) ? mappedValue : mappedValue.split(',')
@@ -66,7 +58,6 @@ export function resolveDashboardRuntimeFilters(
           ]
         : [];
     }
-
     if (Array.isArray(mappedValue)) {
       if (mappedValue.length === 2 && mappedValue.every(isIsoDate)) {
         return [
@@ -89,7 +80,6 @@ export function resolveDashboardRuntimeFilters(
           ]
         : [];
     }
-
     return [
       {
         fieldId: filter.fieldId,
@@ -100,7 +90,6 @@ export function resolveDashboardRuntimeFilters(
     ];
   });
 }
-
 export function activeDashboardFilters(
   filters: GlobalFilter[],
   values: Record<string, string>
@@ -112,7 +101,6 @@ export function activeDashboardFilters(
       : [];
   });
 }
-
 export function resolveWidgetRuntimeFilters(
   filters: WidgetFilter[]
 ): RuntimeQueryFilter[] {
@@ -130,7 +118,6 @@ export function resolveWidgetRuntimeFilters(
     ];
   });
 }
-
 export function mergeRuntimeFilters(
   globalFilters: RuntimeQueryFilter[],
   widgetFilters: RuntimeQueryFilter[]
@@ -141,13 +128,11 @@ export function mergeRuntimeFilters(
     ...widgetFilters
   ];
 }
-
 export function isUniversalSelection(value: string): boolean {
   return ['tous', 'toutes', 'all', '*'].includes(
     value.trim().toLocaleLowerCase('fr')
   );
 }
-
 function isIsoDate(value: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }

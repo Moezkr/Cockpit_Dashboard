@@ -1,5 +1,4 @@
 package com.dynamicdashboard.cockpit.shared.security;
-
 import java.util.List;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -24,13 +23,11 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 @EnableConfigurationProperties(SecurityProperties.class)
 public class SecurityConfiguration {
-
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationConverter jwtAuthenticationConverter)
             throws Exception {
@@ -50,10 +47,8 @@ public class SecurityConfiguration {
                         .requestMatchers("/actuator/health", "/actuator/info", "/api/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().permitAll());
-
         return http.build();
     }
-
     @Bean
     CorsConfigurationSource corsConfigurationSource(SecurityProperties securityProperties) {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -63,19 +58,16 @@ public class SecurityConfiguration {
         configuration.setExposedHeaders(List.of("X-Request-Id"));
         configuration.setAllowCredentials(false);
         configuration.setMaxAge(3600L);
-
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
     @Bean
     JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(new JwtAuthoritiesConverter());
         return converter;
     }
-
     @Bean
     JwtDecoder jwtDecoder(SecurityProperties securityProperties,
             org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties properties) {
@@ -90,5 +82,4 @@ public class SecurityConfiguration {
             return token -> null;
         }
     }
-
 }

@@ -8,10 +8,8 @@ import { uid } from '@core/utils/utils';
 import { AuditService } from '@pages/settings/services/audit.service';
 import { normalizeQueries, normalizeQuery } from '@pages/query/services/query-model.service';
 import { LIVE_QUERY_DATA, setCatalogSources } from '@pages/query/services/query-execution.service';
-
 const nowIso = () => new Date().toISOString();
 const API_URL = '/api';
-
 function getStoredQueries(): DataQuery[] {
   if (typeof localStorage !== 'undefined') {
     const raw = localStorage.getItem('cockpit_queries');
@@ -24,31 +22,25 @@ function getStoredQueries(): DataQuery[] {
   }
   return [];
 }
-
 function saveStoredQueries(list: DataQuery[]): void {
   if (typeof localStorage !== 'undefined' && Array.isArray(list)) {
     localStorage.setItem('cockpit_queries', JSON.stringify(list));
   }
 }
-
 @Injectable({ providedIn: 'root' })
 export class QueryService {
   private queriesSubject = new BehaviorSubject<DataQuery[]>(normalizeQueries(getStoredQueries()));
   private catalogSourcesSubject = new BehaviorSubject<any[]>([]);
-
   queries$: Observable<DataQuery[]> = this.queriesSubject.asObservable();
   catalogSources$: Observable<any[]> = this.catalogSourcesSubject.asObservable();
-
   constructor(private http: HttpClient, private ngZone: NgZone, private auditService: AuditService) {
     this.loadFromBackend();
     this.loadCatalog();
   }
-
   private setQueries(list: DataQuery[]) {
     saveStoredQueries(list);
     this.ngZone.run(() => this.queriesSubject.next(list));
   }
-
   public loadFromBackend(): void {
     this.http.get<QueryResponseDto[]>(`${API_URL}/queries`).subscribe({
       next: (data: any) => {
@@ -56,16 +48,20 @@ export class QueryService {
           const cleanModels = data.map((dto: QueryResponseDto) => QueryMapper.toDomain(dto));
           const queries = normalizeQueries(cleanModels);
           this.setQueries(queries);
-          queries.forEach(q => {
-            this.http.get<any[]>(`${API_URL}/queries/${q.id}/execute`).subscribe({
-              next: (rows) => {
-                if (Array.isArray(rows) && rows.length > 0) {
-                  LIVE_QUERY_DATA[q.id] = rows;
-                  this.ngZone.run(() => this.queriesSubject.next([...this.queriesSubject.value]));
-                }
-              },
-              error: () => {}
-            });
+          const batchMap: Record<string, any[]> = {};
+          queries.forEach(q => { batchMap[q.id] = []; });
+          this.http.post<Record<string, any[]>>(`${API_URL}/queries/batch-execute`, batchMap).subscribe({
+            next: (results) => {
+              if (results && typeof results === 'object') {
+                Object.entries(results).forEach(([qId, rows]) => {
+                  if (Array.isArray(rows)) {
+                    LIVE_QUERY_DATA[qId] = rows;
+                  }
+                });
+                this.ngZone.run(() => this.queriesSubject.next([...this.queriesSubject.value]));
+              }
+            },
+            error: () => {}
           });
         }
       },
@@ -74,15 +70,12 @@ export class QueryService {
       }
     });
   }
-
   get queries(): DataQuery[] {
     return this.queriesSubject.value;
   }
-
   get catalogSources(): any[] {
     return this.catalogSourcesSubject.value;
   }
-
   loadCatalog(): void {
     this.http.get<any[]>(`${API_URL}/catalog/data-sources`).subscribe({
       next: (sources: any) => {
@@ -94,7 +87,6 @@ export class QueryService {
       error: () => {}
     });
   }
-
   upsertQuery(query: DataQuery): void {
     const prev = this.queries;
     const exists = prev.some((q) => q.id === query.id);
@@ -107,7 +99,6 @@ export class QueryService {
       ? prev.map((q) => (q.id === query.id ? next : q))
       : [next, ...prev];
     this.setQueries(updated);
-
     if (exists) {
       const dto = QueryMapper.toDto(query);
       this.http.put<QueryRequestDto>(`${API_URL}/queries/${query.id}`, dto).subscribe({
@@ -131,14 +122,12 @@ export class QueryService {
       });
     }
   }
-
   deleteQuery(id: string): void {
     this.queriesSubject.next(this.queries.filter((q) => q.id !== id));
     this.http.delete(`${API_URL}/queries/${id}`).subscribe({
       next: () => this.auditService.loadAuditLogs()
     });
   }
-
   duplicateQuery(id: string): void {
     const source = this.queries.find((q) => q.id === id);
     if (!source) return;
@@ -151,7 +140,6 @@ export class QueryService {
       counter++;
       newName = `${cleanBase} (copie ${counter})`;
     }
-
     const copy: DataQuery = {
       ...normalizeQuery(source),
       id: copyId,
@@ -175,7 +163,6 @@ export class QueryService {
       updatedAt: nowIso()
     };
     this.queriesSubject.next([copy, ...this.queries]);
-
     this.http.post<QueryResponseDto>(`${API_URL}/queries/${id}/duplicate`, {}).subscribe({
       next: (createdDto: QueryResponseDto) => {
           const created = QueryMapper.toDomain(createdDto);
@@ -196,11 +183,9 @@ export class QueryService {
       }
     });
   }
-
   executeQueryData(queryId: string, filters: import('@pages/dashboard/services/dashboard-filters.service').RuntimeQueryFilter[] = []): Observable<any[]> {
     return this.http.post<any[]>(`${API_URL}/queries/${queryId}/execute`, filters);
   }
-
   previewQuery(query: DataQuery): Observable<any[]> {
     const payload = QueryMapper.toDto(query);
     return this.http.post<any[]>(`${API_URL}/queries/preview`, payload);

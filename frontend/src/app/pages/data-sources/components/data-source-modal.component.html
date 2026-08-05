@@ -21,7 +21,6 @@
         </button>
       </div>
     </section>
-
     <section class="rounded-lg border border-line bg-surface-muted p-3">
       <div class="mb-3 flex items-center gap-2">
         <app-svg-icon name="ServerCog" class="h-4 w-4 text-brand-strong"></app-svg-icon>
@@ -78,8 +77,6 @@
         </span>
       </div>
     </section>
-
-    <!-- SCHÉMA DÉTECTÉ PREVIEW (GROUPED BY TABLE) -->
     <section *ngIf="testResult === 'success' && groupedSchema && groupedSchema.length > 0" class="rounded-lg border border-line bg-surface p-3 space-y-3">
       <h4 class="text-2xs font-semibold uppercase tracking-wide text-ink-faint">
         SCHÉMA DÉTECTÉ ({{ groupedSchema.length }} table{{ groupedSchema.length > 1 ? 's' : '' }} trouvée{{ groupedSchema.length > 1 ? 's' : '' }})
@@ -112,7 +109,6 @@
         </div>
       </div>
     </section>
-
     <div class="flex items-center justify-end gap-2 border-t border-line pt-3 mt-2">
       <app-button variant="secondary" (onClick)="onClose.emit()">Annuler</app-button>
       <app-button variant="primary" [disabled]="!isValid || saving || testing" (onClick)="save()">
